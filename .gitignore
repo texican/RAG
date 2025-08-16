@@ -1,0 +1,68 @@
+# Build artifacts
+target/
+*.class
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage reports
+coverage/
+
+# Environment variables
+.env
+.env.local
+
+# Storage
+storage/
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# OS generated files
+Thumbs.db
+
+# Spring Boot
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# JetBrains
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# VS Code
+.vscode/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Docker volumes
+docker-volumes/
