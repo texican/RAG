@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: rag-core-service
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rag_core
+    username: rag_user
+    password: rag_password
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 2  # Use different database than other services
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: rag-core-service
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  # AI Configuration  
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: llama3.2:1b
+          temperature: 0.1
+
+# Server Configuration
+server:
+  port: 8082
+
+# Management/Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# RAG Configuration
+rag:
+  retrieval:
+    max-chunks: 5
+    similarity-threshold: 0.7
+  generation:
+    max-tokens: 2000
+    temperature: 0.1
+    context-window: 8000
+  cache:
+    ttl-minutes: 60
+    enabled: true
+
+# Logging
+logging:
+  level:
+    com.enterprise.rag: DEBUG
+    org.springframework.ai: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
