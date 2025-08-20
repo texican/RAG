@@ -66,3 +66,7 @@ build/
 
 # Docker volumes
 docker-volumes/
+
+#Random Claude Nonsense
+ACTUAL-TEST-RESULTS.md
+error-prevention-test-suite.md
