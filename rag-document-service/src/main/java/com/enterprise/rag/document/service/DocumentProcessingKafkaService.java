@@ -5,6 +5,7 @@ import com.enterprise.rag.shared.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class DocumentProcessingKafkaService {
+@Profile("!test")
+public class DocumentProcessingKafkaService implements DocumentProcessingKafkaServiceInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentProcessingKafkaService.class);
 
@@ -31,6 +33,7 @@ public class DocumentProcessingKafkaService {
         this.embeddingGenerationTopic = embeddingGenerationTopic;
     }
 
+    @Override
     public void sendDocumentForProcessing(UUID documentId) {
         try {
             DocumentProcessingMessage message = new DocumentProcessingMessage(documentId);
@@ -53,6 +56,7 @@ public class DocumentProcessingKafkaService {
         }
     }
 
+    @Override
     public void sendChunksForEmbedding(List<DocumentChunk> chunks) {
         try {
             for (DocumentChunk chunk : chunks) {
