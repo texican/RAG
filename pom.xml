@@ -46,6 +46,7 @@
         <module>rag-shared</module>
         <module>rag-auth-service</module>
         <module>rag-document-service</module>
+        <module>rag-embedding-service</module>
         <module>rag-core-service</module>
     </modules>
 

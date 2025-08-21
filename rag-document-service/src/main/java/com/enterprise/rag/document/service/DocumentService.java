@@ -34,14 +34,14 @@ public class DocumentService {
     private final DocumentChunkService chunkService;
     private final FileStorageService fileStorageService;
     private final TextExtractionService textExtractionService;
-    private final DocumentProcessingKafkaService kafkaService;
+    private final DocumentProcessingKafkaServiceInterface kafkaService;
 
     public DocumentService(
             DocumentRepository documentRepository,
             DocumentChunkService chunkService,
             FileStorageService fileStorageService,
             TextExtractionService textExtractionService,
-            DocumentProcessingKafkaService kafkaService) {
+            DocumentProcessingKafkaServiceInterface kafkaService) {
         this.documentRepository = documentRepository;
         this.chunkService = chunkService;
         this.fileStorageService = fileStorageService;

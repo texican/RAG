@@ -1,0 +1,160 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: rag-embedding-service
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rag_db
+    username: rag_user
+    password: rag_password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        generate_statistics: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        jdbc:
+          batch_size: 25
+          order_inserts: true
+          order_updates: true
+          batch_versioned_data: true
+  
+  # Redis Configuration for Vector Storage
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 2  # Use separate database for embeddings
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: embedding-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "com.enterprise.rag.*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 1
+      retries: 3
+      batch-size: 16384
+      linger-ms: 1
+      buffer-memory: 33554432
+
+# Spring AI Configuration
+spring.ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key}
+    embedding:
+      options:
+        model: text-embedding-3-small
+        dimensions: 1536
+  
+  transformers:
+    onnx:
+      model:
+        path: ${TRANSFORMERS_MODEL_PATH:models/sentence-transformers/all-MiniLM-L6-v2}
+
+# Application Configuration
+embedding:
+  # Vector Storage Configuration
+  vector:
+    redis:
+      index-prefix: "rag:vectors"
+      batch-size: 100
+      dimension: 1536
+      similarity-algorithm: COSINE
+      ef-construction: 200
+      ef-runtime: 10
+      max-connections: 16
+  
+  # Model Configuration
+  models:
+    default: openai-text-embedding-3-small
+    fallback: sentence-transformers-all-minilm-l6-v2
+    cache-ttl: 3600  # Cache embeddings for 1 hour
+    
+  # Batch Processing Configuration
+  batch:
+    size: 50
+    timeout: 30s
+    max-retries: 3
+    parallel-processing: true
+    max-threads: 4
+
+# Kafka Topics
+kafka:
+  topics:
+    embedding-generation: embedding-generation
+    embedding-complete: embedding-complete
+    vector-search: vector-search
+
+# Monitoring Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.enterprise.rag: DEBUG
+    org.springframework.ai: INFO
+    org.springframework.kafka: WARN
+    redis.clients.jedis: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/embedding-service.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+
+# Custom Application Properties
+app:
+  name: RAG Embedding Service
+  version: 1.0.0
+  description: Vector operations and similarity search service for enterprise RAG system

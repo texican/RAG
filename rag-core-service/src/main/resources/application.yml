@@ -1,84 +1,214 @@
+server:
+  port: 8082
+
 spring:
   application:
     name: rag-core-service
   
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/rag_core
+    url: jdbc:postgresql://localhost:5432/rag_db
     username: rag_user
     password: rag_password
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
   
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        generate_statistics: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        jdbc:
+          batch_size: 25
+          order_inserts: true
+          order_updates: true
+          batch_versioned_data: true
   
-  # Redis Configuration
+  # Redis Configuration for Caching
   data:
     redis:
       host: localhost
       port: 6379
-      database: 2  # Use different database than other services
+      database: 1  # Use separate database for core service cache
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 15
+          max-idle: 10
+          min-idle: 3
+          max-wait: -1ms
   
   # Kafka Configuration
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: rag-core-service
+      group-id: core-service
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "com.enterprise.rag.*"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 1
+      retries: 3
+      batch-size: 16384
+      linger-ms: 1
+      buffer-memory: 33554432
 
-  # AI Configuration  
-  ai:
-    ollama:
-      base-url: http://localhost:11434
-      chat:
-        options:
-          model: llama3.2:1b
-          temperature: 0.1
+# Spring AI Configuration
+spring.ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key}
+    chat:
+      options:
+        model: gpt-4o-mini
+        temperature: 0.1
+        max-tokens: 2000
+        top-p: 0.9
+        frequency-penalty: 0.0
+        presence-penalty: 0.0
+  
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    chat:
+      options:
+        model: llama3.1:8b
+        temperature: 0.1
+        num-predict: 2000
+        top-p: 0.9
+        repeat-penalty: 1.1
 
-# Server Configuration
-server:
-  port: 8082
+# RAG Configuration
+rag:
+  # Context Assembly Configuration
+  context:
+    max-tokens: 4000
+    chunk-separator: "\n\n---\n\n"
+    include-metadata: true
+    relevance-threshold: 0.7
+    
+  # Query Optimization Configuration
+  query:
+    optimization:
+      enabled: true
+      min-length: 3
+      max-length: 500
+      expand-acronyms: true
+      remove-stopwords: false
+    
+  # Response Generation Configuration  
+  generation:
+    default-provider: openai
+    fallback-provider: ollama
+    max-retries: 3
+    timeout: 30s
+    streaming: true
 
-# Management/Monitoring
+# LLM Configuration
+llm:
+  default-provider: openai
+  fallback-provider: ollama
+  max-tokens: 1500
+  temperature: 0.7
+  timeout-seconds: 30
+
+# Cache Configuration
+cache:
+  response:
+    enabled: true
+    ttl-minutes: 60
+  embedding:
+    enabled: true
+    ttl-hours: 24
+  similarity-threshold: 0.95
+  key-prefix: rag-cache
+
+# Conversation Configuration
+conversation:
+  max-history: 20
+  context-window: 5
+  ttl-hours: 24
+  enable-context: true
+
+# Service URLs for Feign clients
+services:
+  embedding:
+    url: ${EMBEDDING_SERVICE_URL:http://localhost:8084}
+    timeout: 30s
+    retry-attempts: 3
+  
+  document:
+    url: ${DOCUMENT_SERVICE_URL:http://localhost:8083}
+    timeout: 15s
+    retry-attempts: 2
+
+# Kafka Topics
+kafka:
+  topics:
+    rag-queries: rag-queries
+    rag-responses: rag-responses
+    feedback: feedback
+
+# Monitoring Configuration
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,rag
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+    rag:
+      enabled: true
   metrics:
     export:
       prometheus:
         enabled: true
+    tags:
+      service: rag-core-service
+      version: 1.0.0
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    build:
+      enabled: true
 
-# RAG Configuration
-rag:
-  retrieval:
-    max-chunks: 5
-    similarity-threshold: 0.7
-  generation:
-    max-tokens: 2000
-    temperature: 0.1
-    context-window: 8000
-  cache:
-    ttl-minutes: 60
-    enabled: true
-
-# Logging
+# Logging Configuration
 logging:
   level:
     com.enterprise.rag: DEBUG
     org.springframework.ai: INFO
+    org.springframework.kafka: WARN
+    dev.langchain4j: INFO
+    org.springframework.cloud.openfeign: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/core-service.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+
+# Custom Application Properties
+app:
+  name: RAG Core Service
+  version: 1.0.0
+  description: RAG query engine and LLM integration service
