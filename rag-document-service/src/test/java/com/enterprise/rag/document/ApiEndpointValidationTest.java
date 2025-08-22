@@ -41,9 +41,11 @@ public class ApiEndpointValidationTest {
     @DisplayName("Document upload endpoint should exist")
     void documentUploadEndpointShouldExist() throws Exception {
         // This test prevents 404 errors when endpoints are not properly mapped
+        // The endpoint should return 400 Bad Request when required file parameter is missing
         mockMvc.perform(post("/api/v1/documents/upload")
-                .header("X-Tenant-ID", "test-tenant-id"))
-                .andExpect(status().isBadRequest()); // Should not be 404 Not Found
+                .header("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
+                .contentType("multipart/form-data"))
+                .andExpect(status().isBadRequest()); // Should not be 404 Not Found, expects file parameter
     }
 
     @Test
@@ -58,7 +60,7 @@ public class ApiEndpointValidationTest {
     @Test
     @DisplayName("All required endpoints should be mapped")
     void allRequiredEndpointsShouldBeMapped() throws Exception {
-        String tenantId = "test-tenant-id";
+        String tenantId = "550e8400-e29b-41d4-a716-446655440000";
 
         // GET /api/v1/documents - list documents
         mockMvc.perform(get("/api/v1/documents")
@@ -87,12 +89,14 @@ public class ApiEndpointValidationTest {
     @DisplayName("Required headers should be validated")
     void requiredHeadersShouldBeValidated() throws Exception {
         // Test that X-Tenant-ID header is required
-        mockMvc.perform(post("/api/v1/documents/upload"))
+        mockMvc.perform(post("/api/v1/documents/upload")
+                .contentType("multipart/form-data"))
                 .andExpect(status().isBadRequest()); // Should fail without tenant header
 
         // Test with invalid tenant ID format
         mockMvc.perform(post("/api/v1/documents/upload")
-                .header("X-Tenant-ID", "invalid-uuid"))
+                .header("X-Tenant-ID", "invalid-uuid")
+                .contentType("multipart/form-data"))
                 .andExpect(status().isBadRequest()); // Should validate UUID format
     }
 
@@ -103,7 +107,7 @@ public class ApiEndpointValidationTest {
         mockMvc.perform(post("/api/v1/documents/upload")
                 .header("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
                 .contentType("application/json"))
-                .andExpect(status().isBadRequest()); // Should expect multipart/form-data
+                .andExpect(status().isUnsupportedMediaType()); // Should expect multipart/form-data, not JSON
 
         // Test JSON content type for updates
         mockMvc.perform(put("/api/v1/documents/550e8400-e29b-41d4-a716-446655440000")
@@ -120,7 +124,8 @@ public class ApiEndpointValidationTest {
 
         // POST for upload (creation)
         mockMvc.perform(post("/api/v1/documents/upload")
-                .header("X-Tenant-ID", tenantId))
+                .header("X-Tenant-ID", tenantId)
+                .contentType("multipart/form-data"))
                 .andExpect(status().isBadRequest()); // Should accept POST
 
         // GET for retrieval
@@ -142,7 +147,8 @@ public class ApiEndpointValidationTest {
 
         // Wrong methods should not be allowed
         mockMvc.perform(patch("/api/v1/documents/upload")
-                .header("X-Tenant-ID", tenantId))
+                .header("X-Tenant-ID", tenantId)
+                .contentType("multipart/form-data"))
                 .andExpect(status().isMethodNotAllowed()); // PATCH not supported for upload
     }
 

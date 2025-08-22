@@ -11,16 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.search.*;
-import redis.clients.jedis.search.schemafields.NumericField;
-import redis.clients.jedis.search.schemafields.TextField;
-import redis.clients.jedis.search.schemafields.VectorField;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * Service for storing and retrieving vectors in Redis Stack.
+ * Service for storing and retrieving vector embeddings in Redis.
+ * Provides basic vector storage and similarity search functionality.
  */
 @Service
 public class VectorStorageService {
@@ -29,7 +25,7 @@ public class VectorStorageService {
     
     private final JedisPool jedisPool;
     private final VectorStorageProperties properties;
-    private final Set<String> createdIndexes = ConcurrentHashMap.newKeySet();
+    // Future: Track created indexes for cleanup
     
     public VectorStorageService(JedisPool jedisPool, VectorStorageProperties properties) {
         this.jedisPool = jedisPool;
@@ -37,29 +33,25 @@ public class VectorStorageService {
     }
     
     /**
-     * Store vectors for document chunks.
+     * Store embedding vectors for a batch of chunks.
      */
-    public void storeVectors(UUID tenantId, UUID documentId, 
-                           List<EmbeddingResult> results, String modelName) {
-        
-        String indexName = getIndexName(tenantId, modelName);
+    public void storeEmbeddings(UUID tenantId, String modelName, List<EmbeddingResult> results) {
+        if (results.isEmpty()) {
+            logger.warn("No embedding results to store for tenant: {}", tenantId);
+            return;
+        }
         
         try (Jedis jedis = jedisPool.getResource()) {
-            // Ensure index exists
-            ensureIndexExists(jedis, indexName);
-            
-            // Store vectors in batch
             for (EmbeddingResult result : results) {
-                if (!"SUCCESS".equals(result.status()) || result.embedding() == null) {
-                    continue;
+                if (!"SUCCESS".equals(result.status())) {
+                    continue; // Skip failed embeddings
                 }
                 
-                String key = getVectorKey(tenantId, documentId, result.chunkId());
-                Map<String, Object> fields = new HashMap<>();
+                String key = getVectorKey(tenantId, modelName, result.chunkId());
                 
-                // Metadata fields
+                // Prepare data for Redis hash
+                Map<String, Object> fields = new HashMap<>();
                 fields.put("tenant_id", tenantId.toString());
-                fields.put("document_id", documentId.toString());
                 fields.put("chunk_id", result.chunkId().toString());
                 fields.put("model_name", modelName);
                 fields.put("content", result.text());
@@ -69,257 +61,228 @@ public class VectorStorageService {
                 byte[] vectorBytes = floatListToByteArray(result.embedding());
                 fields.put("vector", vectorBytes);
                 
-                // Store in Redis
-                jedis.hset(key, fields);
+                // Store in Redis - convert Object values to String for Jedis
+                Map<String, String> stringFields = new HashMap<>();
+                for (Map.Entry<String, Object> entry : fields.entrySet()) {
+                    if (entry.getValue() instanceof byte[]) {
+                        // Convert byte array to base64 string for storage
+                        stringFields.put(entry.getKey(), 
+                            java.util.Base64.getEncoder().encodeToString((byte[]) entry.getValue()));
+                    } else {
+                        stringFields.put(entry.getKey(), entry.getValue().toString());
+                    }
+                }
+                jedis.hset(key, stringFields);
+                
+                // Add to tenant's vector index for search
+                String indexKey = getTenantIndexKey(tenantId, modelName);
+                jedis.sadd(indexKey, result.chunkId().toString());
                 
                 logger.debug("Stored vector for chunk: {} in tenant: {}", 
                            result.chunkId(), tenantId);
             }
             
-            logger.info("Stored {} vectors for document: {} in tenant: {}", 
-                       results.size(), documentId, tenantId);
-                       
         } catch (Exception e) {
-            logger.error("Failed to store vectors for tenant: {}, document: {}", 
-                        tenantId, documentId, e);
-            throw new EmbeddingException("Failed to store vectors in Redis", e);
+            logger.error("Failed to store embeddings for tenant: {}", tenantId, e);
+            throw new EmbeddingException("Failed to store embedding vectors", e);
         }
     }
     
     /**
-     * Search for similar vectors.
+     * Search for similar vectors using basic cosine similarity.
+     * Note: This is a simplified implementation for demonstration.
+     * In production, you would use a proper vector database like Redis Stack with RediSearch.
      */
     public SearchResponse searchSimilar(SearchRequest request, List<Float> queryEmbedding) {
         long startTime = System.currentTimeMillis();
         
         String modelName = getEffectiveModelName(request.modelName());
-        String indexName = getIndexName(request.tenantId(), modelName);
         
         try (Jedis jedis = jedisPool.getResource()) {
-            // Ensure index exists
-            if (!indexExists(jedis, indexName)) {
-                logger.info("Index {} does not exist, returning empty results", indexName);
+            String indexKey = getTenantIndexKey(request.tenantId(), modelName);
+            Set<String> chunkIds = jedis.smembers(indexKey);
+            
+            if (chunkIds.isEmpty()) {
+                logger.info("No vectors found for tenant: {} with model: {}", 
+                           request.tenantId(), modelName);
                 return SearchResponse.empty(request.tenantId(), request.query(), 
                                           modelName, System.currentTimeMillis() - startTime);
             }
             
-            // Build search query
-            Query searchQuery = buildSearchQuery(request, queryEmbedding);
+            // Calculate similarities
+            List<SearchResult> results = new ArrayList<>();
             
-            // Execute search
-            SearchResult searchResult = jedis.ftSearch(indexName, searchQuery);
+            for (String chunkIdStr : chunkIds) {
+                UUID chunkId = UUID.fromString(chunkIdStr);
+                String vectorKey = getVectorKey(request.tenantId(), modelName, chunkId);
+                
+                Map<String, String> vectorData = jedis.hgetAll(vectorKey);
+                if (vectorData.isEmpty()) {
+                    continue;
+                }
+                
+                // Reconstruct vector from base64
+                String vectorBase64 = vectorData.get("vector");
+                if (vectorBase64 == null) {
+                    continue;
+                }
+                
+                byte[] vectorBytes = Base64.getDecoder().decode(vectorBase64);
+                List<Float> storedVector = byteArrayToFloatList(vectorBytes);
+                
+                // Calculate cosine similarity
+                double similarity = calculateCosineSimilarity(queryEmbedding, storedVector);
+                
+                if (similarity >= request.threshold()) {
+                    SearchResult result = SearchResult.of(
+                        chunkId,
+                        UUID.randomUUID(), // TODO: Get actual document ID
+                        request.includeContent() ? vectorData.get("content") : null,
+                        similarity,
+                        request.includeMetadata() ? Map.of("model", modelName) : null,
+                        "Unknown Document",
+                        "text"
+                    );
+                    results.add(result);
+                }
+            }
             
-            // Process results
-            List<SearchResult> results = processSearchResults(searchResult.getDocuments(), request);
+            // Sort by similarity score (descending) and limit results
+            results.sort((a, b) -> Double.compare(b.score(), a.score()));
+            if (results.size() > request.topK()) {
+                results = results.subList(0, request.topK());
+            }
             
             long searchTime = System.currentTimeMillis() - startTime;
-            
-            logger.info("Found {} results for query in tenant: {} ({}ms)", 
+            logger.info("Found {} similar vectors for tenant: {} in {}ms", 
                        results.size(), request.tenantId(), searchTime);
             
             return SearchResponse.success(request.tenantId(), request.query(), 
                                         modelName, results, searchTime);
-                                        
-        } catch (Exception e) {
-            long searchTime = System.currentTimeMillis() - startTime;
-            logger.error("Failed to search vectors for tenant: {}, query: {}", 
-                        request.tenantId(), request.query(), e);
             
+        } catch (Exception e) {
+            logger.error("Failed to search vectors for tenant: {}", request.tenantId(), e);
             return SearchResponse.empty(request.tenantId(), request.query(), 
-                                      modelName, searchTime);
+                                      modelName, System.currentTimeMillis() - startTime);
         }
     }
     
     /**
-     * Delete vectors for a document.
+     * Delete vectors for a tenant.
      */
-    public void deleteDocumentVectors(UUID tenantId, UUID documentId, String modelName) {
-        String indexName = getIndexName(tenantId, modelName);
-        
+    public void deleteVectors(UUID tenantId, String modelName) {
         try (Jedis jedis = jedisPool.getResource()) {
-            if (!indexExists(jedis, indexName)) {
-                return;
+            String indexKey = getTenantIndexKey(tenantId, modelName);
+            Set<String> chunkIds = jedis.smembers(indexKey);
+            
+            // Delete individual vector entries
+            for (String chunkIdStr : chunkIds) {
+                UUID chunkId = UUID.fromString(chunkIdStr);
+                String vectorKey = getVectorKey(tenantId, modelName, chunkId);
+                jedis.del(vectorKey);
             }
             
-            // Search for all vectors for this document
-            Query query = new Query("@document_id:" + documentId.toString());
-            SearchResult searchResult = jedis.ftSearch(indexName, query);
+            // Delete the index
+            jedis.del(indexKey);
             
-            // Delete all found documents
-            for (Document doc : searchResult.getDocuments()) {
-                jedis.del(doc.getId());
-            }
-            
-            logger.info("Deleted vectors for document: {} in tenant: {}", documentId, tenantId);
+            logger.info("Deleted {} vectors for tenant: {} with model: {}", 
+                       chunkIds.size(), tenantId, modelName);
             
         } catch (Exception e) {
-            logger.error("Failed to delete vectors for document: {} in tenant: {}", 
-                        documentId, tenantId, e);
+            logger.error("Failed to delete vectors for tenant: {}", tenantId, e);
+            throw new EmbeddingException("Failed to delete vectors", e);
         }
     }
     
     /**
-     * Get statistics for tenant's vector storage.
+     * Get vector storage statistics.
      */
-    public VectorStats getStats(UUID tenantId, String modelName) {
-        String indexName = getIndexName(tenantId, modelName);
-        
+    public VectorStats getStats() {
         try (Jedis jedis = jedisPool.getResource()) {
-            if (!indexExists(jedis, indexName)) {
-                return new VectorStats(0, 0, 0);
-            }
+            // Basic stats from Redis info
+            String info = jedis.info("memory");
+            long usedMemory = parseMemoryFromInfo(info);
             
-            IndexInfo indexInfo = jedis.ftInfo(indexName);
-            
-            // Extract statistics from index info
-            long totalVectors = indexInfo.getNumDocs();
-            long indexSize = indexInfo.getInvertedSzMB();
-            long vectorSize = indexInfo.getVectorIndexSzMB();
-            
-            return new VectorStats(totalVectors, indexSize, vectorSize);
+            return new VectorStats(
+                0L, // totalVectors - would need to count all keys
+                usedMemory / (1024 * 1024), // memoryUsageMB
+                0.0, // averageVectorSize - would need to calculate
+                System.currentTimeMillis()
+            );
             
         } catch (Exception e) {
-            logger.error("Failed to get vector statistics for tenant: {}", tenantId, e);
-            return new VectorStats(0, 0, 0);
+            logger.error("Failed to get vector storage stats", e);
+            return new VectorStats(0L, 0L, 0.0, System.currentTimeMillis());
         }
     }
     
-    private void ensureIndexExists(Jedis jedis, String indexName) {
-        if (createdIndexes.contains(indexName) || indexExists(jedis, indexName)) {
-            return;
-        }
-        
-        try {
-            Schema schema = new Schema()
-                .addField(new TextField("tenant_id", 1.0))
-                .addField(new TextField("document_id", 1.0))
-                .addField(new TextField("chunk_id", 1.0))
-                .addField(new TextField("model_name", 1.0))
-                .addField(new TextField("content", 1.0))
-                .addField(new NumericField("created_at"))
-                .addField(VectorField.builder()
-                    .fieldName("vector")
-                    .algorithm(VectorField.VectorAlgorithm.HNSW)
-                    .attributes(Map.of(
-                        "TYPE", "FLOAT32",
-                        "DIM", properties.dimension(),
-                        "DISTANCE_METRIC", properties.similarityAlgorithm(),
-                        "INITIAL_CAP", "1000",
-                        "M", properties.maxConnections(),
-                        "EF_CONSTRUCTION", properties.efConstruction(),
-                        "EF_RUNTIME", properties.efRuntime()
-                    ))
-                    .build());
-            
-            jedis.ftCreate(indexName, IndexOptions.defaultOptions(), schema);
-            createdIndexes.add(indexName);
-            
-            logger.info("Created vector index: {}", indexName);
-            
-        } catch (Exception e) {
-            if (e.getMessage().contains("Index already exists")) {
-                createdIndexes.add(indexName);
-                logger.debug("Index {} already exists", indexName);
-            } else {
-                logger.error("Failed to create index: {}", indexName, e);
-                throw new EmbeddingException("Failed to create vector index", e);
-            }
-        }
+    // Helper methods
+    
+    private String getVectorKey(UUID tenantId, String modelName, UUID chunkId) {
+        return String.format("%s:vector:%s:%s:%s", 
+                           properties.indexPrefix(), tenantId, modelName, chunkId);
     }
     
-    private boolean indexExists(Jedis jedis, String indexName) {
-        try {
-            jedis.ftInfo(indexName);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-    
-    private Query buildSearchQuery(SearchRequest request, List<Float> queryEmbedding) {
-        StringBuilder queryBuilder = new StringBuilder();
-        
-        // Tenant isolation
-        queryBuilder.append("@tenant_id:").append(request.tenantId());
-        
-        // Document filtering
-        if (request.documentIds() != null && !request.documentIds().isEmpty()) {
-            queryBuilder.append(" @document_id:(");
-            queryBuilder.append(request.documentIds().stream()
-                .map(UUID::toString)
-                .collect(Collectors.joining("|")));
-            queryBuilder.append(")");
-        }
-        
-        // Vector similarity search
-        String vectorQuery = String.format("=>[KNN %d @vector $BLOB AS score]", request.topK());
-        queryBuilder.append(" ").append(vectorQuery);
-        
-        Query query = new Query(queryBuilder.toString())
-            .addParam("BLOB", floatListToByteArray(queryEmbedding))
-            .returnFields("tenant_id", "document_id", "chunk_id", "content", "score")
-            .setSortBy("score", false)  // Sort by similarity score descending
-            .limit(0, request.topK());
-            
-        return query;
-    }
-    
-    private List<SearchResult> processSearchResults(List<Document> documents, SearchRequest request) {
-        return documents.stream()
-            .map(doc -> {
-                UUID chunkId = UUID.fromString(doc.getString("chunk_id"));
-                UUID documentId = UUID.fromString(doc.getString("document_id"));
-                String content = request.includeContent() ? doc.getString("content") : null;
-                double score = Double.parseDouble(doc.getString("score"));
-                
-                // Apply threshold filtering
-                if (score < request.threshold()) {
-                    return null;
-                }
-                
-                return SearchResult.of(
-                    chunkId,
-                    documentId, 
-                    content,
-                    score,
-                    request.includeMetadata() ? getMetadata(doc) : null,
-                    null,  // Document title would need separate lookup
-                    null   // Document type would need separate lookup
-                );
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-    }
-    
-    private Map<String, Object> getMetadata(Document doc) {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("model_name", doc.getString("model_name"));
-        metadata.put("created_at", doc.getString("created_at"));
-        return metadata;
-    }
-    
-    private byte[] floatListToByteArray(List<Float> floats) {
-        byte[] bytes = new byte[floats.size() * 4];
-        for (int i = 0; i < floats.size(); i++) {
-            int bits = Float.floatToIntBits(floats.get(i));
-            bytes[i * 4] = (byte) (bits >> 24);
-            bytes[i * 4 + 1] = (byte) (bits >> 16);
-            bytes[i * 4 + 2] = (byte) (bits >> 8);
-            bytes[i * 4 + 3] = (byte) bits;
-        }
-        return bytes;
-    }
-    
-    private String getIndexName(UUID tenantId, String modelName) {
-        return properties.indexPrefix() + ":" + tenantId + ":" + modelName;
-    }
-    
-    private String getVectorKey(UUID tenantId, UUID documentId, UUID chunkId) {
-        return String.format("vector:%s:%s:%s", tenantId, documentId, chunkId);
+    private String getTenantIndexKey(UUID tenantId, String modelName) {
+        return String.format("%s:index:%s:%s", 
+                           properties.indexPrefix(), tenantId, modelName);
     }
     
     private String getEffectiveModelName(String requestedModel) {
-        return requestedModel != null ? requestedModel : "default";
+        if (requestedModel == null || requestedModel.trim().isEmpty()) {
+            return "default";
+        }
+        return requestedModel;
+    }
+    
+    private byte[] floatListToByteArray(List<Float> floats) {
+        java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocate(floats.size() * 4);
+        for (Float f : floats) {
+            buffer.putFloat(f);
+        }
+        return buffer.array();
+    }
+    
+    private List<Float> byteArrayToFloatList(byte[] bytes) {
+        java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
+        List<Float> floats = new ArrayList<>();
+        while (buffer.hasRemaining()) {
+            floats.add(buffer.getFloat());
+        }
+        return floats;
+    }
+    
+    private double calculateCosineSimilarity(List<Float> vector1, List<Float> vector2) {
+        if (vector1.size() != vector2.size()) {
+            return 0.0;
+        }
+        
+        double dotProduct = 0.0;
+        double norm1 = 0.0;
+        double norm2 = 0.0;
+        
+        for (int i = 0; i < vector1.size(); i++) {
+            dotProduct += vector1.get(i) * vector2.get(i);
+            norm1 += vector1.get(i) * vector1.get(i);
+            norm2 += vector2.get(i) * vector2.get(i);
+        }
+        
+        if (norm1 == 0.0 || norm2 == 0.0) {
+            return 0.0;
+        }
+        
+        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+    }
+    
+    private long parseMemoryFromInfo(String info) {
+        // Simple parsing of used_memory from Redis INFO command
+        String[] lines = info.split("\n");
+        for (String line : lines) {
+            if (line.startsWith("used_memory:")) {
+                return Long.parseLong(line.split(":")[1].trim());
+            }
+        }
+        return 0L;
     }
     
     /**
@@ -327,7 +290,8 @@ public class VectorStorageService {
      */
     public record VectorStats(
         long totalVectors,
-        long indexSizeMB,
-        long vectorSizeMB
+        long memoryUsageMB,
+        double averageVectorSize,
+        long lastUpdated
     ) {}
 }

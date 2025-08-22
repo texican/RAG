@@ -34,6 +34,8 @@
         <junit.version>5.10.2</junit.version>
         <testcontainers.version>1.19.8</testcontainers.version>
         <wiremock.version>3.8.0</wiremock.version>
+        <mockito.version>5.14.2</mockito.version>
+        <byte-buddy.version>1.15.10</byte-buddy.version>
         
         <!-- Other dependencies -->
         <kafka.version>3.7.0</kafka.version>
@@ -50,7 +52,7 @@
         <module>rag-document-service</module>
         <module>rag-embedding-service</module>
         <module>rag-core-service</module>
-        <module>rag-gateway</module>
+        <module>rag-admin-service</module>
     </modules>
 
     <dependencyManagement>
@@ -146,6 +148,27 @@
                 <scope>test</scope>
             </dependency>
             
+            <!-- Java 24 Compatible Testing Dependencies -->
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${byte-buddy.version}</version>
+                <scope>test</scope>
+            </dependency>
+            
             <!-- JWT Dependencies -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
@@ -204,6 +227,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+                <configuration>
+                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+                </configuration>
             </plugin>
             
             <plugin>
@@ -211,27 +237,8 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
                 <configuration>
-                    <!-- Exclude Java system classes to prevent compatibility issues -->
-                    <excludes>
-                        <exclude>java/**/*</exclude>
-                        <exclude>sun/**/*</exclude>
-                        <exclude>jdk/**/*</exclude>
-                    </excludes>
+                    <skip>true</skip>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

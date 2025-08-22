@@ -1,6 +1,7 @@
 package com.enterprise.rag.embedding.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,6 +15,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * Redis configuration for vector storage operations.
  */
 @Configuration
+@EnableConfigurationProperties(RedisConfig.VectorStorageProperties.class)
 public class RedisConfig {
     
     @Bean
@@ -42,8 +44,8 @@ public class RedisConfig {
         poolConfig.setTestOnBorrow(true);
         poolConfig.setTestOnReturn(true);
         poolConfig.setTestWhileIdle(true);
-        poolConfig.setTimeBetweenEvictionRunsMillis(30000);
-        poolConfig.setMinEvictableIdleTimeMillis(60000);
+        poolConfig.setTimeBetweenEvictionRuns(java.time.Duration.ofSeconds(30));
+        poolConfig.setMinEvictableIdleDuration(java.time.Duration.ofMinutes(1));
         
         return new JedisPool(
             poolConfig,

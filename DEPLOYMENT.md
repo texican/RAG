@@ -1,4 +1,4 @@
-# Enterprise RAG System - Deployment Guide
+c# Enterprise RAG System - Deployment Guide
 
 A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Generation) system across development, staging, and production environments.
 

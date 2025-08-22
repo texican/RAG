@@ -13,8 +13,11 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -138,6 +141,24 @@ public class DocumentExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestPart(MissingServletRequestPartException ex) {
+        logger.warn("Missing required request part: {}", ex.getRequestPartName());
+        
+        Map<String, String> details = new HashMap<>();
+        details.put("missingPart", ex.getRequestPartName());
+        
+        ErrorResponse error = new ErrorResponse(
+            "MISSING_REQUIRED_PART",
+            "Required request part '" + ex.getRequestPartName() + "' is missing",
+            HttpStatus.BAD_REQUEST.value(),
+            LocalDateTime.now(),
+            details
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ErrorResponse> handleMultipartException(MultipartException ex) {
         logger.warn("Multipart request error: {}", ex.getMessage());
@@ -171,6 +192,44 @@ public class DocumentExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        logger.warn("Unsupported media type: {}, supported types: {}", ex.getContentType(), ex.getSupportedMediaTypes());
+        
+        Map<String, String> details = new HashMap<>();
+        details.put("provided", ex.getContentType() != null ? ex.getContentType().toString() : "none");
+        details.put("supported", ex.getSupportedMediaTypes().toString());
+        
+        ErrorResponse error = new ErrorResponse(
+            "UNSUPPORTED_MEDIA_TYPE",
+            "Content type '" + (ex.getContentType() != null ? ex.getContentType() : "none") + "' is not supported",
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
+            LocalDateTime.now(),
+            details
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(error);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        logger.warn("Method not supported: {}, supported methods: {}", ex.getMethod(), ex.getSupportedHttpMethods());
+        
+        Map<String, String> details = new HashMap<>();
+        details.put("method", ex.getMethod());
+        details.put("supported", ex.getSupportedHttpMethods() != null ? ex.getSupportedHttpMethods().toString() : "unknown");
+        
+        ErrorResponse error = new ErrorResponse(
+            "METHOD_NOT_ALLOWED",
+            "HTTP method '" + ex.getMethod() + "' is not supported for this endpoint",
+            HttpStatus.METHOD_NOT_ALLOWED.value(),
+            LocalDateTime.now(),
+            details
+        );
+        
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
