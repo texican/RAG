@@ -42,8 +42,8 @@ public class RedisConfig {
         poolConfig.setTestOnBorrow(true);
         poolConfig.setTestOnReturn(true);
         poolConfig.setTestWhileIdle(true);
-        poolConfig.setTimeBetweenEvictionRunsMillis(30000);
-        poolConfig.setMinEvictableIdleTimeMillis(60000);
+        poolConfig.setTimeBetweenEvictionRuns(java.time.Duration.ofSeconds(30));
+        poolConfig.setMinEvictableIdleDuration(java.time.Duration.ofMinutes(1));
         
         return new JedisPool(
             poolConfig,

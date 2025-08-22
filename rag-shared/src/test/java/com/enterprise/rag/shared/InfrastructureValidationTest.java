@@ -181,7 +181,7 @@ public class InfrastructureValidationTest {
         // or that the application handles their absence gracefully
         for (String envVar : envVars) {
             assertDoesNotThrow(() -> {
-                String value = System.getenv(envVar);
+                System.getenv(envVar); // Check that environment variable access doesn't throw
                 // It's okay if environment variables are not set in tests
                 // But the application should handle this gracefully
             }, "Environment variable " + envVar + " should be handled gracefully");

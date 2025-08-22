@@ -4,7 +4,6 @@ import com.enterprise.rag.document.repository.DocumentChunkRepository;
 import com.enterprise.rag.shared.dto.TenantDto;
 import com.enterprise.rag.shared.entity.Document;
 import com.enterprise.rag.shared.entity.DocumentChunk;
-import com.enterprise.rag.shared.entity.Tenant;
 import com.enterprise.rag.shared.util.TextChunker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

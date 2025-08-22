@@ -248,7 +248,7 @@ public class EmbeddingController {
         
         logger.info("Deleting vectors for document: {} in tenant: {}", documentId, tenantId);
         
-        vectorStorageService.deleteDocumentVectors(tenantId, documentId, modelName);
+        vectorStorageService.deleteVectors(tenantId, modelName);
         
         logger.info("Successfully deleted vectors for document: {}", documentId);
         
@@ -263,7 +263,7 @@ public class EmbeddingController {
             @Parameter(description = "Tenant identifier") UUID tenantId) {
         
         VectorStorageService.VectorStats vectorStats = 
-            vectorStorageService.getStats(tenantId, modelName);
+            vectorStorageService.getStats();
         
         EmbeddingCacheService.CacheStats cacheStats = cacheService.getCacheStats();
         
@@ -272,8 +272,9 @@ public class EmbeddingController {
             "model_name", modelName != null ? modelName : "default",
             "vector_storage", Map.of(
                 "total_vectors", vectorStats.totalVectors(),
-                "index_size_mb", vectorStats.indexSizeMB(),
-                "vector_size_mb", vectorStats.vectorSizeMB()
+                "memory_usage_mb", vectorStats.memoryUsageMB(),
+                "average_vector_size", vectorStats.averageVectorSize(),
+                "last_updated", vectorStats.lastUpdated()
             ),
             "cache", Map.of(
                 "total_cached_items", cacheStats.totalCachedItems(),
