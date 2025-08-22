@@ -53,7 +53,6 @@ public class QueryOptimizationService {
 
     // Patterns for query cleaning
     private static final Pattern EXTRA_WHITESPACE = Pattern.compile("\\s+");
-    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9\\s\\-_.]");
 
     /**
      * Optimize the incoming RAG query request.
@@ -261,7 +260,6 @@ public class QueryOptimizationService {
     private QueryComplexity analyzeComplexity(String query) {
         int words = countWords(query);
         int sentences = query.split("[.!?]+").length;
-        boolean hasQuestions = query.contains("?");
         boolean hasConjunctions = query.toLowerCase().matches(".*(and|or|but|however|therefore).*");
 
         if (words < 3) return QueryComplexity.SIMPLE;
@@ -280,9 +278,10 @@ public class QueryOptimizationService {
     private RagQueryRequest createOptimizedRequest(RagQueryRequest original, String optimizedQuery) {
         return new RagQueryRequest(
             original.tenantId(),
-            original.userId(),
             optimizedQuery,
             original.conversationId(),
+            original.userId(),
+            original.sessionId(),
             original.documentIds(),
             original.filters(),
             original.options()

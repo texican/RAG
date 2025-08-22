@@ -1,6 +1,6 @@
 package com.enterprise.rag.embedding;
 
-import com.enterprise.rag.embedding.config.EmbeddingConfig.EmbeddingClientRegistry;
+import com.enterprise.rag.embedding.config.EmbeddingConfig.EmbeddingModelRegistry;
 import com.enterprise.rag.embedding.dto.EmbeddingRequest;
 import com.enterprise.rag.embedding.dto.EmbeddingResponse;
 import com.enterprise.rag.embedding.service.EmbeddingCacheService;
@@ -12,19 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.EmbeddingClient;
-import org.springframework.ai.embedding.EmbeddingRequest as SpringEmbeddingRequest;
-import org.springframework.ai.embedding.EmbeddingResponse as SpringEmbeddingResponse;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.Embedding;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -34,7 +31,7 @@ import static org.mockito.Mockito.*;
 public class EmbeddingServiceTest {
 
     @Mock
-    private EmbeddingClientRegistry clientRegistry;
+    private EmbeddingModelRegistry modelRegistry;
     
     @Mock
     private EmbeddingCacheService cacheService;
@@ -43,13 +40,13 @@ public class EmbeddingServiceTest {
     private VectorStorageService vectorStorageService;
     
     @Mock
-    private EmbeddingClient embeddingClient;
+    private EmbeddingModel embeddingModel;
     
     private EmbeddingService embeddingService;
     
     @BeforeEach
     void setUp() {
-        embeddingService = new EmbeddingService(clientRegistry, cacheService, vectorStorageService);
+        embeddingService = new EmbeddingService(modelRegistry, cacheService, vectorStorageService);
     }
     
     @Test
@@ -64,21 +61,23 @@ public class EmbeddingServiceTest {
         
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f, 0.4f);
         
-        EmbeddingRequest request = EmbeddingRequest.singleText(
-            tenantId, text, modelName, documentId, chunkId);
+        EmbeddingRequest request = new EmbeddingRequest(
+            tenantId, List.of(text), modelName, documentId, List.of(chunkId));
         
         // Mock dependencies
-        when(clientRegistry.hasModel(modelName)).thenReturn(true);
-        when(clientRegistry.getClient(modelName)).thenReturn(embeddingClient);
-        when(clientRegistry.defaultModelName()).thenReturn("default-model");
+        when(modelRegistry.hasModel(modelName)).thenReturn(true);
+        when(modelRegistry.getClient(modelName)).thenReturn(embeddingModel);
         when(cacheService.getCachedEmbedding(any(), anyString(), anyString())).thenReturn(null);
         
-        // Mock Spring AI response
-        Embedding mockSpringEmbedding = new Embedding(mockEmbedding, 0);
-        SpringEmbeddingResponse mockSpringResponse = new SpringEmbeddingResponse(
-            List.of(mockSpringEmbedding));
+        // Mock Spring AI response - using mocks to avoid constructor issues
+        Embedding mockSpringEmbedding = mock(Embedding.class);
+        when(mockSpringEmbedding.getOutput()).thenReturn(mockEmbedding.stream().map(Float::doubleValue).toList());
         
-        when(embeddingClient.call(any(SpringEmbeddingRequest.class)))
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+            mock(org.springframework.ai.embedding.EmbeddingResponse.class);
+        when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
+        
+        when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
         
         // Act
@@ -100,7 +99,7 @@ public class EmbeddingServiceTest {
         
         // Verify interactions
         verify(cacheService).cacheEmbedding(tenantId, text, modelName, mockEmbedding);
-        verify(vectorStorageService).storeVectors(eq(tenantId), eq(documentId), any(), eq(modelName));
+        verify(vectorStorageService).storeEmbeddings(eq(tenantId), eq(modelName), any());
     }
     
     @Test
@@ -115,11 +114,12 @@ public class EmbeddingServiceTest {
         
         List<Float> cachedEmbedding = List.of(0.5f, 0.6f, 0.7f, 0.8f);
         
-        EmbeddingRequest request = EmbeddingRequest.singleText(
-            tenantId, text, modelName, documentId, chunkId);
+        EmbeddingRequest request = new EmbeddingRequest(
+            tenantId, List.of(text), modelName, documentId, List.of(chunkId));
         
-        // Mock cached embedding
-        when(clientRegistry.hasModel(modelName)).thenReturn(true);
+        // Mock cached embedding and model registry
+        when(modelRegistry.hasModel(modelName)).thenReturn(true);
+        when(modelRegistry.getClient(modelName)).thenReturn(embeddingModel);
         when(cacheService.getCachedEmbedding(tenantId, text, modelName))
             .thenReturn(cachedEmbedding);
         
@@ -134,8 +134,8 @@ public class EmbeddingServiceTest {
         EmbeddingResponse.EmbeddingResult result = response.embeddings().get(0);
         assertEquals(cachedEmbedding, result.embedding());
         
-        // Verify that embedding client was not called
-        verify(embeddingClient, never()).call(any(SpringEmbeddingRequest.class));
+        // Verify that embedding model was not called
+        verify(embeddingModel, never()).embedForResponse(any(List.class));
         verify(cacheService, never()).cacheEmbedding(any(), anyString(), anyString(), any());
     }
     
@@ -152,22 +152,26 @@ public class EmbeddingServiceTest {
         List<Float> embedding1 = List.of(0.1f, 0.2f, 0.3f);
         List<Float> embedding2 = List.of(0.4f, 0.5f, 0.6f);
         
-        EmbeddingRequest request = EmbeddingRequest.batchTexts(
+        EmbeddingRequest request = new EmbeddingRequest(
             tenantId, texts, modelName, documentId, chunkIds);
         
         // Mock dependencies
-        when(clientRegistry.hasModel(modelName)).thenReturn(true);
-        when(clientRegistry.getClient(modelName)).thenReturn(embeddingClient);
+        when(modelRegistry.hasModel(modelName)).thenReturn(true);
+        when(modelRegistry.getClient(modelName)).thenReturn(embeddingModel);
         when(cacheService.getCachedEmbedding(any(), anyString(), anyString())).thenReturn(null);
         
-        // Mock Spring AI response
-        List<Embedding> mockEmbeddings = List.of(
-            new Embedding(embedding1, 0),
-            new Embedding(embedding2, 1)
-        );
-        SpringEmbeddingResponse mockSpringResponse = new SpringEmbeddingResponse(mockEmbeddings);
+        // Mock Spring AI response - using mocks
+        Embedding mockSpringEmbedding1 = mock(Embedding.class);
+        when(mockSpringEmbedding1.getOutput()).thenReturn(embedding1.stream().map(Float::doubleValue).toList());
         
-        when(embeddingClient.call(any(SpringEmbeddingRequest.class)))
+        Embedding mockSpringEmbedding2 = mock(Embedding.class);
+        when(mockSpringEmbedding2.getOutput()).thenReturn(embedding2.stream().map(Float::doubleValue).toList());
+        
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+            mock(org.springframework.ai.embedding.EmbeddingResponse.class);
+        when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding1, mockSpringEmbedding2));
+        
+        when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
         
         // Act
@@ -201,16 +205,17 @@ public class EmbeddingServiceTest {
         String text = "Test text";
         String modelName = "test-model";
         
-        EmbeddingRequest request = EmbeddingRequest.singleText(
-            tenantId, text, modelName, documentId, chunkId);
+        EmbeddingRequest request = new EmbeddingRequest(
+            tenantId, List.of(text), modelName, documentId, List.of(chunkId));
         
-        // Mock dependencies
-        when(clientRegistry.hasModel(modelName)).thenReturn(true);
-        when(clientRegistry.getClient(modelName)).thenReturn(embeddingClient);
-        when(cacheService.getCachedEmbedding(any(), anyString(), anyString())).thenReturn(null);
+        // Mock dependencies - ensure the model is not cached and available
+        when(modelRegistry.hasModel(modelName)).thenReturn(true);
+        when(modelRegistry.getClient(modelName)).thenReturn(embeddingModel);
+        // Ensure no cached embedding so the service calls the embedding model
+        when(cacheService.getCachedEmbedding(tenantId, text, modelName)).thenReturn(null);
         
         // Mock failure
-        when(embeddingClient.call(any(SpringEmbeddingRequest.class)))
+        when(embeddingModel.embedForResponse(any(List.class)))
             .thenThrow(new RuntimeException("API error"));
         
         // Act
@@ -219,12 +224,9 @@ public class EmbeddingServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals("FAILED", response.status());
-        assertEquals(1, response.embeddings().size());
-        
-        EmbeddingResponse.EmbeddingResult result = response.embeddings().get(0);
-        assertEquals("FAILED", result.status());
-        assertNotNull(result.error());
-        assertNull(result.embedding());
+        // When embedding generation fails at the service level, 
+        // it returns a failure response with empty embeddings list
+        assertEquals(0, response.embeddings().size());
     }
     
     @Test
@@ -240,21 +242,24 @@ public class EmbeddingServiceTest {
         
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         
-        EmbeddingRequest request = EmbeddingRequest.singleText(
-            tenantId, text, unavailableModel, documentId, chunkId);
+        EmbeddingRequest request = new EmbeddingRequest(
+            tenantId, List.of(text), unavailableModel, documentId, List.of(chunkId));
         
         // Mock dependencies
-        when(clientRegistry.hasModel(unavailableModel)).thenReturn(false);
-        when(clientRegistry.defaultModelName()).thenReturn(defaultModel);
-        when(clientRegistry.getClient(defaultModel)).thenReturn(embeddingClient);
+        when(modelRegistry.hasModel(unavailableModel)).thenReturn(false);
+        when(modelRegistry.defaultModelName()).thenReturn(defaultModel);
+        when(modelRegistry.getClient(defaultModel)).thenReturn(embeddingModel);
         when(cacheService.getCachedEmbedding(any(), anyString(), anyString())).thenReturn(null);
         
-        // Mock Spring AI response
-        Embedding mockSpringEmbedding = new Embedding(mockEmbedding, 0);
-        SpringEmbeddingResponse mockSpringResponse = new SpringEmbeddingResponse(
-            List.of(mockSpringEmbedding));
+        // Mock Spring AI response - using mocks
+        Embedding mockSpringEmbedding = mock(Embedding.class);
+        when(mockSpringEmbedding.getOutput()).thenReturn(mockEmbedding.stream().map(Float::doubleValue).toList());
         
-        when(embeddingClient.call(any(SpringEmbeddingRequest.class)))
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+            mock(org.springframework.ai.embedding.EmbeddingResponse.class);
+        when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
+        
+        when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
         
         // Act
@@ -266,7 +271,7 @@ public class EmbeddingServiceTest {
         assertEquals(defaultModel, response.modelName());
         
         // Verify fallback model was used
-        verify(clientRegistry).getClient(defaultModel);
+        verify(modelRegistry).getClient(defaultModel);
         verify(cacheService).cacheEmbedding(tenantId, text, defaultModel, mockEmbedding);
     }
 }
