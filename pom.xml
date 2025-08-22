@@ -40,6 +40,8 @@
         <micrometer.version>1.12.7</micrometer.version>
         <jackson.version>2.17.1</jackson.version>
         <springdoc.version>2.5.0</springdoc.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <logstash-logback.version>7.4</logstash-logback.version>
     </properties>
 
     <modules>
@@ -48,6 +50,7 @@
         <module>rag-document-service</module>
         <module>rag-embedding-service</module>
         <module>rag-core-service</module>
+        <module>rag-gateway</module>
     </modules>
 
     <dependencyManagement>
@@ -141,6 +144,32 @@
                 <artifactId>wiremock-standalone</artifactId>
                 <version>${wiremock.version}</version>
                 <scope>test</scope>
+            </dependency>
+            
+            <!-- JWT Dependencies -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            
+            <!-- Logging -->
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-logback.version}</version>
             </dependency>
             
             <!-- Documentation -->
