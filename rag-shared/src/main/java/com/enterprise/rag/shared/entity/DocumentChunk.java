@@ -32,7 +32,7 @@ public class DocumentChunk extends BaseEntity {
     @Column(name = "embedding_vector_id")
     private String embeddingVectorId;
 
-    @Column(name = "metadata", columnDefinition = "TEXT")
+    @Column(name = "metadata", columnDefinition = "TEXT") 
     private String metadata;
 
     @ManyToOne(fetch = FetchType.LAZY)

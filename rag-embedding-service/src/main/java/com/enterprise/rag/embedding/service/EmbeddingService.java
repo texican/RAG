@@ -1,16 +1,13 @@
 package com.enterprise.rag.embedding.service;
 
-import com.enterprise.rag.embedding.config.EmbeddingConfig.EmbeddingClientRegistry;
+import com.enterprise.rag.embedding.config.EmbeddingConfig.EmbeddingModelRegistry;
 import com.enterprise.rag.embedding.dto.EmbeddingRequest;
 import com.enterprise.rag.embedding.dto.EmbeddingResponse;
 import com.enterprise.rag.embedding.dto.EmbeddingResponse.EmbeddingResult;
 import com.enterprise.rag.shared.exception.EmbeddingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.EmbeddingClient;
-import org.springframework.ai.embedding.EmbeddingRequest as SpringEmbeddingRequest;
-import org.springframework.ai.embedding.EmbeddingResponse as SpringEmbeddingResponse;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,13 +25,13 @@ public class EmbeddingService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddingService.class);
     
-    private final EmbeddingClientRegistry clientRegistry;
+    private final EmbeddingModelRegistry clientRegistry;
     private final EmbeddingCacheService cacheService;
     private final VectorStorageService vectorStorageService;
     private final ExecutorService executorService;
     
     public EmbeddingService(
-            EmbeddingClientRegistry clientRegistry,
+            EmbeddingModelRegistry clientRegistry,
             EmbeddingCacheService cacheService,
             VectorStorageService vectorStorageService) {
         this.clientRegistry = clientRegistry;
@@ -51,7 +48,7 @@ public class EmbeddingService {
         
         try {
             String modelName = getEffectiveModelName(request.modelName());
-            EmbeddingClient client = clientRegistry.getClient(modelName);
+            EmbeddingModel client = clientRegistry.getClient(modelName);
             
             if (client == null) {
                 throw new EmbeddingException("No embedding client available for model: " + modelName);
@@ -158,18 +155,12 @@ public class EmbeddingService {
     }
     
     private List<EmbeddingResult> generateNewEmbeddings(
-            EmbeddingClient client, List<String> texts, List<Integer> indexes,
+            EmbeddingModel client, List<String> texts, List<Integer> indexes,
             EmbeddingRequest request, String modelName) {
         
         try {
-            // Create documents for Spring AI
-            List<Document> documents = texts.stream()
-                .map(Document::new)
-                .toList();
-            
-            // Generate embeddings
-            SpringEmbeddingRequest springRequest = new SpringEmbeddingRequest(documents, null);
-            SpringEmbeddingResponse springResponse = client.call(springRequest);
+            // Generate embeddings directly from text strings
+            org.springframework.ai.embedding.EmbeddingResponse springResponse = client.embedForResponse(texts);
             
             List<EmbeddingResult> results = new ArrayList<>();
             
@@ -181,7 +172,9 @@ public class EmbeddingService {
                     UUID chunkId = request.chunkIds() != null ? 
                         request.chunkIds().get(originalIndex) : UUID.randomUUID();
                     
-                    List<Float> embeddingVector = embedding.getOutput();
+                    List<Float> embeddingVector = embedding.getOutput().stream()
+                        .map(Double::floatValue)
+                        .toList();
                     
                     // Cache the embedding
                     cacheService.cacheEmbedding(request.tenantId(), text, modelName, embeddingVector);
@@ -227,7 +220,7 @@ public class EmbeddingService {
                 .toList();
                 
             if (!successfulResults.isEmpty()) {
-                vectorStorageService.storeVectors(tenantId, documentId, successfulResults, modelName);
+                vectorStorageService.storeEmbeddings(tenantId, modelName, successfulResults);
             }
         } catch (Exception e) {
             logger.error("Failed to store vectors for tenant: {}, document: {}", 

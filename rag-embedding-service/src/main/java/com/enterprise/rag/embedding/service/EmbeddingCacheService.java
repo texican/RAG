@@ -52,7 +52,6 @@ public class EmbeddingCacheService {
     /**
      * Retrieve cached embedding for a specific text and model.
      */
-    @SuppressWarnings("unchecked")
     public List<Float> getCachedEmbedding(UUID tenantId, String text, String modelName) {
         try {
             String cacheKey = generateCacheKey(tenantId, text, modelName);

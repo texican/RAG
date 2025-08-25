@@ -23,12 +23,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:h2:mem:testdb",
+    "spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH",
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa",
     "spring.datasource.password=",
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.properties.hibernate.globally_quoted_identifiers=false",
     "jwt.secret=TestSecretKeyForJWTThatIsAtLeast256BitsLongForHS256Algorithm"
 })
 public class DatabaseConfigurationTest {
@@ -164,6 +166,7 @@ public class DatabaseConfigurationTest {
         // In test profile, should use H2 or test database
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
             String url = environment.getProperty("spring.datasource.url");
+            assertNotNull(url, "Database URL should be configured");
             assertTrue(
                 url.contains("h2:mem") || url.contains("testdb"),
                 "Test profile should use in-memory or test database"

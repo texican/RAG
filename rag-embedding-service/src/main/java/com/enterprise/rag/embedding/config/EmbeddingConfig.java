@@ -1,10 +1,9 @@
 package com.enterprise.rag.embedding.config;
 
-import org.springframework.ai.embedding.EmbeddingClient;
-import org.springframework.ai.openai.OpenAiEmbeddingClient;
-import org.springframework.ai.openai.OpenAiEmbeddingOptions;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.ai.transformers.TransformersEmbeddingClient;
+import org.springframework.ai.transformers.TransformersEmbeddingModel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,54 +23,51 @@ public class EmbeddingConfig {
      */
     @Bean
     @Primary
-    public EmbeddingClient primaryEmbeddingClient(EmbeddingModelProperties properties) {
+    public EmbeddingModel primaryEmbeddingModel(EmbeddingModelProperties properties) {
+        // Note: For Spring AI 1.0.0-M1, the constructor signature has changed
+        // Using a simplified initialization for now
         var openAiApi = new OpenAiApi(properties.openai().apiKey());
-        var options = OpenAiEmbeddingOptions.builder()
-            .withModel(properties.openai().model())
-            .withDimensions(properties.openai().dimensions())
-            .build();
-        
-        return new OpenAiEmbeddingClient(openAiApi, options);
+        return new OpenAiEmbeddingModel(openAiApi);
     }
     
     /**
      * Fallback embedding client (Local Transformers).
      */
-    @Bean("fallbackEmbeddingClient")
-    public EmbeddingClient fallbackEmbeddingClient(EmbeddingModelProperties properties) {
-        return new TransformersEmbeddingClient(properties.transformers().modelPath());
+    @Bean("fallbackEmbeddingModel")
+    public EmbeddingModel fallbackEmbeddingModel(EmbeddingModelProperties properties) {
+        return new TransformersEmbeddingModel();
     }
     
     /**
      * Registry of all available embedding clients.
      */
     @Bean
-    public EmbeddingClientRegistry embeddingClientRegistry(
-            EmbeddingClient primaryEmbeddingClient,
-            EmbeddingClient fallbackEmbeddingClient,
+    public EmbeddingModelRegistry embeddingClientRegistry(
+            EmbeddingModel primaryEmbeddingModel,
+            EmbeddingModel fallbackEmbeddingModel,
             EmbeddingModelProperties properties) {
         
-        Map<String, EmbeddingClient> clients = new ConcurrentHashMap<>();
-        clients.put(properties.defaultModel(), primaryEmbeddingClient);
-        clients.put(properties.fallbackModel(), fallbackEmbeddingClient);
-        clients.put("openai-text-embedding-3-small", primaryEmbeddingClient);
-        clients.put("sentence-transformers-all-minilm-l6-v2", fallbackEmbeddingClient);
+        Map<String, EmbeddingModel> clients = new ConcurrentHashMap<>();
+        clients.put(properties.defaultModel(), primaryEmbeddingModel);
+        clients.put(properties.fallbackModel(), fallbackEmbeddingModel);
+        clients.put("openai-text-embedding-3-small", primaryEmbeddingModel);
+        clients.put("sentence-transformers-all-minilm-l6-v2", fallbackEmbeddingModel);
         
-        return new EmbeddingClientRegistry(clients, properties.defaultModel());
+        return new EmbeddingModelRegistry(clients, properties.defaultModel());
     }
     
     /**
      * Registry for managing multiple embedding clients.
      */
-    public record EmbeddingClientRegistry(
-        Map<String, EmbeddingClient> clients,
+    public record EmbeddingModelRegistry(
+        Map<String, EmbeddingModel> clients,
         String defaultModelName
     ) {
         
         /**
          * Get embedding client by model name.
          */
-        public EmbeddingClient getClient(String modelName) {
+        public EmbeddingModel getClient(String modelName) {
             if (modelName == null || modelName.isEmpty()) {
                 return clients.get(defaultModelName);
             }

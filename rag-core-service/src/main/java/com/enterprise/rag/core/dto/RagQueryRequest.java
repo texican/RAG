@@ -47,7 +47,9 @@ public record RagQueryRequest(
         Boolean streaming,
         Boolean includeMetadata,
         Boolean includeSources,
-        String language
+        String language,
+        String intent,
+        String systemPrompt
     ) {
         
         /**
@@ -63,7 +65,9 @@ public record RagQueryRequest(
                 true,    // streaming
                 true,    // includeMetadata
                 true,    // includeSources
-                "en"     // language
+                "en",    // language
+                null,    // intent
+                null     // systemPrompt
             );
         }
         
@@ -80,7 +84,9 @@ public record RagQueryRequest(
                 true,    // streaming
                 false,   // includeMetadata
                 true,    // includeSources
-                "en"     // language
+                "en",    // language
+                null,    // intent
+                null     // systemPrompt
             );
         }
         
@@ -97,7 +103,9 @@ public record RagQueryRequest(
                 true,    // streaming
                 true,    // includeMetadata
                 true,    // includeSources
-                "en"     // language
+                "en",    // language
+                null,    // intent
+                null     // systemPrompt
             );
         }
     }

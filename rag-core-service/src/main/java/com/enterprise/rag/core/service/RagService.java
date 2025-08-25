@@ -3,10 +3,12 @@ package com.enterprise.rag.core.service;
 import com.enterprise.rag.core.client.EmbeddingServiceClient;
 import com.enterprise.rag.core.dto.RagQueryRequest;
 import com.enterprise.rag.core.dto.RagQueryResponse;
+import com.enterprise.rag.core.dto.RagResponse;
 import com.enterprise.rag.core.dto.RagQueryResponse.RagMetrics;
 import com.enterprise.rag.core.dto.RagQueryResponse.SourceDocument;
 import com.enterprise.rag.shared.exception.RagException;
 import org.slf4j.Logger;
+import java.util.UUID;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -56,16 +58,15 @@ public class RagService {
                        request.tenantId(), request.conversationId());
             
             // Step 1: Check cache for similar queries
-            RagQueryResponse cachedResponse = cacheService.getCachedResponse(request);
+            String cacheKey = generateCacheKey(request);
+            RagResponse cachedResponse = cacheService.getResponse(cacheKey);
             if (cachedResponse != null) {
                 logger.info("Returning cached response for tenant: {}", request.tenantId());
-                return cachedResponse;
+                return convertToQueryResponse(cachedResponse, request);
             }
             
             // Step 2: Query preprocessing and optimization
-            long queryOptStartTime = System.currentTimeMillis();
             RagQueryRequest optimizedRequest = queryOptimizationService.optimizeQuery(request);
-            long queryOptTime = System.currentTimeMillis() - queryOptStartTime;
             
             // Step 3: Retrieve conversation context if needed
             String contextualizedQuery = optimizedRequest.query();
@@ -105,10 +106,10 @@ public class RagService {
             long generationTime = System.currentTimeMillis() - generationStartTime;
             
             // Step 7: Update conversation history
-            if (optimizedRequest.conversationId() != null) {
+            if (optimizedRequest.conversationId() != null && optimizedRequest.userId() != null) {
                 conversationService.addExchange(
                     optimizedRequest.conversationId(),
-                    optimizedRequest.userId(),
+                    UUID.fromString(optimizedRequest.userId()),
                     optimizedRequest.query(),
                     generatedResponse,
                     retrievedDocuments
@@ -138,7 +139,8 @@ public class RagService {
             );
             
             // Step 9: Cache the response
-            cacheService.cacheResponse(request, response);
+            RagResponse cacheResponse = convertToRagResponse(response);
+            cacheService.cacheResponse(cacheKey, cacheResponse);
             
             long totalTime = System.currentTimeMillis() - startTime;
             logger.info("RAG query processed successfully for tenant: {} in {}ms", 
@@ -257,6 +259,97 @@ public class RagService {
             .mapToDouble(SourceDocument::relevanceScore)
             .average()
             .orElse(0.0);
+    }
+    
+    /**
+     * Generate cache key for a RAG query request.
+     */
+    private String generateCacheKey(RagQueryRequest request) {
+        return "rag:" + request.tenantId() + ":" + 
+               Integer.toHexString(request.query().hashCode());
+    }
+    
+    /**
+     * Convert RagResponse to RagQueryResponse.
+     */
+    private RagQueryResponse convertToQueryResponse(RagResponse ragResponse, RagQueryRequest request) {
+        // Convert sources from DocumentChunkDto to SourceDocument
+        List<SourceDocument> sources = ragResponse.sources().stream()
+            .map(chunk -> new SourceDocument(
+                UUID.randomUUID(), // documentId (not available in chunk)
+                chunk.id(),
+                chunk.documentFilename() != null ? chunk.documentFilename() : "Unknown",
+                chunk.content(),
+                1.0, // Default relevance score
+                chunk.metadata(),
+                null, // documentType
+                java.time.Instant.now() // createdAt (not available in chunk)
+            ))
+            .toList();
+            
+        // Convert metadata
+        RagMetrics metrics = new RagMetrics(
+            ragResponse.processingTimeMs(),
+            0L, // retrievalTimeMs
+            0L, // contextAssemblyTimeMs
+            0L, // generationTimeMs
+            ragResponse.metadata().chunksRetrieved(),
+            ragResponse.metadata().chunksRetrieved(), // chunksUsed = chunksRetrieved
+            ragResponse.metadata().tokensUsed(),
+            0.0, // averageRelevanceScore
+            ragResponse.metadata().modelUsed(),
+            null // embeddingModel
+        );
+        
+        return new RagQueryResponse(
+            request.tenantId(),
+            request.query(),
+            ragResponse.conversationId(),
+            ragResponse.answer(),
+            sources,
+            metrics,
+            "SUCCESS",
+            null,
+            ragResponse.timestamp().atZone(java.time.ZoneOffset.UTC).toInstant()
+        );
+    }
+    
+    /**
+     * Convert RagQueryResponse to RagResponse for caching.
+     */
+    private RagResponse convertToRagResponse(RagQueryResponse queryResponse) {
+        // Convert sources from SourceDocument to DocumentChunkDto
+        List<com.enterprise.rag.shared.dto.DocumentChunkDto> sources = queryResponse.sources().stream()
+            .map(source -> new com.enterprise.rag.shared.dto.DocumentChunkDto(
+                source.chunkId(),
+                source.content(),
+                1, // sequenceNumber (default)
+                null, // startIndex
+                null, // endIndex
+                null, // tokenCount
+                source.title(),
+                source.metadata()
+            ))
+            .toList();
+        
+        // Convert metadata
+        RagResponse.QueryMetadata metadata = new RagResponse.QueryMetadata(
+            queryResponse.metrics().chunksRetrieved(),
+            queryResponse.metrics().llmProvider(),
+            queryResponse.metrics().tokensGenerated(),
+            false, // fromCache
+            "semantic_similarity" // retrievalStrategy
+        );
+        
+        return new RagResponse(
+            queryResponse.response(),
+            1.0, // confidence
+            sources,
+            queryResponse.metrics().totalProcessingTimeMs(),
+            queryResponse.createdAt().atZone(java.time.ZoneOffset.UTC).toLocalDateTime(),
+            queryResponse.conversationId(),
+            metadata
+        );
     }
     
     /**
