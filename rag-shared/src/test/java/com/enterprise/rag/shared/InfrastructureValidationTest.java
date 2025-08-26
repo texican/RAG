@@ -38,7 +38,8 @@ public class InfrastructureValidationTest {
 
     @Test
     @DisplayName("PostgreSQL configuration should include pgvector")
-    @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")
+    // TODO: why do we need the next line?
+    // @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")
     void postgresqlConfigurationShouldIncludePgvector() {
         // Test that PostgreSQL image supports pgvector extension
         assertDoesNotThrow(() -> {
@@ -56,7 +57,8 @@ public class InfrastructureValidationTest {
 
     @Test
     @DisplayName("Required ports should not conflict")
-    @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")  
+    // TODO: why do we need the next line?
+    // @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")  
     void requiredPortsShouldNotConflict() {
         // Test that required ports are available
         int[] requiredPorts = {5432, 6379, 9092, 8081, 8082, 8083, 8084, 8085, 8080};
@@ -76,6 +78,7 @@ public class InfrastructureValidationTest {
 
     @Test
     @DisplayName("Redis configuration should be valid")
+    // TODO: why do we need the next line?
     @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")
     void redisConfigurationShouldBeValid() {
         assertDoesNotThrow(() -> {
@@ -85,7 +88,8 @@ public class InfrastructureValidationTest {
 
     @Test
     @DisplayName("Kafka configuration should be valid")
-    @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")
+    // TODO: why do we need the next line?
+    // @EnabledIfEnvironmentVariable(named = "TEST_INFRASTRUCTURE", matches = "true")
     void kafkaConfigurationShouldBeValid() {
         assertDoesNotThrow(() -> {
             Class.forName("org.apache.kafka.clients.producer.KafkaProducer");

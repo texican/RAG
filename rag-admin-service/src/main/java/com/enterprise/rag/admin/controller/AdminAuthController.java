@@ -35,7 +35,7 @@ public class AdminAuthController {
     
     // Hardcoded admin credentials for demo purposes
     private static final String ADMIN_USERNAME = "admin@enterprise.com";
-    private static final String ADMIN_PASSWORD_HASH = "$2a$10$EncodedPasswordHashForTesting";
+    private static final String ADMIN_PASSWORD_HASH = "$2a$10$KBdADFHGKGYwIjnfh56vq.i2AcnMUAdYgkEfnoqJxUr1vBD8AWODm";
     private static final List<String> ADMIN_ROLES = List.of("SUPER_ADMIN");
 
     public AdminAuthController(AdminJwtService jwtService, PasswordEncoder passwordEncoder) {

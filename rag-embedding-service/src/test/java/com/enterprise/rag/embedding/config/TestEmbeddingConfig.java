@@ -2,12 +2,20 @@ package com.enterprise.rag.embedding.config;
 
 import com.enterprise.rag.embedding.config.EmbeddingConfig.EmbeddingModelProperties;
 import com.enterprise.rag.embedding.config.RedisConfig.VectorStorageProperties;
+import com.enterprise.rag.embedding.service.VectorStorageService;
+import com.enterprise.rag.embedding.service.VectorStorageService.VectorStats;
+import com.enterprise.rag.embedding.dto.SearchRequest;
+import com.enterprise.rag.embedding.dto.SearchResponse;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.mockito.Mockito;
+
+import java.util.UUID;
+import java.util.List;
 
 /**
  * Test configuration for embedding service tests.
@@ -57,5 +65,29 @@ public class TestEmbeddingConfig {
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable());
         return http.build();
+    }
+    
+    @Bean
+    @Primary
+    public VectorStorageService testVectorStorageService() {
+        VectorStorageService mockService = Mockito.mock(VectorStorageService.class);
+        
+        // Mock all methods to do nothing or return empty results
+        Mockito.doNothing().when(mockService).storeEmbeddings(
+            Mockito.any(UUID.class), Mockito.anyString(), Mockito.anyList());
+        Mockito.doNothing().when(mockService).deleteVectors(
+            Mockito.any(UUID.class), Mockito.anyString());
+        
+        // Return empty search results  
+        SearchResponse emptyResponse = new SearchResponse(
+            UUID.randomUUID(), "test query", "test-model", List.of(), 0, 0.0, 0L, java.time.Instant.now());
+        Mockito.when(mockService.searchSimilar(Mockito.any(SearchRequest.class), Mockito.anyList()))
+            .thenReturn(emptyResponse);
+        
+        // Mock getStats to return test statistics
+        VectorStats testStats = new VectorStats(0L, 0L, 0.0, System.currentTimeMillis());
+        Mockito.when(mockService.getStats()).thenReturn(testStats);
+        
+        return mockService;
     }
 }
