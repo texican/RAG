@@ -20,7 +20,7 @@ echo "Test 1: Admin Service Authentication"
 response=$(curl -s -w "%{http_code}" -X POST http://localhost:8085/admin/api/auth/login \
     -H "Content-Type: application/json" \
     -d '{
-        "username": "admin@enterprise.com",
+        "username": "admin@enterprise-rag.com",
         "password": "admin123"
     }')
 

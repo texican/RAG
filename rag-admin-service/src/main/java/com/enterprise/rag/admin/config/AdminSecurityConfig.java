@@ -44,16 +44,16 @@ public class AdminSecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/admin/api/auth/login", "/admin/api/auth/refresh").permitAll()
-                        .requestMatchers("/admin/api/health", "/admin/api/info").permitAll()
-                        .requestMatchers("/admin/api/v3/api-docs/**", "/admin/api/swagger-ui/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/refresh").permitAll()
+                        .requestMatchers("/health", "/info").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         
                         // Admin-only endpoints
-                        .requestMatchers("/admin/api/tenants/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/admin/api/analytics/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                        .requestMatchers("/admin/api/monitoring/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                        .requestMatchers("/admin/api/users/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers("/tenants/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/analytics/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers("/monitoring/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers("/users/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                         
                         // All other requests require authentication
                         .anyRequest().authenticated()

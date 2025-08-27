@@ -6,6 +6,8 @@ import com.enterprise.rag.admin.dto.AdminRefreshRequest;
 import com.enterprise.rag.admin.dto.AdminUserValidationResponse;
 import com.enterprise.rag.admin.dto.LogoutResponse;
 import com.enterprise.rag.admin.service.AdminJwtService;
+import com.enterprise.rag.shared.entity.User;
+import com.enterprise.rag.admin.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,9 +23,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/admin/api/auth")
+@RequestMapping("/auth")
 @Tag(name = "Admin Authentication", description = "Admin authentication and authorization endpoints")
 @Validated
 public class AdminAuthController {
@@ -32,15 +35,12 @@ public class AdminAuthController {
 
     private final AdminJwtService jwtService;
     private final PasswordEncoder passwordEncoder;
-    
-    // Hardcoded admin credentials for demo purposes
-    private static final String ADMIN_USERNAME = "admin@enterprise.com";
-    private static final String ADMIN_PASSWORD_HASH = "$2a$10$KBdADFHGKGYwIjnfh56vq.i2AcnMUAdYgkEfnoqJxUr1vBD8AWODm";
-    private static final List<String> ADMIN_ROLES = List.of("SUPER_ADMIN");
+    private final UserRepository userRepository;
 
-    public AdminAuthController(AdminJwtService jwtService, PasswordEncoder passwordEncoder) {
+    public AdminAuthController(AdminJwtService jwtService, PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
@@ -49,26 +49,60 @@ public class AdminAuthController {
         try {
             logger.debug("Admin login attempt for username: {}", request.username());
             
-            // Validate admin credentials
-            if (!ADMIN_USERNAME.equals(request.username()) || 
-                !passwordEncoder.matches(request.password(), ADMIN_PASSWORD_HASH)) {
-                logger.warn("Invalid login attempt for username: {}", request.username());
+            // Find user in database
+            Optional<User> userOpt = userRepository.findByEmail(request.username());
+            if (userOpt.isEmpty()) {
+                logger.warn("User not found for username: {}", request.username());
                 return ResponseEntity.status(401)
                         .body(Map.of(
                                 "error", "Invalid credentials",
                                 "message", "Username or password is incorrect"
                         ));
             }
+            
+            User user = userOpt.get();
+            
+            // Validate password
+            boolean passwordMatches = passwordEncoder.matches(request.password(), user.getPasswordHash());
+            
+            if (!passwordMatches) {
+                logger.warn("Invalid password for username: {}", request.username());
+                return ResponseEntity.status(401)
+                        .body(Map.of(
+                                "error", "Invalid credentials",
+                                "message", "Username or password is incorrect"
+                        ));
+            }
+            
+            // Check if user is active and has admin role
+            if (!user.getStatus().name().equals("ACTIVE")) {
+                logger.warn("Inactive user login attempt: {}", request.username());
+                return ResponseEntity.status(401)
+                        .body(Map.of(
+                                "error", "Account disabled",
+                                "message", "Your account is not active"
+                        ));
+            }
+            
+            if (!user.getRole().name().equals("ADMIN")) {
+                logger.warn("Non-admin user login attempt: {}", request.username());
+                return ResponseEntity.status(403)
+                        .body(Map.of(
+                                "error", "Access denied",
+                                "message", "Admin access required"
+                        ));
+            }
 
             // Generate JWT token
-            String token = jwtService.generateToken(request.username(), ADMIN_ROLES);
+            List<String> roles = List.of("ADMIN");
+            String token = jwtService.generateToken(request.username(), roles);
             
             logger.info("Admin user successfully authenticated: {}", request.username());
             
             AdminLoginResponse response = new AdminLoginResponse(
                     token,
                     request.username(),
-                    ADMIN_ROLES,
+                    roles,
                     86400000L // 24 hours in milliseconds
             );
             
@@ -135,7 +169,10 @@ public class AdminAuthController {
     @GetMapping("/validate")
     @Operation(summary = "Validate admin user", description = "Check if admin user exists")
     public ResponseEntity<AdminUserValidationResponse> validateUser(@RequestParam String username) {
-        boolean exists = ADMIN_USERNAME.equals(username);
+        Optional<User> userOpt = userRepository.findByEmail(username);
+        boolean exists = userOpt.isPresent() && 
+                         userOpt.get().getRole().name().equals("ADMIN") &&
+                         userOpt.get().getStatus().name().equals("ACTIVE");
         logger.debug("Admin user validation for {}: {}", username, exists);
         
         return ResponseEntity.ok(new AdminUserValidationResponse(exists, username));
