@@ -659,7 +659,7 @@ main() {
     echo "2. Check system health: ./scripts/utils/health-check.sh" 
     echo "3. Test admin login: curl -X POST http://localhost:8085/admin/api/auth/login \\"
     echo "   -H 'Content-Type: application/json' \\"
-    echo "   -d '{\"email\":\"admin@enterprise-rag.com\",\"password\":\"admin123\"}'"
+    echo "   -d '{\"username\":\"admin@enterprise-rag.com\",\"password\":\"admin123\"}'"
     echo "4. Run integration tests: ./scripts/tests/test-system.sh"
     echo ""
     echo "📚 Documentation:"
