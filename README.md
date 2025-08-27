@@ -1,6 +1,6 @@
 # Enterprise RAG System
 
-A production-ready Enterprise RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
+An Enterprise RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
 
 ## 🏗️ Architecture Overview
 
