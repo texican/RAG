@@ -199,3 +199,4 @@ All major services implemented with proper Spring Boot architecture:
 - **Code quality first** - Address IDE issues systematically before new feature development
 - **Spring AI compatibility** - Keep up with Spring AI milestone releases and API changes
 - **Redis modernization** - Current implementation uses basic Redis; Redis Stack features available for future enhancement
+- **Only use jj for source control**
