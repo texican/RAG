@@ -111,8 +111,11 @@ check_prerequisites() {
     fi
     
     local java_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-    if [[ "$java_version" -lt 21 ]]; then
+    # Handle case where java_version might be empty or non-numeric
+    if [[ -n "$java_version" && "$java_version" =~ ^[0-9]+$ && "$java_version" -lt 21 ]]; then
         error_exit "Java 21 or later is required. Current version: $java_version"
+    elif [[ ! "$java_version" =~ ^[0-9]+$ ]]; then
+        log WARN "Could not parse Java version, proceeding with setup"
     fi
     log DEBUG "Java version check passed: $java_version"
     
@@ -577,6 +580,59 @@ EOF
     log INFO "✅ System test script created"
 }
 
+# Setup initial admin user
+setup_admin_user() {
+    log INFO "Setting up initial admin user..."
+    
+    # Check if admin user creation script exists
+    local admin_script="${PROJECT_ROOT}/scripts/db/create-admin-user.sh"
+    if [[ ! -f "$admin_script" ]]; then
+        log WARN "Admin user creation script not found. Admin user must be created manually."
+        return 0
+    fi
+    
+    # Check if PostgreSQL is ready
+    local retries=0
+    local max_retries=30
+    
+    while [[ $retries -lt $max_retries ]]; do
+        if pg_isready -h localhost -p 5432 -U rag_user >/dev/null 2>&1; then
+            break
+        fi
+        
+        ((retries++))
+        log DEBUG "Waiting for PostgreSQL... (attempt $retries/$max_retries)"
+        sleep 2
+    done
+    
+    if [[ $retries -eq $max_retries ]]; then
+        log WARN "PostgreSQL not ready. Skipping admin user creation."
+        log INFO "You can create the admin user manually later with: $admin_script"
+        return 0
+    fi
+    
+    # Check if admin user already exists
+    local admin_exists=$(PGPASSWORD="rag_password" psql -h localhost -p 5432 -U rag_user -d rag_enterprise -t -c "SELECT COUNT(*) FROM users WHERE email = 'admin@enterprise-rag.com';" 2>/dev/null | tr -d ' ' || echo "0")
+    
+    if [[ "$admin_exists" -gt 0 ]]; then
+        log INFO "Admin user already exists. Skipping creation."
+        return 0
+    fi
+    
+    # Create admin user
+    log INFO "Creating initial admin user..."
+    if "$admin_script"; then
+        log INFO "✅ Admin user created successfully"
+        echo ""
+        echo "🔐 Default admin credentials:"
+        echo "   Email: admin@enterprise-rag.com"
+        echo "   Password: admin123"
+        echo "   ⚠️  Change password after first login!"
+    else
+        log WARN "Failed to create admin user. You can create it manually later with: $admin_script"
+    fi
+}
+
 # Main setup function
 main() {
     echo "🚀 Enterprise RAG System - Local Development Setup"
@@ -594,13 +650,17 @@ main() {
     create_service_scripts
     create_health_check_script
     create_test_script
+    setup_admin_user
     
     log INFO "✅ Setup completed successfully!"
     echo ""
     echo "🎯 Next steps:"
     echo "1. Start all services: ./scripts/services/start-all-services.sh"
-    echo "2. Check system health: ./scripts/utils/health-check.sh"
-    echo "3. Run integration tests: ./scripts/tests/test-system.sh"
+    echo "2. Check system health: ./scripts/utils/health-check.sh" 
+    echo "3. Test admin login: curl -X POST http://localhost:8085/admin/api/auth/login \\"
+    echo "   -H 'Content-Type: application/json' \\"
+    echo "   -d '{\"email\":\"admin@enterprise-rag.com\",\"password\":\"admin123\"}'"
+    echo "4. Run integration tests: ./scripts/tests/test-system.sh"
     echo ""
     echo "📚 Documentation:"
     echo "- Full deployment guide: ./DEPLOYMENT.md"
