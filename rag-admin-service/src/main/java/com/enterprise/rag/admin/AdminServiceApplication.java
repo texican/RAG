@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EntityScan(basePackages = {"com.enterprise.rag.shared.entity"})
-@EnableJpaRepositories(basePackages = {"com.enterprise.rag.shared.repository"})
+@EnableJpaRepositories(basePackages = {"com.enterprise.rag.admin.repository"})
 @EnableScheduling
 public class AdminServiceApplication {
     
