@@ -195,6 +195,7 @@ All major services implemented with proper Spring Boot architecture:
 - `CLAUDE.md` - This file: Project instructions and current status
 - `README.md` - Project overview and setup instructions  
 - `DEPLOYMENT.md` - Production deployment documentation
+- `ollama-chat/README.md` - Lightweight Ollama chat frontend documentation
 
 ### 🏗️ **Technical Debt & Improvements**
 - **Database persistence layer**: JPA repositories for tenant and user management (HIGH PRIORITY)
