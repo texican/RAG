@@ -206,3 +206,4 @@ All major services implemented with proper Spring Boot architecture:
 - **Spring AI compatibility** - Keep up with Spring AI milestone releases and API changes
 - **Redis modernization** - Current implementation uses basic Redis; Redis Stack features available for future enhancement
 - **Only use jj for source control**
+- Always tell the source-control-manager agent to use jj
