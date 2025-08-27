@@ -547,45 +547,477 @@ curl http://localhost:8085/admin/api/actuator/env
 curl http://localhost:8085/admin/api/actuator/configprops
 ```
 
-## 📋 Scripts Reference
+## 📋 Complete Scripts Reference & Step-by-Step Usage
 
-### Setup Scripts
+### 🚀 Main Entry Points
 
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `scripts/setup/setup-local-dev.sh` | Complete environment setup | `./setup-local-dev.sh [--skip-docker] [--skip-build] [--verbose]` |
-| `scripts/utils/quick-start.sh` | One-command full system startup | `./quick-start.sh` |
-| `scripts/utils/dev-reset.sh` | Clean and reset environment | `./dev-reset.sh [--force]` |
+#### 1. **Quick Start Script** - `./scripts/utils/quick-start.sh`
+**Purpose**: Complete one-command system setup and startup
+**Usage**: 
+```bash
+cd /path/to/enterprise-rag
+./scripts/utils/quick-start.sh
+```
 
-### Service Management
+**Step-by-Step Process**:
+1. ✅ **Environment Validation**: Checks Java 21+, Maven 3.8+, Docker 24.0+
+2. 🐳 **Infrastructure Setup**: Starts PostgreSQL, Redis, Kafka, Ollama via Docker Compose
+3. 🔨 **Service Build**: Compiles all 6 microservices with `mvn clean compile`
+4. 🗃️ **Database Setup**: Creates admin user with BCrypt password hashing
+5. 🚀 **Service Startup**: Launches services in dependency order with health checks
+6. 🧪 **Integration Tests**: Runs authentication and health verification tests
+7. 📊 **System Report**: Displays all service URLs and status
 
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `scripts/services/start-all-services.sh` | Start all services in order | `./start-all-services.sh` |
-| `scripts/services/stop-all-services.sh` | Stop all running services | `./stop-all-services.sh` |
+**Expected Output**:
+```
+🚀 RAG System Quick Start
+========================
 
-### Monitoring & Testing
+✅ Prerequisites validated
+✅ Infrastructure services started
+✅ All services built successfully  
+✅ Admin user created: admin@enterprise-rag.com
+✅ All 6 services started and healthy
+✅ Integration tests passed
+✅ Admin authentication: PASSED
+✅ All 6/6 services: HEALTHY
 
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `scripts/utils/health-check.sh` | Comprehensive health verification | `./health-check.sh` |
-| `scripts/tests/test-system.sh` | Integration and system tests | `./test-system.sh` |
+🎉 System Status: ALL SYSTEMS OPERATIONAL
+```
 
-### Directory Structure
+#### 2. **Complete Setup Script** - `./scripts/setup/setup-local-dev.sh`
+**Purpose**: Comprehensive development environment preparation
+**Usage**:
+```bash
+# Basic setup
+./scripts/setup/setup-local-dev.sh
+
+# With options
+./scripts/setup/setup-local-dev.sh --verbose --skip-docker
+./scripts/setup/setup-local-dev.sh --skip-build
+./scripts/setup/setup-local-dev.sh --help
+```
+
+**Available Options**:
+- `--verbose`: Detailed logging output
+- `--skip-docker`: Skip Docker infrastructure setup (if already running)
+- `--skip-build`: Skip Maven build process (if services already built)
+- `--help`: Display all available options
+
+**Step-by-Step Process**:
+1. **Prerequisites Check**:
+   ```bash
+   # Validates required software
+   java -version    # Must be Java 21+
+   mvn -version     # Must be Maven 3.8+
+   docker --version # Must be Docker 24.0+
+   ```
+
+2. **Directory Structure Creation**:
+   ```bash
+   # Creates required directories
+   mkdir -p logs/          # Service log files
+   mkdir -p data/postgres/ # Database persistence
+   mkdir -p data/redis/    # Redis data
+   ```
+
+3. **Environment Configuration**:
+   ```bash
+   # Auto-generates .env file with:
+   POSTGRES_DB=rag_enterprise
+   POSTGRES_USER=rag_user
+   POSTGRES_PASSWORD=rag_password
+   REDIS_PASSWORD=redis_password
+   JWT_SECRET=admin-super-secret-key-that-should-be-at-least-256-bits-long
+   ```
+
+4. **Infrastructure Services**:
+   ```bash
+   docker-compose up -d postgres redis kafka zookeeper ollama prometheus grafana
+   # Waits for health checks before proceeding
+   ```
+
+5. **Maven Build Process**:
+   ```bash
+   # Builds all services in dependency order
+   cd rag-shared && mvn clean compile
+   cd rag-auth-service && mvn clean compile  
+   cd rag-admin-service && mvn clean compile
+   cd rag-document-service && mvn clean compile
+   cd rag-embedding-service && mvn clean compile
+   cd rag-core-service && mvn clean compile
+   cd rag-gateway && mvn clean compile
+   ```
+
+### 🔧 Service Management Scripts
+
+#### 3. **Start Services Script** - `./scripts/services/start-all-services.sh`
+**Purpose**: Launch all microservices in correct dependency order
+**Usage**:
+```bash
+./scripts/services/start-all-services.sh
+```
+
+**Step-by-Step Process**:
+1. **Startup Sequence** (with 3-second delays between services):
+   ```bash
+   # Order matters - dependencies first
+   1. rag-auth-service     (port 8081) - Authentication foundation
+   2. rag-admin-service    (port 8085) - Admin operations with database
+   3. rag-embedding-service (port 8084) - Vector operations  
+   4. rag-document-service (port 8083) - Document processing
+   5. rag-core-service     (port 8082) - RAG query engine
+   6. rag-gateway         (port 8080) - API Gateway (last)
+   ```
+
+2. **For Each Service**:
+   ```bash
+   # Check port availability
+   lsof -Pi :8081 -sTCP:LISTEN -t >/dev/null
+   
+   # Start service in background
+   cd rag-auth-service
+   nohup mvn spring-boot:run > ../logs/rag-auth-service.log 2>&1 &
+   echo $! > ../logs/rag-auth-service.pid
+   
+   # Wait for startup
+   sleep 3
+   ```
+
+3. **Service URLs Display**:
+   ```
+   ✅ rag-auth-service started (PID: 12345)
+   ✅ rag-admin-service started (PID: 12346)  
+   ...
+   
+   Service URLs:
+   - API Gateway: http://localhost:8080/actuator/health
+   - Auth Service: http://localhost:8081/swagger-ui.html
+   - Admin Service: http://localhost:8085/admin/api/swagger-ui.html
+   ```
+
+#### 4. **Stop Services Script** - `./scripts/services/stop-all-services.sh`
+**Purpose**: Gracefully stop all running services
+**Usage**:
+```bash
+./scripts/services/stop-all-services.sh
+```
+
+**Step-by-Step Process**:
+1. **PID File Discovery**:
+   ```bash
+   # Finds all service PID files
+   for pidfile in logs/*.pid; do
+       service_name=$(basename "$pidfile" .pid)
+       pid=$(cat "$pidfile")
+   ```
+
+2. **Graceful Shutdown**:
+   ```bash
+   # Check if process is running
+   if kill -0 "$pid" 2>/dev/null; then
+       echo "Stopping $service_name (PID: $pid)..."
+       kill "$pid"           # SIGTERM for graceful shutdown
+       rm "$pidfile"        # Clean up PID file
+   ```
+
+3. **Cleanup Verification**:
+   ```
+   ✅ rag-gateway stopped
+   ✅ rag-core-service stopped
+   ✅ rag-document-service stopped
+   ✅ rag-embedding-service stopped
+   ✅ rag-admin-service stopped  
+   ✅ rag-auth-service stopped
+   🛑 All services stopped
+   ```
+
+### 🏥 Health Monitoring Scripts
+
+#### 5. **Health Check Script** - `./scripts/utils/health-check.sh`
+**Purpose**: Comprehensive system health verification
+**Usage**:
+```bash
+./scripts/utils/health-check.sh
+```
+
+**Step-by-Step Process**:
+1. **Infrastructure Services Check**:
+   ```bash
+   # PostgreSQL
+   docker-compose exec -T postgres pg_isready -U rag_user -d rag_enterprise
+   
+   # Redis  
+   docker-compose exec -T redis redis-cli -a redis_password ping
+   
+   # Kafka
+   docker-compose ps kafka | grep -q "Up"
+   ```
+
+2. **Application Services Health**:
+   ```bash
+   # For each service, check actuator health endpoint
+   services=(
+       "API Gateway:http://localhost:8080/actuator/health"
+       "Auth Service:http://localhost:8081/actuator/health" 
+       "Admin Service:http://localhost:8085/admin/api/actuator/health"
+       "Document Service:http://localhost:8083/actuator/health"
+       "Embedding Service:http://localhost:8084/actuator/health"
+       "RAG Core:http://localhost:8082/actuator/health"
+   )
+   
+   for service in "${services[@]}"; do
+       curl -s "$url" | grep -q '"status":"UP"'
+   done
+   ```
+
+3. **Health Report**:
+   ```
+   🏥 RAG System Health Check
+   ==========================
+   
+   📋 Infrastructure Services:
+   ✅ PostgreSQL: Healthy
+   ✅ Redis: Healthy  
+   ✅ Kafka: Running
+   
+   🚀 Application Services:
+   ✅ API Gateway: Healthy
+   ✅ Auth Service: Healthy
+   ✅ Admin Service: Healthy
+   ✅ Document Service: Healthy
+   ✅ Embedding Service: Healthy
+   ✅ RAG Core: Healthy
+   
+   🎯 Quick Test URLs:
+   - Grafana Dashboard: http://localhost:3000 (admin/admin)
+   - Kafka UI: http://localhost:8080
+   - Redis Insight: http://localhost:8001
+   ```
+
+### 🧪 Testing & Validation Scripts
+
+#### 6. **System Integration Tests** - `./scripts/tests/test-system.sh`
+**Purpose**: End-to-end system validation with authentication tests
+**Usage**:
+```bash
+./scripts/tests/test-system.sh
+```
+
+**Step-by-Step Process**:
+1. **Admin Service Authentication Test**:
+   ```bash
+   # Test database-backed authentication
+   response=$(curl -s -w "%{http_code}" -X POST \
+       http://localhost:8085/admin/api/auth/login \
+       -H "Content-Type: application/json" \
+       -d '{
+           "username": "admin@enterprise-rag.com",
+           "password": "admin123"
+       }')
+   
+   http_code="${response: -3}"
+   if [[ "$http_code" == "200" ]]; then
+       echo "✅ Admin authentication: PASSED"
+   fi
+   ```
+
+2. **Service Health Validation**:
+   ```bash
+   # Test all 6 service health endpoints
+   healthy_count=0
+   total_services=6
+   
+   for service in "${services[@]}"; do
+       if curl -s "$url" | grep -q '"status":"UP"'; then
+           echo "✅ $name service: HEALTHY"
+           ((healthy_count++))
+       fi
+   done
+   ```
+
+3. **Test Results Summary**:
+   ```
+   🧪 RAG System Integration Tests
+   ================================
+   
+   Test 1: Admin Service Authentication
+   ✅ Admin authentication: PASSED
+   
+   Test 2: Service Health Checks  
+   ✅ Gateway service: HEALTHY
+   ✅ Auth service: HEALTHY
+   ✅ Admin service: HEALTHY
+   ✅ Document service: HEALTHY
+   ✅ Embedding service: HEALTHY
+   ✅ Core service: HEALTHY
+   
+   📊 Test Summary:
+   - Services healthy: 6/6
+   🎉 System Status: ALL SYSTEMS OPERATIONAL
+   ```
+
+#### 7. **Database Administration Script** - `./scripts/db/create-admin-user.sh`
+**Purpose**: Create admin user with proper BCrypt password hashing
+**Usage**:
+```bash
+./scripts/db/create-admin-user.sh
+```
+
+**Step-by-Step Process**:
+1. **Password Hash Generation**:
+   ```bash
+   # Uses BCrypt with Java-compatible salt
+   BCRYPT_HASH=$(docker run --rm openjdk:21-jdk bash -c '
+   cat > HashPassword.java << EOF
+   import java.security.SecureRandom;
+   // BCrypt implementation...
+   EOF
+   javac HashPassword.java && java HashPassword admin123')
+   ```
+
+2. **Database User Creation**:
+   ```sql
+   -- Creates tenant first (required by foreign key)
+   INSERT INTO tenants (id, name, slug, description, status, created_at, updated_at)
+   VALUES (1, 'Enterprise Admin', 'enterprise-admin', 'System administration tenant', 'ACTIVE', NOW(), NOW())
+   ON CONFLICT (id) DO NOTHING;
+   
+   -- Creates admin user with proper relationships
+   INSERT INTO users (id, tenant_id, email, password_hash, first_name, last_name, role, status, created_at, updated_at)
+   VALUES (1, 1, 'admin@enterprise-rag.com', '$2a$10$hashed_password', 'System', 'Admin', 'ADMIN', 'ACTIVE', NOW(), NOW())
+   ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+   ```
+
+3. **Verification**:
+   ```bash
+   # Verify user creation
+   docker-compose exec postgres psql -U rag_user -d rag_enterprise -c "
+   SELECT u.email, u.role, t.name as tenant_name 
+   FROM users u JOIN tenants t ON u.tenant_id = t.id 
+   WHERE u.email = 'admin@enterprise-rag.com';"
+   ```
+
+### 🔄 Development Workflow Scripts
+
+#### Common Development Workflows
+
+**🚀 Daily Development Startup**:
+```bash
+# Option 1: Complete one-command startup (recommended)
+./scripts/utils/quick-start.sh
+
+# Option 2: Step-by-step control
+./scripts/setup/setup-local-dev.sh --skip-docker  # If Docker already running
+./scripts/services/start-all-services.sh
+./scripts/utils/health-check.sh
+```
+
+**🔧 Development Iteration Cycle**:
+```bash
+# Make code changes...
+
+# Restart specific service
+./scripts/services/stop-all-services.sh  
+cd rag-admin-service && mvn spring-boot:run &  # Start single service
+./scripts/utils/health-check.sh
+
+# Full system restart
+./scripts/services/stop-all-services.sh
+./scripts/services/start-all-services.sh  
+./scripts/tests/test-system.sh
+```
+
+**🧪 Testing & Validation**:
+```bash
+# Quick health check
+./scripts/utils/health-check.sh
+
+# Full integration test suite
+./scripts/tests/test-system.sh
+
+# Manual testing examples
+curl -X POST http://localhost:8085/admin/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin@enterprise-rag.com", "password": "admin123"}'
+```
+
+**🛑 Clean Shutdown**:
+```bash
+# Stop services gracefully
+./scripts/services/stop-all-services.sh
+
+# Stop infrastructure (if needed)
+docker-compose down
+
+# Clean logs (optional)
+rm -f logs/*.log logs/*.pid
+```
+
+### 📁 Complete Directory Structure
 
 ```
 scripts/
 ├── setup/
-│   └── setup-local-dev.sh       # Complete development setup
-├── services/  
-│   ├── start-all-services.sh    # Service startup automation
-│   └── stop-all-services.sh     # Service shutdown automation
+│   ├── setup-local-dev.sh           # 🏗️  Complete development environment setup
+│   └── [future: setup-production.sh] # 🏭  Production environment setup
+├── services/
+│   ├── start-all-services.sh        # 🚀  Start all services in dependency order  
+│   ├── stop-all-services.sh         # 🛑  Graceful shutdown of all services
+│   └── [future: restart-service.sh]  # 🔄  Individual service restart utility
 ├── utils/
-│   ├── quick-start.sh           # One-command system startup  
-│   ├── health-check.sh          # System health verification
-│   └── dev-reset.sh             # Environment reset utility
-└── tests/
-    └── test-system.sh           # Integration testing automation
+│   ├── quick-start.sh               # ⚡  One-command complete system startup
+│   ├── health-check.sh              # 🏥  Comprehensive health verification
+│   └── [future: dev-reset.sh]        # 🔄  Environment reset and cleanup utility
+├── tests/
+│   ├── test-system.sh               # 🧪  Integration tests with authentication
+│   └── [future: load-test.sh]        # 📈  Performance and load testing
+├── db/
+│   ├── create-admin-user.sh         # 👤  Admin user creation with BCrypt
+│   └── [future: backup-restore.sh]   # 💾  Database backup and restore utilities
+└── deploy/
+    └── [future: deploy-production.sh] # 🚀  Kubernetes production deployment
+```
+
+### 📊 Script Dependencies & Order
+
+**Dependency Chain**:
+```
+setup-local-dev.sh
+    ↓
+start-all-services.sh  
+    ↓
+health-check.sh
+    ↓  
+test-system.sh
+
+# Alternative: One-command flow
+quick-start.sh
+    ├── setup-local-dev.sh
+    ├── create-admin-user.sh  
+    ├── start-all-services.sh
+    ├── health-check.sh
+    └── test-system.sh
+```
+
+**Port Usage by Scripts**:
+```
+Infrastructure (Docker Compose):
+├── PostgreSQL: 5432
+├── Redis: 6379, 8001 (UI)
+├── Kafka: 9092
+├── Zookeeper: 2181
+├── Ollama: 11434
+├── Prometheus: 9090
+└── Grafana: 3000
+
+Application Services (Maven):
+├── rag-gateway: 8080          # API Gateway
+├── rag-auth-service: 8081     # Authentication  
+├── rag-core-service: 8082     # RAG Query Engine
+├── rag-document-service: 8083 # Document Processing
+├── rag-embedding-service: 8084 # Vector Operations
+└── rag-admin-service: 8085    # Admin + Database
 ```
 
 ## 🎯 What's New - Database Integration
