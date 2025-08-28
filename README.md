@@ -1,6 +1,53 @@
 # Enterprise RAG System
 
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.8-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring AI](https://img.shields.io/badge/Spring%20AI-1.0.0--M1-blue.svg)](https://spring.io/projects/spring-ai)
+[![Maven](https://img.shields.io/badge/Maven-3.8+-red.svg)](https://maven.apache.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An enterprise-grade Enterprise RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
+
+## 📋 Tech Stack & Dependencies
+
+### Core Framework
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **Java** | 21 (LTS) | Primary programming language |
+| **Spring Boot** | 3.2.8 | Application framework |
+| **Spring AI** | 1.0.0-M1 | AI/ML integration |
+| **Spring Cloud** | 2023.0.2 | Microservices framework |
+| **Maven** | 3.8+ | Build and dependency management |
+
+### Database & Storage
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **PostgreSQL** | 42.7.3 | Primary database with pgvector |
+| **Redis Stack** | 5.0.2 | Vector storage and caching |
+| **Apache Kafka** | 3.7.0 | Event streaming and messaging |
+
+### AI/ML Libraries
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **LangChain4j** | 0.33.0 | LLM integration framework |
+| **Apache Tika** | 2.9.2 | Document processing and text extraction |
+| **OpenAI API** | Latest | GPT models and embeddings |
+| **Ollama** | Latest | Local LLM inference |
+
+### Testing & Quality
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **JUnit** | 5.10.2 | Unit testing framework |
+| **Testcontainers** | 1.19.8 | Integration testing |
+| **Mockito** | 5.14.2 | Mocking framework |
+| **WireMock** | 3.8.0 | API mocking |
+
+### Monitoring & Documentation
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **Micrometer** | 1.12.7 | Application metrics |
+| **SpringDoc OpenAPI** | 2.5.0 | API documentation |
+| **Logstash Logback** | 7.4 | Structured logging |
 
 ## 🏗️ Architecture Overview
 

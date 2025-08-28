@@ -6,7 +6,7 @@
 
     <groupId>com.enterprise.rag</groupId>
     <artifactId>enterprise-rag</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Enterprise RAG System</name>
