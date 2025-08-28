@@ -18,7 +18,45 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Main RAG service orchestrating the complete RAG pipeline.
+ * Main RAG service orchestrating the complete Retrieval Augmented Generation pipeline.
+ * 
+ * <p>This service is the core component of the Enterprise RAG system, orchestrating
+ * the complete flow from query processing to response generation. It implements
+ * a multi-stage pipeline that includes query optimization, document retrieval,
+ * context assembly, and LLM-based response generation.</p>
+ * 
+ * <p>Pipeline stages:</p>
+ * <ol>
+ *   <li><strong>Cache Check:</strong> Attempts to return cached responses for performance</li>
+ *   <li><strong>Query Optimization:</strong> Enhances queries for better retrieval results</li>
+ *   <li><strong>Context Retrieval:</strong> Gets conversation history if applicable</li>
+ *   <li><strong>Semantic Search:</strong> Retrieves relevant document chunks using embeddings</li>
+ *   <li><strong>Context Assembly:</strong> Combines retrieved chunks into coherent context</li>
+ *   <li><strong>Response Generation:</strong> Uses LLM to generate final response</li>
+ *   <li><strong>Conversation Update:</strong> Stores exchange for future context</li>
+ *   <li><strong>Response Caching:</strong> Caches response for performance optimization</li>
+ * </ol>
+ * 
+ * <p>Key features:</p>
+ * <ul>
+ *   <li>Multi-tenant isolation and security</li>
+ *   <li>Comprehensive caching strategy for performance</li>
+ *   <li>Streaming responses for real-time user experience</li>
+ *   <li>Detailed metrics and monitoring</li>
+ *   <li>Conversation context management</li>
+ *   <li>Configurable retrieval and generation parameters</li>
+ * </ul>
+ * 
+ * <p>Thread Safety: This service is thread-safe and can handle concurrent requests
+ * from multiple tenants simultaneously.</p>
+ * 
+ * @author Enterprise RAG Development Team
+ * @since 1.0.0
+ * @version 1.0
+ * @see RagQueryRequest
+ * @see RagQueryResponse
+ * @see EmbeddingServiceClient
+ * @see LLMIntegrationService
  */
 @Service
 public class RagService {

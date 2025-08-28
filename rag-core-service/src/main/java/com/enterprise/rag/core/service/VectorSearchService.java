@@ -8,8 +8,43 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Service for vector-based similarity search.
- * This is a placeholder implementation - will be enhanced with actual vector operations.
+ * Enterprise service for vector-based semantic similarity search operations.
+ * 
+ * <p><strong>Note:</strong> This is currently a placeholder implementation that will be enhanced
+ * with actual vector search capabilities using Redis Stack with RediSearch vector similarity
+ * or other vector database solutions.</p>
+ * 
+ * <p>Planned capabilities for full implementation:</p>
+ * <ul>
+ *   <li><strong>Semantic Search:</strong> Find documents based on meaning rather than keywords</li>
+ *   <li><strong>Vector Indexing:</strong> Efficient storage and indexing of document embeddings</li>
+ *   <li><strong>Similarity Scoring:</strong> Cosine similarity and other distance metrics</li>
+ *   <li><strong>Multi-tenant Support:</strong> Isolated vector spaces per tenant</li>
+ *   <li><strong>Real-time Updates:</strong> Dynamic indexing of new document chunks</li>
+ *   <li><strong>Hybrid Search:</strong> Combination of vector and keyword search</li>
+ * </ul>
+ * 
+ * <p>Integration points in RAG pipeline:</p>
+ * <ul>
+ *   <li>Document ingestion: Index new chunks with embeddings</li>
+ *   <li>Query processing: Find semantically similar content</li>
+ *   <li>Retrieval ranking: Score results by similarity</li>
+ *   <li>Context assembly: Provide relevant chunks for LLM</li>
+ * </ul>
+ * 
+ * <p>Future implementation will support:</p>
+ * <ul>
+ *   <li>Redis Stack with RediSearch vector indices</li>
+ *   <li>Alternative vector databases (Pinecone, Weaviate, etc.)</li>
+ *   <li>Multiple embedding models and dimensions</li>
+ *   <li>Advanced filtering and faceting</li>
+ * </ul>
+ * 
+ * @author Enterprise RAG Development Team
+ * @since 1.0.0
+ * @version 1.0 (Placeholder)
+ * @see com.enterprise.rag.core.client.EmbeddingServiceClient
+ * @see ContextAssemblyService
  */
 @Service
 public class VectorSearchService {

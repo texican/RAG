@@ -11,7 +11,48 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service for assembling context from retrieved documents for LLM processing.
+ * Enterprise service for assembling and optimizing document context for LLM processing.
+ * 
+ * <p>This service is responsible for taking retrieved document chunks from semantic search
+ * and intelligently combining them into coherent context that maximizes LLM response quality
+ * while respecting token limits and relevance thresholds. It's a critical component of the
+ * RAG pipeline that bridges document retrieval and response generation.</p>
+ * 
+ * <p>Core responsibilities:</p>
+ * <ul>
+ *   <li><strong>Context Assembly:</strong> Combines multiple document chunks into unified context</li>
+ *   <li><strong>Token Management:</strong> Respects LLM token limits while maximizing information</li>
+ *   <li><strong>Relevance Filtering:</strong> Excludes low-relevance documents to improve quality</li>
+ *   <li><strong>Format Optimization:</strong> Structures context for optimal LLM comprehension</li>
+ *   <li><strong>Metadata Integration:</strong> Includes valuable document metadata when beneficial</li>
+ *   <li><strong>Deduplication:</strong> Removes redundant information to maximize context efficiency</li>
+ * </ul>
+ * 
+ * <p>Assembly strategies:</p>
+ * <ul>
+ *   <li><strong>Relevance-First:</strong> Prioritizes highest-scoring document chunks</li>
+ *   <li><strong>Token-Aware:</strong> Dynamically adjusts content based on available token budget</li>
+ *   <li><strong>Metadata-Enhanced:</strong> Includes contextual metadata when it adds value</li>
+ *   <li><strong>Deduplication:</strong> Removes repetitive content for cleaner context</li>
+ * </ul>
+ * 
+ * <p>Configuration properties:</p>
+ * <ul>
+ *   <li>{@code rag.context.max-tokens} - Maximum context tokens (default: 4000)</li>
+ *   <li>{@code rag.context.chunk-separator} - Separator between document chunks</li>
+ *   <li>{@code rag.context.include-metadata} - Whether to include document metadata</li>
+ *   <li>{@code rag.context.relevance-threshold} - Minimum relevance score (default: 0.7)</li>
+ * </ul>
+ * 
+ * <p>Thread Safety: This service is thread-safe and designed for concurrent use
+ * across multiple tenant requests.</p>
+ * 
+ * @author Enterprise RAG Development Team
+ * @since 1.0.0
+ * @version 1.0
+ * @see SourceDocument
+ * @see RagQueryRequest
+ * @see LLMIntegrationService
  */
 @Service
 public class ContextAssemblyService {
@@ -31,7 +72,29 @@ public class ContextAssemblyService {
     private double relevanceThreshold;
 
     /**
-     * Assemble context from retrieved documents.
+     * Assemble coherent context from a list of retrieved document chunks.
+     * 
+     * <p>This method is the primary entry point for context assembly in the RAG pipeline.
+     * It processes retrieved documents by filtering based on relevance scores, respecting
+     * token limits, and formatting content for optimal LLM comprehension.</p>
+     * 
+     * <p>Assembly process:</p>
+     * <ol>
+     *   <li><strong>Relevance Filtering:</strong> Excludes documents below threshold</li>
+     *   <li><strong>Token-Aware Selection:</strong> Selects documents within token budget</li>
+     *   <li><strong>Content Formatting:</strong> Formats each document with metadata</li>
+     *   <li><strong>Context Structuring:</strong> Combines documents with separators</li>
+     * </ol>
+     * 
+     * <p>The method prioritizes documents with higher relevance scores and includes
+     * as many documents as possible within the configured token limit. If no documents
+     * meet the relevance threshold, an empty context is returned.</p>
+     * 
+     * @param documents list of retrieved documents with relevance scores
+     * @param request the original RAG query request containing tenant and options
+     * @return assembled context string ready for LLM processing, or empty string if no relevant content
+     * @see #assembleContext(List, RagQueryRequest, ContextConfig)
+     * @see #getContextStats(List, String)
      */
     public String assembleContext(List<SourceDocument> documents, RagQueryRequest request) {
         if (documents == null || documents.isEmpty()) {
@@ -86,7 +149,29 @@ public class ContextAssemblyService {
     }
 
     /**
-     * Assemble context with custom configuration.
+     * Assemble context using custom configuration parameters.
+     * 
+     * <p>This method provides fine-grained control over context assembly by allowing
+     * temporary override of service configuration. It's useful for specialized use cases
+     * where standard configuration may not be optimal.</p>
+     * 
+     * <p>Custom configuration scenarios:</p>
+     * <ul>
+     *   <li><strong>Short Context:</strong> Reduced token limits for specific queries</li>
+     *   <li><strong>High Precision:</strong> Higher relevance thresholds for accuracy</li>
+     *   <li><strong>Metadata Control:</strong> Custom metadata inclusion rules</li>
+     *   <li><strong>Testing:</strong> Different configurations for A/B testing</li>
+     * </ul>
+     * 
+     * <p>The method temporarily overrides service configuration, performs assembly,
+     * and restores original settings, ensuring thread safety and no side effects.</p>
+     * 
+     * @param documents list of retrieved documents with relevance scores
+     * @param request the original RAG query request containing tenant and options
+     * @param config custom context assembly configuration
+     * @return assembled context string using the specified configuration
+     * @see ContextConfig
+     * @see #assembleContext(List, RagQueryRequest)
      */
     public String assembleContext(List<SourceDocument> documents, RagQueryRequest request,
                                 ContextConfig config) {
@@ -110,7 +195,29 @@ public class ContextAssemblyService {
     }
 
     /**
-     * Optimize context for better LLM performance.
+     * Optimize assembled context to improve LLM processing efficiency and quality.
+     * 
+     * <p>This method applies post-assembly optimization techniques to enhance
+     * context quality while maintaining essential information. It's particularly
+     * useful for long contexts that may contain redundancies or formatting issues.</p>
+     * 
+     * <p>Optimization techniques applied:</p>
+     * <ul>
+     *   <li><strong>Whitespace Normalization:</strong> Removes excessive spacing and formatting</li>
+     *   <li><strong>Deduplication:</strong> Identifies and removes repeated content</li>
+     *   <li><strong>Token Trimming:</strong> Truncates content to exact token limits</li>
+     *   <li><strong>Boundary Preservation:</strong> Maintains word boundaries when truncating</li>
+     * </ul>
+     * 
+     * <p>The optimization is conservative, prioritizing information preservation
+     * over aggressive compression. It ensures that the optimized context remains
+     * coherent and meaningful for LLM processing.</p>
+     * 
+     * @param rawContext the original assembled context before optimization
+     * @param request the RAG query request for context about optimization needs
+     * @return optimized context with improved structure and reduced redundancy
+     * @see #assembleContext(List, RagQueryRequest)
+     * @see #estimateTokenCount(String)
      */
     public String optimizeContext(String rawContext, RagQueryRequest request) {
         if (rawContext == null || rawContext.trim().isEmpty()) {
@@ -137,7 +244,34 @@ public class ContextAssemblyService {
     }
 
     /**
-     * Get context assembly statistics.
+     * Generate comprehensive statistics about context assembly process and results.
+     * 
+     * <p>This method provides detailed metrics about the context assembly process,
+     * including document usage, relevance distribution, token utilization, and
+     * efficiency measures. These statistics are valuable for monitoring, optimization,
+     * and debugging of the RAG system.</p>
+     * 
+     * <p>Statistical information includes:</p>
+     * <ul>
+     *   <li><strong>Document Counts:</strong> Total documents vs. actually used documents</li>
+     *   <li><strong>Relevance Metrics:</strong> Average relevance scores and filtering results</li>
+     *   <li><strong>Token Utilization:</strong> Actual tokens used vs. available budget</li>
+     *   <li><strong>Assembly Efficiency:</strong> How well the token budget was utilized</li>
+     * </ul>
+     * 
+     * <p>These statistics can be used for:</p>
+     * <ul>
+     *   <li>Monitoring context quality and relevance</li>
+     *   <li>Optimizing relevance thresholds and token limits</li>
+     *   <li>Debugging issues with context assembly</li>
+     *   <li>Performance analysis and system tuning</li>
+     * </ul>
+     * 
+     * @param documents the original list of retrieved documents
+     * @param assembledContext the final assembled context string
+     * @return comprehensive statistics about the context assembly process
+     * @see ContextStats
+     * @see #assembleContext(List, RagQueryRequest)
      */
     public ContextStats getContextStats(List<SourceDocument> documents, String assembledContext) {
         if (documents == null || documents.isEmpty()) {
