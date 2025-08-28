@@ -16,7 +16,44 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Service for integrating with multiple LLM providers.
+ * Enterprise service for integrating with multiple Large Language Model (LLM) providers.
+ * 
+ * <p>This service provides a unified interface for interacting with various LLM providers
+ * such as OpenAI, Ollama, and other compatible services. It implements sophisticated
+ * fallback mechanisms, provider health monitoring, and response optimization strategies.</p>
+ * 
+ * <p>Key capabilities:</p>
+ * <ul>
+ *   <li><strong>Multi-Provider Support:</strong> Seamless integration with multiple LLM services</li>
+ *   <li><strong>Automatic Fallback:</strong> Switches to backup provider if primary fails</li>
+ *   <li><strong>Streaming Responses:</strong> Real-time response generation for better UX</li>
+ *   <li><strong>Provider Health Monitoring:</strong> Continuous availability checking</li>
+ *   <li><strong>Prompt Optimization:</strong> Enhanced prompts for better response quality</li>
+ *   <li><strong>Configurable Parameters:</strong> Tenant-specific model configurations</li>
+ * </ul>
+ * 
+ * <p>The service uses Spring AI's ChatClient for standardized LLM interactions and implements
+ * robust error handling with automatic provider failover. All operations are logged for
+ * monitoring and debugging purposes.</p>
+ * 
+ * <p>Thread Safety: This service is thread-safe and designed for high-concurrency use
+ * in multi-tenant environments.</p>
+ * 
+ * <p>Configuration Properties:</p>
+ * <ul>
+ *   <li>{@code llm.default-provider} - Primary LLM provider (default: openai)</li>
+ *   <li>{@code llm.fallback-provider} - Backup provider (default: ollama)</li>
+ *   <li>{@code llm.max-tokens} - Maximum response tokens (default: 1500)</li>
+ *   <li>{@code llm.temperature} - Response creativity level (default: 0.7)</li>
+ *   <li>{@code llm.timeout-seconds} - Request timeout (default: 30)</li>
+ * </ul>
+ * 
+ * @author Enterprise RAG Development Team
+ * @since 1.0.0
+ * @version 1.0
+ * @see ChatClient
+ * @see RagQueryRequest
+ * @see RagService
  */
 @Service
 public class LLMIntegrationService {
@@ -69,14 +106,55 @@ public class LLMIntegrationService {
     }
 
     /**
-     * Generate response using the default LLM provider.
+     * Generate a complete response using the configured default LLM provider.
+     * 
+     * <p>This method processes the user query along with retrieved document context
+     * to generate a comprehensive answer. It uses the default provider specified
+     * in configuration and automatically falls back to the backup provider if needed.</p>
+     * 
+     * <p>The response generation includes:</p>
+     * <ul>
+     *   <li>System prompt configuration for RAG-specific instructions</li>
+     *   <li>Context integration from retrieved documents</li>
+     *   <li>Query optimization for better LLM understanding</li>
+     *   <li>Provider tracking for metrics and monitoring</li>
+     * </ul>
+     * 
+     * @param query the user's question or query text
+     * @param context the assembled context from retrieved documents
+     * @param request the complete RAG query request with options and metadata
+     * @return generated response text from the LLM
+     * @throws RagException if response generation fails with all available providers
+     * @see #generateResponse(String, String, RagQueryRequest, String)
+     * @see #generateResponseStreaming(String, String, RagQueryRequest)
      */
     public String generateResponse(String query, String context, RagQueryRequest request) {
         return generateResponse(query, context, request, defaultProvider);
     }
 
     /**
-     * Generate response using a specific LLM provider.
+     * Generate a complete response using a specific LLM provider.
+     * 
+     * <p>This method allows explicit provider selection for cases where specific
+     * model capabilities are required. It implements comprehensive error handling
+     * with automatic fallback to the configured backup provider if the specified
+     * provider fails.</p>
+     * 
+     * <p>Provider-specific considerations:</p>
+     * <ul>
+     *   <li><strong>OpenAI:</strong> High-quality responses, good for complex reasoning</li>
+     *   <li><strong>Ollama:</strong> Local deployment, good for privacy-sensitive data</li>
+     *   <li><strong>Custom:</strong> Tenant-specific fine-tuned models</li>
+     * </ul>
+     * 
+     * @param query the user's question or query text
+     * @param context the assembled context from retrieved documents  
+     * @param request the complete RAG query request with options and metadata
+     * @param provider the specific provider identifier to use
+     * @return generated response text from the specified LLM provider
+     * @throws RagException if response generation fails with both primary and fallback providers
+     * @see #isProviderAvailable(String)
+     * @see #getProviderStatus()
      */
     public String generateResponse(String query, String context, RagQueryRequest request, String provider) {
         logger.debug("Generating LLM response for tenant: {} using provider: {}", 
@@ -116,14 +194,58 @@ public class LLMIntegrationService {
     }
 
     /**
-     * Generate streaming response for real-time interaction.
+     * Generate a streaming response for real-time user interaction.
+     * 
+     * <p>This method provides a reactive stream of response chunks, enabling
+     * real-time display of the LLM's response as it's being generated. This
+     * significantly improves user experience for longer responses by reducing
+     * perceived latency.</p>
+     * 
+     * <p>Streaming benefits:</p>
+     * <ul>
+     *   <li><strong>Reduced Latency:</strong> Users see response as it generates</li>
+     *   <li><strong>Better UX:</strong> Progressive disclosure of information</li>
+     *   <li><strong>Early Termination:</strong> Ability to stop long responses</li>
+     *   <li><strong>Bandwidth Efficiency:</strong> Chunks delivered as available</li>
+     * </ul>
+     * 
+     * <p>The stream emits individual response chunks and completes when the
+     * LLM finishes generation. Error handling includes automatic fallback
+     * to the backup provider if the primary provider fails.</p>
+     * 
+     * @param query the user's question or query text
+     * @param context the assembled context from retrieved documents
+     * @param request the complete RAG query request with options and metadata
+     * @return a Flux stream of response text chunks
+     * @throws RagException wrapped in Flux.error() if streaming fails with all providers
+     * @see #generateResponseStreamingWithFallback(String, String, RagQueryRequest)
+     * @see reactor.core.publisher.Flux
      */
     public Flux<String> generateResponseStreaming(String query, String context, RagQueryRequest request) {
         return generateResponseStreaming(query, context, request, defaultProvider);
     }
 
     /**
-     * Generate streaming response using specific provider.
+     * Generate a streaming response using a specific LLM provider.
+     * 
+     * <p>This method combines the benefits of streaming responses with explicit
+     * provider selection. It's particularly useful for A/B testing different
+     * models or using provider-specific capabilities for certain query types.</p>
+     * 
+     * <p>Provider-specific streaming characteristics:</p>
+     * <ul>
+     *   <li><strong>OpenAI:</strong> Consistent chunk timing, reliable streaming</li>
+     *   <li><strong>Ollama:</strong> Variable chunk sizes, local processing</li>
+     *   <li><strong>Custom:</strong> Implementation-dependent behavior</li>
+     * </ul>
+     * 
+     * @param query the user's question or query text
+     * @param context the assembled context from retrieved documents
+     * @param request the complete RAG query request with options and metadata
+     * @param provider the specific provider identifier to use for streaming
+     * @return a Flux stream of response text chunks from the specified provider
+     * @throws RagException wrapped in Flux.error() if streaming fails with both primary and fallback
+     * @see #generateResponseStreaming(String, String, RagQueryRequest)
      */
     public Flux<String> generateResponseStreaming(String query, String context, 
                                                 RagQueryRequest request, String provider) {
@@ -161,14 +283,43 @@ public class LLMIntegrationService {
     }
 
     /**
-     * Get the provider that was last successfully used.
+     * Get the identifier of the LLM provider that was last successfully used.
+     * 
+     * <p>This method returns the provider that successfully completed the most
+     * recent response generation. It's useful for metrics collection, debugging,
+     * and understanding which providers are being used in practice.</p>
+     * 
+     * <p>The value is updated atomically after each successful generation,
+     * ensuring thread-safety in concurrent environments. Initial value is
+     * the configured default provider.</p>
+     * 
+     * @return the provider identifier (e.g., "openai", "ollama") last used successfully
+     * @see #getProviderStatus()
+     * @see #defaultProvider
      */
     public String getProviderUsed() {
         return lastUsedProvider.get();
     }
 
     /**
-     * Check if a specific provider is available.
+     * Check if a specific LLM provider is currently available and responding.
+     * 
+     * <p>This method performs a lightweight health check by sending a minimal
+     * test request to the specified provider. It's used for provider selection,
+     * fallback logic, and health monitoring dashboards.</p>
+     * 
+     * <p>Health check characteristics:</p>
+     * <ul>
+     *   <li><strong>Minimal Request:</strong> Simple "Hello" prompt to minimize cost</li>
+     *   <li><strong>Fast Timeout:</strong> Quick determination of availability</li>
+     *   <li><strong>Error Handling:</strong> Graceful degradation on failure</li>
+     *   <li><strong>No Side Effects:</strong> Does not affect provider statistics</li>
+     * </ul>
+     * 
+     * @param provider the provider identifier to check (e.g., "openai", "ollama")
+     * @return true if the provider is available and responding, false otherwise
+     * @see #getProviderStatus()
+     * @see #generateResponse(String, String, RagQueryRequest, String)
      */
     public boolean isProviderAvailable(String provider) {
         try {
@@ -189,7 +340,25 @@ public class LLMIntegrationService {
     }
 
     /**
-     * Get available providers and their status.
+     * Get comprehensive status information for all configured LLM providers.
+     * 
+     * <p>This method returns detailed status information about all configured
+     * providers, including availability, configuration, and usage statistics.
+     * It's primarily used for monitoring dashboards, debugging, and system
+     * health checks.</p>
+     * 
+     * <p>Status information includes:</p>
+     * <ul>
+     *   <li><strong>defaultProvider:</strong> Currently configured primary provider</li>
+     *   <li><strong>fallbackProvider:</strong> Configured backup provider</li>
+     *   <li><strong>lastUsedProvider:</strong> Most recently successful provider</li>
+     *   <li><strong>defaultAvailable:</strong> Real-time availability of primary</li>
+     *   <li><strong>fallbackAvailable:</strong> Real-time availability of backup</li>
+     * </ul>
+     * 
+     * @return Map containing detailed provider status information
+     * @see #isProviderAvailable(String)
+     * @see #getProviderUsed()
      */
     public Map<String, Object> getProviderStatus() {
         return Map.of(
@@ -202,7 +371,28 @@ public class LLMIntegrationService {
     }
 
     /**
-     * Optimize prompt for better LLM performance.
+     * Optimize user prompts for improved LLM response quality and performance.
+     * 
+     * <p>This method applies various optimization strategies to enhance the
+     * clarity and effectiveness of prompts sent to LLM providers. Better prompts
+     * lead to more accurate, relevant, and helpful responses.</p>
+     * 
+     * <p>Optimization strategies applied:</p>
+     * <ul>
+     *   <li><strong>Whitespace Normalization:</strong> Removes excessive spacing</li>
+     *   <li><strong>Intent Integration:</strong> Adds explicit user intent context</li>
+     *   <li><strong>Specificity Enhancement:</strong> Encourages detailed responses</li>
+     *   <li><strong>Format Standardization:</strong> Ensures consistent prompt structure</li>
+     * </ul>
+     * 
+     * <p>Future enhancements may include sentiment analysis, complexity assessment,
+     * and tenant-specific optimization rules.</p>
+     * 
+     * @param originalPrompt the original user prompt to optimize
+     * @param request the RAG query request containing context and options
+     * @return optimized prompt text with enhanced clarity and structure
+     * @see RagQueryRequest.QueryOptions#intent()
+     * @see #formatUserPrompt(String, String, RagQueryRequest)
      */
     public String optimizePrompt(String originalPrompt, RagQueryRequest request) {
         // Simple prompt optimization strategies
