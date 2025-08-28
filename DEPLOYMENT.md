@@ -1,254 +1,354 @@
-# Enterprise RAG System - Complete Deployment Guide
+# Enterprise RAG System - Deployment Guide
 
-A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Generation) system with automated setup scripts for development, staging, and production environments.
+A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Generation) system across development, staging, and production environments.
 
 ## 📋 Table of Contents
 
-- [Quick Start (Automated)](#-quick-start-automated)
-- [Prerequisites](#-prerequisites)
-- [Development Deployment](#-development-deployment)
-- [Production Deployment](#-production-deployment)
-- [Environment Configuration](#-environment-configuration)
-- [Monitoring & Observability](#-monitoring--observability)
-- [Security & Best Practices](#-security--best-practices)
-- [Troubleshooting](#-troubleshooting)
-- [Scripts Reference](#-scripts-reference)
-
-## 🚀 Quick Start (Automated)
-
-### One-Command Setup
-
-```bash
-# Get the complete RAG system running with a single command
-./scripts/utils/quick-start.sh
-```
-
-This automated script will:
-1. ✅ Validate prerequisites (Java 21+, Maven, Docker)
-2. 🐳 Start all infrastructure services (PostgreSQL, Redis, Kafka, Ollama)
-3. 🔨 Build all 6 microservices with Maven
-4. 🚀 Start all services in the correct order
-5. 🏥 Run comprehensive health checks
-6. 🧪 Execute integration tests
-7. 📊 Display service URLs and monitoring dashboards
-
-### Alternative: Step-by-Step Setup
-
-```bash
-# 1. Complete environment setup
-./scripts/setup/setup-local-dev.sh
-
-# 2. Start all services
-./scripts/services/start-all-services.sh
-
-# 3. Verify system health
-./scripts/utils/health-check.sh
-
-# 4. Run integration tests
-./scripts/tests/test-system.sh
-```
-
-### Management Commands
-
-```bash
-# Stop all services
-./scripts/services/stop-all-services.sh
-
-# Reset development environment
-./scripts/utils/dev-reset.sh
-
-# Monitor system health
-./scripts/utils/health-check.sh
-```
+- [Prerequisites](#prerequisites)
+- [Development Deployment](#development-deployment)
+- [Staging Deployment](#staging-deployment)
+- [Production Deployment](#production-deployment)
+- [Environment Configuration](#environment-configuration)
+- [Monitoring & Observability](#monitoring--observability)
+- [Security Configuration](#security-configuration)
+- [Backup & Recovery](#backup--recovery)
+- [Troubleshooting](#troubleshooting)
+- [Performance Tuning](#performance-tuning)
 
 ## 🔧 Prerequisites
 
 ### System Requirements
 
-| Environment | CPU | RAM | Storage | Network |
-|------------|-----|-----|---------|---------|
-| **Development** | 4+ cores | 8+ GB | 50+ GB | 100 Mbps |
-| **Production** | 16+ cores | 32+ GB | 500+ GB SSD | 10+ Gbps |
+| Component | Minimum | Recommended | Production |
+|-----------|---------|-------------|------------|
+| **CPU** | 4 cores | 8 cores | 16+ cores |
+| **RAM** | 8 GB | 16 GB | 32+ GB |
+| **Storage** | 50 GB | 100 GB | 500+ GB SSD |
+| **Network** | 100 Mbps | 1 Gbps | 10+ Gbps |
 
-### Required Software
+### Software Dependencies
 
 ```bash
-# Check if you have the required software
-java -version      # Java 21+ required
-mvn -version       # Maven 3.8+ required
-docker --version   # Docker 24.0+ required
-docker-compose --version  # Docker Compose 2.0+ required
+# Required Software
+- Java 21+ (OpenJDK recommended)
+- Maven 3.8+
+- Docker 24.0+
+- Docker Compose 2.0+
+- Git 2.30+
+
+# Optional (for advanced deployments)
+- Kubernetes 1.25+
+- Helm 3.10+
+- Terraform 1.5+
 ```
 
-### Installation (if needed)
+## 🚀 Development Deployment
+
+### Quick Start (Local Development)
 
 ```bash
-# macOS (using Homebrew)
-brew install openjdk@21 maven docker docker-compose
+# 1. Clone and setup
+git clone <repository-url>
+cd enterprise-rag
 
-# Ubuntu/Debian
-apt-get update
-apt-get install openjdk-21-jdk maven docker.io docker-compose-plugin
+# 2. Start infrastructure services
+docker-compose up -d
 
-# Verify installation
-./scripts/setup/setup-local-dev.sh --help
+# 3. Verify infrastructure health
+./scripts/health-check.sh
+
+# 4. Build application
+mvn clean install -DskipTests
+
+# 5. Start services (each in separate terminal)
+cd rag-auth-service && mvn spring-boot:run
+cd rag-document-service && mvn spring-boot:run
+cd rag-embedding-service && mvn spring-boot:run
+cd rag-core-service && mvn spring-boot:run
+cd rag-gateway && mvn spring-boot:run
+cd rag-admin-service && mvn spring-boot:run
 ```
 
-## 💻 Development Deployment
+### Development Environment Variables
 
-### Automated Development Setup
-
-The development setup is completely automated. The setup script handles:
-
-- **Infrastructure Services**: PostgreSQL, Redis Stack, Kafka, Zookeeper, Ollama, Prometheus, Grafana
-- **Service Dependencies**: Proper startup order with health checks
-- **Environment Configuration**: Automatic `.env` file creation
-- **Database Integration**: Complete JPA persistence with PostgreSQL (production) and H2 (testing)
-- **Testing**: All 58 tests passing (47 unit + 11 integration tests)
+Create `.env.dev` file:
 
 ```bash
-# Complete setup with all options
-./scripts/setup/setup-local-dev.sh --verbose
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=rag_user
+DB_PASSWORD=rag_password
 
-# Skip Docker if already running
-./scripts/setup/setup-local-dev.sh --skip-docker
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=""
 
-# Skip Maven build (if already built)
-./scripts/setup/setup-local-dev.sh --skip-build
+# Kafka Configuration
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 
-# Get help and see all options
-./scripts/setup/setup-local-dev.sh --help
+# JWT Configuration
+JWT_SECRET=YourVerySecureJWTSecretKeyThatIsAtLeast256BitsLongForHS256Algorithm
+JWT_ACCESS_EXPIRATION=3600
+JWT_REFRESH_EXPIRATION=604800
+
+# AI/ML Configuration
+OPENAI_API_KEY=your-openai-api-key
+OLLAMA_HOST=http://localhost:11434
+
+# File Storage
+FILE_STORAGE_LOCATION=./storage
+
+# Monitoring
+ENABLE_METRICS=true
+PROMETHEUS_ENABLED=true
 ```
 
-### Service Architecture & Ports
+### Development Scripts
 
-| Service | Port | Description | Database |
-|---------|------|-------------|----------|
-| **rag-gateway** | 8080 | API Gateway (main entry) | - |
-| **rag-auth-service** | 8081 | Authentication & tenants | PostgreSQL |
-| **rag-core-service** | 8082 | RAG query engine | PostgreSQL |
-| **rag-document-service** | 8083 | Document processing | PostgreSQL |
-| **rag-embedding-service** | 8084 | Vector operations | Redis Stack |
-| **rag-admin-service** | 8085 | **Admin ops + Database** | **PostgreSQL + H2** |
-
-### Infrastructure Services
-
-| Service | Port | Credentials | Description |
-|---------|------|-------------|-------------|
-| **PostgreSQL** | 5432 | `rag_user`/`rag_password` | Primary database with pgvector |
-| **Redis Stack** | 6379, 8001 | `redis_password` | Vector storage + RediSearch + UI |
-| **Kafka** | 9092 | - | Message queue for async processing |
-| **Ollama** | 11434 | - | Local LLM inference |
-| **Prometheus** | 9090 | - | Metrics collection |
-| **Grafana** | 3000 | `admin`/`admin` | Monitoring dashboards |
-| **Kafka UI** | 8080 | - | Kafka management interface |
-
-### Development URLs
-
-After successful setup, access these URLs:
+Create `scripts/dev-start.sh`:
 
 ```bash
-# Application Services
-- API Gateway: http://localhost:8080/actuator/health
-- Auth Service: http://localhost:8081/swagger-ui.html
-- Admin Service: http://localhost:8085/admin/api/swagger-ui.html  # NEW with Database!
-- Document Service: http://localhost:8083/swagger-ui.html
-- Embedding Service: http://localhost:8084/swagger-ui.html
-- RAG Core: http://localhost:8082/swagger-ui.html
+#!/bin/bash
+set -e
 
-# Infrastructure & Monitoring
-- Grafana Dashboard: http://localhost:3000 (admin/admin)
-- Prometheus Metrics: http://localhost:9090
-- Kafka UI: http://localhost:8080 (if not conflicting)
-- Redis Insight: http://localhost:8001
+echo "🚀 Starting Enterprise RAG Development Environment"
+
+# Start infrastructure
+echo "📦 Starting infrastructure services..."
+docker-compose up -d
+
+# Wait for services to be ready
+echo "⏳ Waiting for services to be ready..."
+./scripts/wait-for-services.sh
+
+# Build application
+echo "🔨 Building application..."
+mvn clean install -DskipTests
+
+# Start services in background
+echo "🎯 Starting application services..."
+cd rag-auth-service && mvn spring-boot:run > ../logs/auth.log 2>&1 &
+sleep 10
+cd ../rag-document-service && mvn spring-boot:run > ../logs/document.log 2>&1 &
+sleep 10
+cd ../rag-embedding-service && mvn spring-boot:run > ../logs/embedding.log 2>&1 &
+sleep 10
+cd ../rag-core-service && mvn spring-boot:run > ../logs/core.log 2>&1 &
+sleep 10
+cd ../rag-gateway && mvn spring-boot:run > ../logs/gateway.log 2>&1 &
+sleep 10
+cd ../rag-admin-service && mvn spring-boot:run > ../logs/admin.log 2>&1 &
+
+echo "✅ All services started! Check logs/ directory for service logs"
+echo "🌐 Access points:"
+echo "   - API Gateway: http://localhost:8080"
+echo "   - Auth Service: http://localhost:8081"
+echo "   - Document Service: http://localhost:8083"
+echo "   - Grafana: http://localhost:3000 (admin/admin)"
+echo "   - Prometheus: http://localhost:9090"
 ```
 
-### Testing the System
+## 🏗️ Staging Deployment
 
-The automation scripts include comprehensive testing:
+### Docker-based Staging
+
+Create `docker-compose.staging.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  # Application Services
+  rag-auth-service:
+    build:
+      context: ./rag-auth-service
+      dockerfile: Dockerfile
+    container_name: rag-auth-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      DB_HOST: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  rag-document-service:
+    build:
+      context: ./rag-document-service
+      dockerfile: Dockerfile
+    container_name: rag-document-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      DB_HOST: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      FILE_STORAGE_LOCATION: /app/storage
+    ports:
+      - "8083:8083"
+    volumes:
+      - document_storage:/app/storage
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    restart: unless-stopped
+
+  rag-embedding-service:
+    build:
+      context: ./rag-embedding-service
+      dockerfile: Dockerfile
+    container_name: rag-embedding-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      DB_HOST: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    restart: unless-stopped
+
+  rag-core-service:
+    build:
+      context: ./rag-core-service
+      dockerfile: Dockerfile
+    container_name: rag-core-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      DB_HOST: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OLLAMA_HOST: http://ollama:11434
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - ollama
+    restart: unless-stopped
+
+  rag-gateway:
+    build:
+      context: ./rag-gateway
+      dockerfile: Dockerfile
+    container_name: rag-gateway-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      AUTH_SERVICE_URL: http://rag-auth-service:8081
+      DOCUMENT_SERVICE_URL: http://rag-document-service:8083
+      EMBEDDING_SERVICE_URL: http://rag-embedding-service:8084
+      CORE_SERVICE_URL: http://rag-core-service:8082
+      ADMIN_SERVICE_URL: http://rag-admin-service:8085
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rag-auth-service
+      - rag-document-service
+      - rag-embedding-service
+      - rag-core-service
+      - rag-admin-service
+    restart: unless-stopped
+
+  # Load Balancer (Nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: rag-nginx-staging
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/nginx.conf
+      - ./ssl/staging:/etc/ssl
+    depends_on:
+      - rag-gateway
+    restart: unless-stopped
+
+volumes:
+  document_storage:
+  postgres_data_staging:
+  redis_data_staging:
+  prometheus_data_staging:
+  grafana_data_staging:
+
+networks:
+  rag-staging:
+    driver: bridge
+```
+
+### Staging Deployment Script
+
+Create `scripts/deploy-staging.sh`:
 
 ```bash
-# Quick system test
-./scripts/tests/test-system.sh
+#!/bin/bash
+set -e
 
-# Manual testing examples
-# 1. Admin Service (Database-backed)
-curl -X POST http://localhost:8085/admin/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin@enterprise.com", "password": "admin123"}'
+echo "🏗️ Deploying to Staging Environment"
 
-# 2. Create Tenant
-curl -X POST http://localhost:8081/api/v1/tenants/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test Company",
-    "slug": "test-company", 
-    "description": "Test tenant"
-  }'
+# Load environment variables
+source .env.staging
 
-# 3. Upload Document
-curl -X POST http://localhost:8083/api/v1/documents/upload \
-  -H "Authorization: Bearer <jwt-token>" \
-  -F "file=@sample-document.pdf"
+# Pre-deployment checks
+echo "🔍 Running pre-deployment checks..."
+./scripts/pre-deploy-checks.sh staging
 
-# 4. Query RAG System  
-curl -X POST http://localhost:8082/api/v1/rag/query \
-  -H "Authorization: Bearer <jwt-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is this document about?", "maxResults": 5}'
+# Build Docker images
+echo "🔨 Building Docker images..."
+docker-compose -f docker-compose.staging.yml build
+
+# Database migrations
+echo "💾 Running database migrations..."
+./scripts/run-migrations.sh staging
+
+# Deploy services
+echo "🚀 Deploying services..."
+docker-compose -f docker-compose.staging.yml down
+docker-compose -f docker-compose.staging.yml up -d
+
+# Health checks
+echo "🏥 Running health checks..."
+./scripts/health-check.sh staging
+
+# Run integration tests
+echo "🧪 Running integration tests..."
+./scripts/run-integration-tests.sh staging
+
+echo "✅ Staging deployment completed successfully!"
+echo "🌐 Staging URL: https://staging.your-domain.com"
 ```
 
 ## 🏭 Production Deployment
 
-### Production-Ready Features
-
-The RAG system includes enterprise-grade production features:
-
-- **Multi-tenant data isolation** at database level
-- **Horizontal auto-scaling** with Kubernetes HPA
-- **Load balancing** with Nginx ingress
-- **SSL/TLS termination** with Let's Encrypt
-- **Comprehensive monitoring** with Prometheus/Grafana
-- **Database backups** and disaster recovery
-- **Security policies** and network isolation
-
 ### Kubernetes Deployment
 
-#### 1. Prepare Production Environment
+#### Namespace Configuration
 
-```bash
-# Create production environment file
-cat > .env.production << 'EOF'
-# Database (use managed PostgreSQL in production)
-DB_HOST=your-postgres-host.amazonaws.com
-DB_USERNAME=rag_prod_user
-DB_PASSWORD=super-secure-password
+Create `k8s/namespace.yml`:
 
-# Redis (use managed Redis in production)  
-REDIS_HOST=your-redis-cluster.cache.amazonaws.com
-REDIS_PASSWORD=redis-prod-password
-
-# Security
-JWT_SECRET=your-256-bit-production-jwt-secret-key
-CORS_ALLOWED_ORIGINS=https://your-domain.com
-
-# AI/ML Services
-OPENAI_API_KEY=your-production-openai-key
-OLLAMA_HOST=http://ollama-service:11434
-
-# Monitoring
-PROMETHEUS_ENABLED=true
-GRAFANA_ADMIN_PASSWORD=secure-grafana-password
-EOF
-```
-
-#### 2. Production Kubernetes Configuration
-
-The deployment includes production-ready Kubernetes manifests:
-
-**Namespace & Security**:
 ```yaml
-# k8s/namespace.yml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -258,41 +358,123 @@ metadata:
     environment: production
 ```
 
-**ConfigMaps & Secrets**:
+#### ConfigMaps
+
+Create `k8s/configmaps/app-config.yml`:
+
 ```yaml
-# k8s/configmaps/app-config.yml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rag-app-config
   namespace: enterprise-rag-prod
 data:
-  SPRING_PROFILES_ACTIVE: "production"
+  # Database Configuration
   DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "rag_enterprise"
+  DB_USERNAME: "rag_user"
+  
+  # Redis Configuration
   REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Kafka Configuration
   KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  
+  # Application Configuration
+  SPRING_PROFILES_ACTIVE: "production"
+  FILE_STORAGE_LOCATION: "/app/storage"
+  
+  # Monitoring
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "when-authorized"
 ```
 
-**Deployments with Auto-scaling**:
+#### Secrets
+
+Create `k8s/secrets/app-secrets.yml`:
+
 ```yaml
-# k8s/deployments/admin-service.yml (NEW - Database integrated)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rag-app-secrets
+  namespace: enterprise-rag-prod
+type: Opaque
+data:
+  # Base64 encoded values
+  DB_PASSWORD: <base64-encoded-password>
+  JWT_SECRET: <base64-encoded-jwt-secret>
+  REDIS_PASSWORD: <base64-encoded-redis-password>
+  OPENAI_API_KEY: <base64-encoded-openai-key>
+```
+
+#### Persistent Volumes
+
+Create `k8s/storage/persistent-volumes.yml`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rag-postgres-pv
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ssd
+  hostPath:
+    path: /data/postgres
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rag-postgres-pvc
+  namespace: enterprise-rag-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: ssd
+```
+
+#### Deployments
+
+Create `k8s/deployments/auth-service.yml`:
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rag-admin-service
+  name: rag-auth-service
   namespace: enterprise-rag-prod
+  labels:
+    app: rag-auth-service
+    tier: backend
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      app: rag-admin-service
+      app: rag-auth-service
   template:
+    metadata:
+      labels:
+        app: rag-auth-service
+        tier: backend
     spec:
       containers:
-      - name: rag-admin-service
-        image: enterprise-rag/admin-service:latest
+      - name: rag-auth-service
+        image: enterprise-rag/auth-service:latest
         ports:
-        - containerPort: 8085
+        - containerPort: 8081
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "production"
@@ -306,104 +488,320 @@ spec:
             memory: "1Gi"
             cpu: "500m"
           limits:
-            memory: "2Gi" 
+            memory: "2Gi"
             cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-auth-service
+  namespace: enterprise-rag-prod
+  labels:
+    app: rag-auth-service
+spec:
+  selector:
+    app: rag-auth-service
+  ports:
+  - port: 8081
+    targetPort: 8081
+    name: http
+  type: ClusterIP
 ```
 
-#### 3. Automated Production Deployment
+#### Horizontal Pod Autoscaler
+
+Create `k8s/hpa/auth-service-hpa.yml`:
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rag-auth-service-hpa
+  namespace: enterprise-rag-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rag-auth-service
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+```
+
+#### Ingress Configuration
+
+Create `k8s/ingress/ingress.yml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rag-ingress
+  namespace: enterprise-rag-prod
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+  - hosts:
+    - api.your-domain.com
+    secretName: rag-tls-secret
+  rules:
+  - host: api.your-domain.com
+    http:
+      paths:
+      - path: /auth(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-auth-service
+            port:
+              number: 8081
+      - path: /documents(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-document-service
+            port:
+              number: 8083
+      - path: /embeddings(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-embedding-service
+            port:
+              number: 8084
+      - path: /rag(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-core-service
+            port:
+              number: 8082
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-gateway
+            port:
+              number: 8080
+```
+
+### Production Deployment Script
+
+Create `scripts/deploy-production.sh`:
 
 ```bash
-# Deploy to production (requires --confirm flag)
-./scripts/deploy/deploy-production.sh --confirm
+#!/bin/bash
+set -e
 
-# Monitor deployment
-kubectl get pods -n enterprise-rag-prod
-kubectl logs -f deployment/rag-admin-service -n enterprise-rag-prod
+echo "🏭 Deploying to Production Environment"
 
-# Health check
-./scripts/utils/health-check.sh production
+# Safety checks
+if [[ "$1" != "--confirm" ]]; then
+  echo "❌ Production deployment requires --confirm flag"
+  echo "Usage: $0 --confirm"
+  exit 1
+fi
+
+# Load production environment
+source .env.production
+
+# Pre-deployment validation
+echo "🔍 Running pre-deployment validation..."
+./scripts/validate-production.sh
+
+# Create namespace
+echo "📁 Creating/updating namespace..."
+kubectl apply -f k8s/namespace.yml
+
+# Apply secrets (ensure they exist)
+echo "🔐 Applying secrets..."
+kubectl apply -f k8s/secrets/
+
+# Apply configmaps
+echo "⚙️ Applying configuration..."
+kubectl apply -f k8s/configmaps/
+
+# Apply storage
+echo "💾 Setting up storage..."
+kubectl apply -f k8s/storage/
+
+# Deploy infrastructure services
+echo "🏗️ Deploying infrastructure..."
+kubectl apply -f k8s/infrastructure/
+
+# Wait for infrastructure to be ready
+echo "⏳ Waiting for infrastructure services..."
+kubectl wait --for=condition=ready pod -l app=postgres -n enterprise-rag-prod --timeout=300s
+kubectl wait --for=condition=ready pod -l app=redis -n enterprise-rag-prod --timeout=300s
+kubectl wait --for=condition=ready pod -l app=kafka -n enterprise-rag-prod --timeout=300s
+
+# Run database migrations
+echo "📊 Running database migrations..."
+kubectl run migration --image=enterprise-rag/migrations:latest \
+  --env="DB_HOST=postgres-service" \
+  --env="DB_PASSWORD=$DB_PASSWORD" \
+  --restart=Never \
+  -n enterprise-rag-prod
+kubectl wait --for=condition=complete job/migration -n enterprise-rag-prod --timeout=600s
+
+# Deploy application services
+echo "🚀 Deploying application services..."
+kubectl apply -f k8s/deployments/
+
+# Apply HPA
+echo "📈 Setting up autoscaling..."
+kubectl apply -f k8s/hpa/
+
+# Apply ingress
+echo "🌐 Setting up ingress..."
+kubectl apply -f k8s/ingress/
+
+# Apply monitoring
+echo "📊 Setting up monitoring..."
+kubectl apply -f k8s/monitoring/
+
+# Wait for all deployments to be ready
+echo "⏳ Waiting for all services to be ready..."
+kubectl wait --for=condition=available deployment --all -n enterprise-rag-prod --timeout=600s
+
+# Run health checks
+echo "🏥 Running comprehensive health checks..."
+./scripts/health-check.sh production
+
+# Run smoke tests
+echo "🧪 Running smoke tests..."
+./scripts/smoke-tests.sh production
+
+echo "✅ Production deployment completed successfully!"
+echo "🌐 Production URL: https://api.your-domain.com"
+echo "📊 Monitoring: https://grafana.your-domain.com"
 ```
 
-### Production Scaling Configuration
-
-| Service | Min | Max | CPU Target | Memory Target |
-|---------|-----|-----|------------|---------------|
-| Gateway | 2 | 10 | 60% | 70% |
-| Auth | 3 | 20 | 70% | 80% |
-| **Admin** | **1** | **5** | **80%** | **85%** |
-| Document | 2 | 15 | 75% | 85% |
-| Embedding | 2 | 10 | 80% | 90% |
-| Core | 3 | 25 | 70% | 80% |
-
-## ⚙️ Environment Configuration
-
-### Development Environment
-
-The setup script automatically creates `.env` with:
-
-```bash
-# Database Configuration (Docker PostgreSQL)
-POSTGRES_DB=rag_enterprise
-POSTGRES_USER=rag_user  
-POSTGRES_PASSWORD=rag_password
-
-# Redis Configuration (Docker Redis Stack)
-REDIS_PASSWORD=redis_password
-
-# JWT Configuration
-JWT_SECRET=admin-super-secret-key-that-should-be-at-least-256-bits-long
-
-# AI/ML Configuration (Optional)
-# OPENAI_API_KEY=your-openai-key-here
-OLLAMA_HOST=http://localhost:11434
-
-# CORS Configuration
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-```
+## 🔧 Environment Configuration
 
 ### Application Profiles
 
-**Development** (`application-local.yml`):
-```yaml
-logging:
-  level:
-    com.enterprise.rag: DEBUG
-    org.springframework.security: INFO
-    org.hibernate.SQL: DEBUG
+#### Development (`application-dev.yml`)
 
+```yaml
 spring:
   jpa:
-    show-sql: true
     hibernate:
-      ddl-auto: update  # Auto-create tables in development
+      ddl-auto: create-drop
+    show-sql: true
+  
+  logging:
+    level:
+      com.enterprise.rag: DEBUG
+      org.springframework.security: DEBUG
+      org.hibernate.SQL: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"  # All actuator endpoints in dev
+        include: "*"
 ```
 
-**Production** (`application-prod.yml`):
-```yaml
-logging:
-  level:
-    com.enterprise.rag: WARN
-    org.springframework.security: ERROR
-  file:
-    name: /app/logs/application.log
+#### Staging (`application-staging.yml`)
 
+```yaml
 spring:
   jpa:
-    show-sql: false
     hibernate:
-      ddl-auto: validate  # Only validate schema in production
+      ddl-auto: validate
+    show-sql: false
+  
+  logging:
+    level:
+      com.enterprise.rag: INFO
+      org.springframework.security: WARN
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus  # Limited endpoints in production
+        include: health,info,prometheus,metrics
+```
+
+#### Production (`application-prod.yml`)
+
+```yaml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  logging:
+    level:
+      com.enterprise.rag: WARN
+      org.springframework.security: ERROR
+    file:
+      name: /app/logs/application.log
+    pattern:
+      file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: never
@@ -411,254 +809,671 @@ management:
 
 ## 📊 Monitoring & Observability
 
-### Grafana Dashboards
+### Prometheus Configuration
 
-Access Grafana at `http://localhost:3000` (admin/admin) with pre-configured dashboards:
+Create `monitoring/prometheus/prometheus-prod.yml`:
 
-1. **RAG System Overview**: Service health, request rates, response times
-2. **Database Performance**: Connection pools, query performance, storage usage
-3. **Infrastructure Monitoring**: CPU, memory, disk, network metrics
-4. **Business Metrics**: Tenant usage, document processing, query analytics
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
-### Prometheus Metrics
+rule_files:
+  - "alert_rules.yml"
 
-All services expose metrics at `/actuator/prometheus`:
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
 
-- **Application Metrics**: Request counts, latencies, error rates
-- **JVM Metrics**: Memory usage, GC performance, thread counts
-- **Database Metrics**: Connection pool status, query performance
-- **Redis Metrics**: Cache hit rates, memory usage
-- **Custom Business Metrics**: Tenant activity, document counts
+scrape_configs:
+  - job_name: 'rag-auth-service'
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+            - enterprise-rag-prod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: rag-auth-service
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: http
 
-### Health Checks
+  - job_name: 'rag-document-service'
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+            - enterprise-rag-prod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: rag-document-service
 
-Automated health monitoring:
-
-```bash
-# Quick health check
-./scripts/utils/health-check.sh
-
-# Detailed system analysis
-curl http://localhost:8085/admin/api/actuator/health | jq .
-
-# Service-specific metrics
-curl http://localhost:8085/admin/api/actuator/metrics/jvm.memory.used
+  - job_name: 'kubernetes-nodes'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
 ```
 
-## 🔐 Security & Best Practices
+### Grafana Dashboards
 
-### Database Security
+Create `monitoring/grafana/dashboards/rag-overview.json`:
 
-The **rag-admin-service** now includes comprehensive database security:
+```json
+{
+  "dashboard": {
+    "id": null,
+    "title": "Enterprise RAG System Overview",
+    "tags": ["rag", "microservices"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=~\"rag-.*-service\"}",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=~\"rag-.*-service\"}[5m])",
+            "legendFormat": "{{job}} - {{method}} {{uri}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=~\"rag-.*-service\"}[5m]))",
+            "legendFormat": "95th percentile - {{job}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}
+```
 
-- **Multi-tenant data isolation** with proper foreign key constraints
-- **Role-based access control** with ADMIN, USER, READER roles
-- **Password encryption** with BCrypt
-- **SQL injection prevention** through JPA parameterized queries
-- **Connection pooling** with HikariCP for production performance
+### Alert Rules
 
-### JWT Security
+Create `monitoring/prometheus/alert_rules.yml`:
 
-- **256-bit secrets** for token signing
-- **Refresh token rotation** for session management
-- **Tenant-scoped tokens** for multi-tenant isolation
-- **Rate limiting** per tenant and endpoint
+```yaml
+groups:
+  - name: rag-system-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up{job=~"rag-.*-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute."
 
-### Infrastructure Security
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second for {{ $labels.job }}"
 
-- **Network policies** for pod-to-pod communication
-- **Pod security policies** with non-root execution
-- **SSL/TLS encryption** for all external communication
-- **Secret management** with Kubernetes secrets
-- **Regular security updates** for base images
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }}s for {{ $labels.job }}"
 
-## 🔧 Troubleshooting
+      - alert: DatabaseConnectionsHigh
+        expr: postgresql_connections_active / postgresql_connections_max > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connections high"
+          description: "Database connection usage is at {{ $value }}%"
 
-### Common Issues & Solutions
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is at {{ $value }}%"
+```
 
-#### 1. Service Won't Start
+## 🔐 Security Configuration
+
+### Network Security
+
+#### Network Policies
+
+Create `k8s/security/network-policy.yml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-network-policy
+  namespace: enterprise-rag-prod
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: backend
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+    - protocol: TCP
+      port: 8082
+    - protocol: TCP
+      port: 8083
+    - protocol: TCP
+      port: 8084
+    - protocol: TCP
+      port: 8085
+
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: cache
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS outbound
+    - protocol: TCP
+      port: 53   # DNS
+    - protocol: UDP
+      port: 53   # DNS
+```
+
+#### Pod Security Policy
+
+Create `k8s/security/pod-security-policy.yml`:
+
+```yaml
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: rag-psp
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+```
+
+### SSL/TLS Configuration
+
+#### Certificate Management
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@your-domain.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+```
+
+## 💾 Backup & Recovery
+
+### Database Backup Strategy
+
+Create `scripts/backup-database.sh`:
 
 ```bash
-# Check prerequisites
-./scripts/setup/setup-local-dev.sh --help
+#!/bin/bash
+set -e
 
-# Check Docker services
-docker-compose ps
-docker-compose logs postgres redis kafka
+NAMESPACE="${1:-enterprise-rag-prod}"
+BACKUP_DIR="/backups/$(date +%Y/%m/%d)"
+RETENTION_DAYS=30
 
-# Check port conflicts
-lsof -i :8085  # Check admin service port
+echo "📦 Starting database backup for namespace: $NAMESPACE"
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR"
+
+# PostgreSQL backup
+echo "🗄️ Backing up PostgreSQL..."
+kubectl exec -n "$NAMESPACE" deployment/postgres -- pg_dumpall -U rag_user > "$BACKUP_DIR/postgres-$(date +%H%M%S).sql"
+
+# Redis backup
+echo "🔄 Backing up Redis..."
+kubectl exec -n "$NAMESPACE" deployment/redis -- redis-cli BGSAVE
+kubectl cp "$NAMESPACE/redis-pod:/data/dump.rdb" "$BACKUP_DIR/redis-$(date +%H%M%S).rdb"
+
+# Compress backups
+echo "🗜️ Compressing backups..."
+tar -czf "$BACKUP_DIR.tar.gz" -C "$(dirname "$BACKUP_DIR")" "$(basename "$BACKUP_DIR")"
+
+# Upload to cloud storage (example: AWS S3)
+echo "☁️ Uploading to cloud storage..."
+aws s3 cp "$BACKUP_DIR.tar.gz" "s3://your-backup-bucket/enterprise-rag/"
+
+# Cleanup old backups
+echo "🧹 Cleaning up old backups..."
+find /backups -name "*.tar.gz" -mtime +$RETENTION_DAYS -delete
+
+echo "✅ Backup completed successfully!"
+```
+
+### Disaster Recovery Plan
+
+Create `scripts/disaster-recovery.sh`:
+
+```bash
+#!/bin/bash
+set -e
+
+BACKUP_FILE="$1"
+NAMESPACE="${2:-enterprise-rag-prod}"
+
+if [[ -z "$BACKUP_FILE" ]]; then
+  echo "❌ Usage: $0 <backup-file> [namespace]"
+  exit 1
+fi
+
+echo "🚨 Starting disaster recovery for namespace: $NAMESPACE"
+echo "📁 Using backup file: $BACKUP_FILE"
+
+# Scale down all services
+echo "⏸️ Scaling down all services..."
+kubectl scale deployment --all --replicas=0 -n "$NAMESPACE"
+
+# Wait for pods to terminate
+echo "⏳ Waiting for pods to terminate..."
+kubectl wait --for=delete pod --all -n "$NAMESPACE" --timeout=300s
+
+# Restore database
+echo "🗄️ Restoring PostgreSQL..."
+kubectl exec -n "$NAMESPACE" deployment/postgres -- psql -U rag_user -f /tmp/restore.sql
+
+# Restore Redis
+echo "🔄 Restoring Redis..."
+kubectl cp "$BACKUP_FILE/redis.rdb" "$NAMESPACE/redis-pod:/data/dump.rdb"
+kubectl exec -n "$NAMESPACE" deployment/redis -- redis-cli DEBUG RESTART
+
+# Scale up services
+echo "▶️ Scaling up services..."
+kubectl scale deployment rag-auth-service --replicas=3 -n "$NAMESPACE"
+kubectl scale deployment rag-document-service --replicas=3 -n "$NAMESPACE"
+kubectl scale deployment rag-embedding-service --replicas=2 -n "$NAMESPACE"
+kubectl scale deployment rag-core-service --replicas=3 -n "$NAMESPACE"
+kubectl scale deployment rag-gateway --replicas=2 -n "$NAMESPACE"
+kubectl scale deployment rag-admin-service --replicas=1 -n "$NAMESPACE"
+
+# Wait for services to be ready
+echo "⏳ Waiting for services to be ready..."
+kubectl wait --for=condition=available deployment --all -n "$NAMESPACE" --timeout=600s
+
+# Run health checks
+echo "🏥 Running health checks..."
+./scripts/health-check.sh production
+
+echo "✅ Disaster recovery completed successfully!"
+```
+
+## 🔧 Performance Tuning
+
+### JVM Tuning
+
+Create `k8s/deployments/optimized-auth-service.yml`:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-auth-service
+  namespace: enterprise-rag-prod
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: rag-auth-service
+        image: enterprise-rag/auth-service:latest
+        env:
+        - name: JAVA_OPTS
+          value: >-
+            -Xms1g -Xmx2g
+            -XX:+UseG1GC
+            -XX:MaxGCPauseMillis=200
+            -XX:+HeapDumpOnOutOfMemoryError
+            -XX:HeapDumpPath=/app/logs/
+            -Dspring.profiles.active=production
+            -Dlogging.config=/app/config/logback-spring.xml
+        resources:
+          requests:
+            memory: "1.5Gi"
+            cpu: "500m"
+          limits:
+            memory: "2.5Gi"
+            cpu: "1000m"
+```
+
+### Database Optimization
+
+Create `infrastructure/postgres/postgresql.conf`:
+
+```conf
+# Connection Settings
+max_connections = 200
+shared_buffers = 2GB
+effective_cache_size = 6GB
+maintenance_work_mem = 512MB
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
+
+# Logging
+log_min_duration_statement = 1000
+log_checkpoints = on
+log_connections = on
+log_disconnections = on
+log_lock_waits = on
+
+# Replication (if using)
+wal_level = replica
+max_wal_senders = 3
+max_replication_slots = 3
+```
+
+### Redis Optimization
+
+Create `infrastructure/redis/redis.conf`:
+
+```conf
+# Memory Management
+maxmemory 4gb
+maxmemory-policy allkeys-lru
+maxmemory-samples 5
+
+# Persistence
+save 900 1
+save 300 10
+save 60 10000
+rdbcompression yes
+rdbchecksum yes
+
+# Networking
+tcp-keepalive 300
+timeout 0
+
+# Performance
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+list-max-ziplist-size -2
+set-max-intset-entries 512
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. Service Not Starting
+
+```bash
+# Check pod status
+kubectl get pods -n enterprise-rag-prod
+
+# Check pod logs
+kubectl logs -f deployment/rag-auth-service -n enterprise-rag-prod
+
+# Check events
+kubectl get events -n enterprise-rag-prod --sort-by=.metadata.creationTimestamp
+
+# Debug pod
+kubectl exec -it deployment/rag-auth-service -n enterprise-rag-prod -- /bin/bash
 ```
 
 #### 2. Database Connection Issues
 
 ```bash
-# Test PostgreSQL connection
-docker exec -it rag-postgres psql -U rag_user -d rag_enterprise
+# Test database connectivity
+kubectl run db-test --image=postgres:15 --rm -it --restart=Never \
+  --env="PGPASSWORD=password" \
+  -- psql -h postgres-service -U rag_user -d rag_enterprise
 
-# Check admin service database integration
-curl http://localhost:8085/admin/api/actuator/health
-curl http://localhost:8085/admin/api/actuator/metrics/hikaricp.connections.active
+# Check database logs
+kubectl logs deployment/postgres -n enterprise-rag-prod
+
+# Check connection pool metrics
+curl http://localhost:8081/actuator/metrics/hikaricp.connections.active
 ```
 
-#### 3. Integration Tests Failing
-
-```bash
-# Run specific test suite
-cd rag-admin-service && mvn test -Dtest=AdminAuthControllerIntegrationTest
-
-# Check test configuration
-./scripts/tests/test-system.sh
-
-# Reset environment
-./scripts/utils/dev-reset.sh --force
-./scripts/utils/quick-start.sh
-```
-
-#### 4. Performance Issues
+#### 3. Performance Issues
 
 ```bash
 # Check resource usage
-docker stats
+kubectl top pods -n enterprise-rag-prod
+kubectl top nodes
 
-# Monitor JVM metrics
-curl http://localhost:8085/admin/api/actuator/metrics/jvm.memory.used
-curl http://localhost:8085/admin/api/actuator/metrics/jvm.gc.pause
+# Check HPA status
+kubectl get hpa -n enterprise-rag-prod
 
-# Database performance
-curl http://localhost:8085/admin/api/actuator/metrics/data.repository.invocations
+# Analyze slow queries
+kubectl exec -it deployment/postgres -n enterprise-rag-prod -- \
+  psql -U rag_user -d rag_enterprise -c "
+  SELECT query, calls, total_time, mean_time 
+  FROM pg_stat_statements 
+  ORDER BY total_time DESC 
+  LIMIT 10;"
 ```
 
-### Debug Commands
+#### 4. Memory Issues
 
 ```bash
-# Complete system status
-./scripts/utils/health-check.sh
+# Check JVM memory usage
+curl http://localhost:8081/actuator/metrics/jvm.memory.used
+curl http://localhost:8081/actuator/metrics/jvm.memory.max
 
-# Service logs
-tail -f logs/admin-service.log
-
-# Docker infrastructure logs  
-docker-compose logs -f postgres redis kafka
-
-# Spring Boot actuator endpoints
-curl http://localhost:8085/admin/api/actuator/
-curl http://localhost:8085/admin/api/actuator/env
-curl http://localhost:8085/admin/api/actuator/configprops
+# Generate heap dump
+kubectl exec deployment/rag-auth-service -n enterprise-rag-prod -- \
+  jcmd 1 GC.run_finalization
+kubectl exec deployment/rag-auth-service -n enterprise-rag-prod -- \
+  jcmd 1 VM.classloader_stats
 ```
 
-## 📋 Scripts Reference
+### Debugging Commands
 
-### Setup Scripts
-
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `scripts/setup/setup-local-dev.sh` | Complete environment setup | `./setup-local-dev.sh [--skip-docker] [--skip-build] [--verbose]` |
-| `scripts/utils/quick-start.sh` | One-command full system startup | `./quick-start.sh` |
-| `scripts/utils/dev-reset.sh` | Clean and reset environment | `./dev-reset.sh [--force]` |
-
-### Service Management
-
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `scripts/services/start-all-services.sh` | Start all services in order | `./start-all-services.sh` |
-| `scripts/services/stop-all-services.sh` | Stop all running services | `./stop-all-services.sh` |
-
-### Monitoring & Testing
-
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `scripts/utils/health-check.sh` | Comprehensive health verification | `./health-check.sh` |
-| `scripts/tests/test-system.sh` | Integration and system tests | `./test-system.sh` |
-
-### Directory Structure
-
-```
-scripts/
-├── setup/
-│   └── setup-local-dev.sh       # Complete development setup
-├── services/  
-│   ├── start-all-services.sh    # Service startup automation
-│   └── stop-all-services.sh     # Service shutdown automation
-├── utils/
-│   ├── quick-start.sh           # One-command system startup  
-│   ├── health-check.sh          # System health verification
-│   └── dev-reset.sh             # Environment reset utility
-└── tests/
-    └── test-system.sh           # Integration testing automation
-```
-
-## 🎯 What's New - Database Integration
-
-### rag-admin-service Enhancements
-
-The **rag-admin-service** has been completely upgraded with database integration:
-
-✅ **Database Layer**:
-- **TenantRepository**: Custom JPA queries for tenant analytics and management
-- **UserRepository**: Comprehensive user management with tenant-aware operations
-- **PostgreSQL** for production and **H2** for testing
-
-✅ **Service Layer**:
-- **TenantServiceImpl**: Complete database-backed tenant operations
-- **UserServiceImpl**: Full user management with role-based access control
-- **Transaction management** for data consistency
-
-✅ **Testing Achievement**:
-- **58 tests passing** (47 unit + 11 integration tests)
-- **100% success rate** with comprehensive test coverage
-- **Database integration tests** with Spring Boot context
-
-✅ **Production Ready**:
-- **Multi-tenant data isolation** at database level
-- **Advanced analytics** capabilities with custom queries
-- **Proper entity relationships** and foreign key constraints
-
-## 🚀 Getting Started Summary
-
-### For New Developers
+Create `scripts/debug-toolkit.sh`:
 
 ```bash
-# 1. One-command setup (recommended)
-git clone <repository-url>
-cd enterprise-rag
-./scripts/utils/quick-start.sh
+#!/bin/bash
 
-# 2. Access the system
-open http://localhost:8085/admin/api/swagger-ui.html  # Admin service with database
-open http://localhost:3000  # Grafana (admin/admin)
+NAMESPACE="${1:-enterprise-rag-prod}"
+SERVICE="${2:-rag-auth-service}"
 
-# 3. Run tests
-./scripts/tests/test-system.sh
+echo "🔍 Debug Toolkit for $SERVICE in $NAMESPACE"
+
+echo "📊 Resource Usage:"
+kubectl top pods -l app=$SERVICE -n $NAMESPACE
+
+echo "📋 Pod Status:"
+kubectl get pods -l app=$SERVICE -n $NAMESPACE -o wide
+
+echo "🔗 Service Endpoints:"
+kubectl get endpoints $SERVICE -n $NAMESPACE
+
+echo "📝 Recent Events:"
+kubectl get events -n $NAMESPACE --field-selector involvedObject.name=$SERVICE --sort-by=.metadata.creationTimestamp
+
+echo "🏥 Health Check:"
+kubectl exec deployment/$SERVICE -n $NAMESPACE -- \
+  curl -f http://localhost:8081/actuator/health || echo "Health check failed"
+
+echo "📊 Metrics Sample:"
+kubectl exec deployment/$SERVICE -n $NAMESPACE -- \
+  curl -s http://localhost:8081/actuator/metrics | head -20
+
+echo "📁 Recent Logs:"
+kubectl logs deployment/$SERVICE -n $NAMESPACE --tail=50
 ```
 
-### For Production Deployment
+## 📈 Scaling Guidelines
 
-```bash
-# 1. Prepare production config
-cp .env.production.example .env.production
-# Edit .env.production with your values
+### Horizontal Scaling
 
-# 2. Deploy to Kubernetes
-./scripts/deploy/deploy-production.sh --confirm
+| Service | Min Replicas | Max Replicas | CPU Threshold | Memory Threshold |
+|---------|--------------|--------------|---------------|------------------|
+| Auth Service | 3 | 20 | 70% | 80% |
+| Document Service | 2 | 15 | 75% | 85% |
+| Embedding Service | 2 | 10 | 80% | 90% |
+| Core Service | 3 | 25 | 70% | 80% |
+| Gateway | 2 | 10 | 60% | 70% |
+| Admin Service | 1 | 5 | 80% | 85% |
 
-# 3. Monitor deployment
-kubectl get pods -n enterprise-rag-prod
-./scripts/utils/health-check.sh production
+### Vertical Scaling
+
+```yaml
+# Production Resource Allocations
+resources:
+  auth-service:
+    requests: { memory: "1.5Gi", cpu: "500m" }
+    limits: { memory: "2.5Gi", cpu: "1000m" }
+  
+  document-service:
+    requests: { memory: "2Gi", cpu: "750m" }
+    limits: { memory: "4Gi", cpu: "1500m" }
+  
+  embedding-service:
+    requests: { memory: "3Gi", cpu: "1000m" }
+    limits: { memory: "6Gi", cpu: "2000m" }
+  
+  core-service:
+    requests: { memory: "2Gi", cpu: "750m" }
+    limits: { memory: "4Gi", cpu: "1500m" }
 ```
 
-## 📞 Support
+## 🎯 Deployment Checklist
 
-For issues and questions:
+### Pre-Deployment
 
-1. **Check logs**: `./scripts/utils/health-check.sh`
-2. **Reset environment**: `./scripts/utils/dev-reset.sh --force`
-3. **Run diagnostics**: `./scripts/tests/test-system.sh`
-4. **GitHub Issues**: [Create an issue](https://github.com/your-repo/issues)
+- [ ] Environment variables configured
+- [ ] Secrets created and validated
+- [ ] Database migrations tested
+- [ ] SSL certificates valid
+- [ ] Resource quotas set
+- [ ] Monitoring configured
+- [ ] Backup strategy implemented
+
+### Deployment
+
+- [ ] Infrastructure services deployed
+- [ ] Application services deployed
+- [ ] Health checks passing
+- [ ] Ingress configured
+- [ ] DNS records updated
+- [ ] SSL/TLS working
+- [ ] Monitoring active
+
+### Post-Deployment
+
+- [ ] Smoke tests passed
+- [ ] Performance tests executed
+- [ ] Security scan completed
+- [ ] Documentation updated
+- [ ] Team notified
+- [ ] Rollback plan confirmed
 
 ---
 
-**🎉 The Enterprise RAG System is now ready for development with complete database integration and automated deployment!**
+## 📞 Support & Maintenance
 
-*Last Updated: August 2025 - Database Integration Complete*
-*All 58 tests passing • Production-ready with JPA persistence*
+For ongoing support and maintenance:
+
+1. **Monitor dashboards** regularly
+2. **Review logs** for errors and warnings
+3. **Update dependencies** quarterly
+4. **Backup verification** monthly
+5. **Security updates** as available
+6. **Performance reviews** bi-annually
+
+**Emergency Contact**: DevOps Team - `devops@your-company.com`
+
+**Documentation**: Keep this guide updated with environment changes and lessons learned.
+
+---
+
+*Last Updated: August 2025*
+*Version: 1.0.0*
