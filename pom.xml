@@ -10,7 +10,7 @@
     <packaging>pom</packaging>
 
     <name>Enterprise RAG System</name>
-    <description>Production-ready Enterprise RAG (Retrieval Augmented Generation) system</description>
+    <description>Enterprise-grade Enterprise RAG (Retrieval Augmented Generation) system</description>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

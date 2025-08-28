@@ -1,6 +1,6 @@
 # Enterprise RAG System
 
-A production-ready Enterprise RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
+An enterprise-grade Enterprise RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
 
 ## 🏗️ Architecture Overview
 
@@ -208,7 +208,7 @@ curl -X POST http://localhost:8082/api/v1/rag/query \
 | **rag-embedding-service** | 8084 | Vector operations |
 | **rag-admin-service** | 8085 | Admin operations & analytics |
 
-## 🏭 Production Deployment
+## 🏭 Enterprise Deployment
 
 ### Environment Variables
 ```bash
@@ -228,15 +228,15 @@ export OLLAMA_HOST=http://ollama:11434
 export KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 ```
 
-### Docker Production Build
+### Docker Enterprise Build
 ```bash
-# Build production images
+# Build enterprise images
 docker build -t rag-auth-service:latest rag-auth-service/
 docker build -t rag-document-service:latest rag-document-service/
 # ... repeat for other services
 
-# Deploy with production docker-compose
-docker-compose -f docker-compose.prod.yml up -d
+# Deploy with enterprise docker-compose
+docker-compose -f docker-compose.enterprise.yml up -d
 ```
 
 ### Kubernetes Deployment
@@ -328,7 +328,7 @@ This project demonstrates:
 - Complex microservices architecture with proper separation of concerns
 - Multi-tenant system design with complete data isolation
 - Event-driven processing with Kafka at scale
-- Production-ready monitoring and observability
+- Enterprise-grade monitoring and observability
 
 **AI/ML Engineering Skills**:
 - RAG implementation with real-world complexity
