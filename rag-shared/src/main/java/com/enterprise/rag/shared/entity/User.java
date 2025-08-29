@@ -9,6 +9,40 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entity representing a user in the multi-tenant Enterprise RAG system.
+ * 
+ * <p>Users are scoped to specific tenants and have roles that determine their
+ * access permissions within the system. Each user can upload documents, perform
+ * RAG queries, and manage their profile within their tenant's boundaries.</p>
+ * 
+ * <p>Key features:</p>
+ * <ul>
+ *   <li>Email-based unique identification across the entire system</li>
+ *   <li>Role-based access control (ADMIN, USER, READER)</li>
+ *   <li>Status management for user lifecycle and security</li>
+ *   <li>Email verification workflow support</li>
+ *   <li>Audit trail with last login tracking</li>
+ *   <li>Tenant isolation for multi-tenancy</li>
+ * </ul>
+ * 
+ * <p>Usage example:</p>
+ * <pre>{@code
+ * User user = new User("John", "Doe", "john.doe@acme.com", tenant);
+ * user.setRole(UserRole.ADMIN);
+ * user.setPasswordHash(passwordEncoder.encode("secure-password"));
+ * user.setEmailVerified(true);
+ * userRepository.save(user);
+ * }</pre>
+ * 
+ * @author Enterprise RAG Development Team
+ * @since 1.0.0
+ * @version 1.0
+ * @see Tenant
+ * @see Document
+ * @see UserRole
+ * @see UserStatus
+ */
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_user_email", columnList = "email", unique = true),
@@ -17,47 +51,64 @@ import java.util.List;
 })
 public class User extends BaseEntity {
 
+    /** User's first name for display and identification purposes. */
     @NotBlank
     @Size(min = 2, max = 100)
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
+    /** User's last name for display and identification purposes. */
     @NotBlank
     @Size(min = 2, max = 100)
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
+    /** 
+     * User's email address, used as unique identifier for authentication.
+     * Must be unique across the entire system.
+     */
     @NotBlank
     @Email
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    /**
+     * Hashed password for authentication.
+     * Should never store plain text passwords.
+     */
     @NotBlank
     @Size(min = 8)
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    /** User's role determining their access permissions within the tenant. */
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role = UserRole.USER;
 
+    /** Current operational status of the user account. */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private UserStatus status = UserStatus.ACTIVE;
 
+    /** Timestamp of the user's most recent successful login. */
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    /** Flag indicating whether the user's email address has been verified. */
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
+    /** Token used for email verification workflow. */
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
+    /** The tenant organization this user belongs to. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
+    /** List of documents uploaded by this user. */
     @OneToMany(mappedBy = "uploadedBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Document> uploadedDocuments = new ArrayList<>();
 

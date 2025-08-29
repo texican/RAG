@@ -6,11 +6,50 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * Utility class for splitting text into optimally sized chunks for RAG processing.
+ * 
+ * <p>Text chunking is a critical preprocessing step in RAG systems that breaks large documents
+ * into smaller, semantically meaningful pieces. This ensures that vector embeddings capture
+ * focused semantic content and that retrieved context fits within LLM token limits.</p>
+ * 
+ * <p>Supported chunking strategies:</p>
+ * <ul>
+ *   <li><strong>Fixed Size:</strong> Simple character-based chunking with configurable overlap</li>
+ *   <li><strong>Semantic:</strong> Intelligent chunking that preserves sentence and paragraph boundaries</li>
+ *   <li><strong>Sliding Window:</strong> Overlapping chunks with configurable step size</li>
+ * </ul>
+ * 
+ * <p>Usage example:</p>
+ * <pre>{@code
+ * TenantDto.ChunkingConfig config = new TenantDto.ChunkingConfig(
+ *     TenantDto.ChunkingStrategy.SEMANTIC, 
+ *     1000, 
+ *     200
+ * );
+ * List<String> chunks = TextChunker.chunkText(documentText, config);
+ * }</pre>
+ * 
+ * @author Enterprise RAG Development Team
+ * @since 1.0.0
+ * @version 1.0
+ */
 public class TextChunker {
 
+    /** Regular expression pattern for identifying sentence boundaries. */
     private static final Pattern SENTENCE_BOUNDARY = Pattern.compile("(?<=[.!?])\\s+");
+    
+    /** Regular expression pattern for identifying paragraph boundaries. */
     private static final Pattern PARAGRAPH_BOUNDARY = Pattern.compile("\\n\\s*\\n");
 
+    /**
+     * Splits text into chunks based on the specified chunking configuration.
+     *
+     * @param text the input text to be chunked
+     * @param config the chunking configuration specifying strategy, size, and overlap
+     * @return a list of text chunks optimized for RAG processing
+     * @throws IllegalArgumentException if text is null or config is invalid
+     */
     public static List<String> chunkText(String text, TenantDto.ChunkingConfig config) {
         return switch (config.strategy()) {
             case FIXED_SIZE -> chunkFixedSize(text, config.chunkSize(), config.chunkOverlap());
@@ -106,11 +145,32 @@ public class TextChunker {
         return chunks;
     }
 
+    /**
+     * Estimates the token count for a given text using a simple heuristic.
+     * <p>This uses an approximation of ~4 characters per token for English text,
+     * which is suitable for rough capacity planning but not precise tokenization.</p>
+     *
+     * @param text the text to estimate tokens for
+     * @return estimated number of tokens
+     */
     public static int estimateTokenCount(String text) {
         // Rough estimation: ~4 characters per token for English text
         return (int) Math.ceil(text.length() / 4.0);
     }
 
+    /**
+     * Cleans and normalizes text for optimal chunking and processing.
+     * <p>Performs the following normalization steps:</p>
+     * <ul>
+     *   <li>Normalizes line endings to Unix format (\n)</li>
+     *   <li>Reduces multiple consecutive newlines to double newlines</li>
+     *   <li>Collapses multiple spaces and tabs to single spaces</li>
+     *   <li>Trims whitespace from beginning and end</li>
+     * </ul>
+     *
+     * @param text the text to clean, may be null
+     * @return cleaned text, or empty string if input was null
+     */
     public static String cleanText(String text) {
         if (text == null) return "";
         
