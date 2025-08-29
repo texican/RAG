@@ -24,6 +24,73 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Enterprise-grade document management service providing comprehensive document lifecycle operations.
+ * 
+ * <p>This service orchestrates the complete document processing pipeline for the Enterprise RAG system,
+ * from initial upload through text extraction, chunking, and embedding generation. It maintains strict
+ * multi-tenant isolation, comprehensive validation, and robust error handling throughout all operations.</p>
+ * 
+ * <p><strong>Core Capabilities:</strong></p>
+ * <ul>
+ *   <li><strong>Document Upload:</strong> Multi-format file upload with validation and storage</li>
+ *   <li><strong>Text Processing:</strong> Automated text extraction using Apache Tika</li>
+ *   <li><strong>Content Chunking:</strong> Intelligent text segmentation for optimal embeddings</li>
+ *   <li><strong>Async Processing:</strong> Kafka-based pipeline for scalable document processing</li>
+ *   <li><strong>Multi-Tenant Operations:</strong> Complete tenant isolation and resource management</li>
+ *   <li><strong>Analytics:</strong> Document statistics and storage usage tracking</li>
+ * </ul>
+ * 
+ * <p><strong>Document Processing Pipeline:</strong></p>
+ * <ol>
+ *   <li><strong>Validation Phase:</strong> File type, size, tenant limits, security checks</li>
+ *   <li><strong>Storage Phase:</strong> Secure file storage with tenant-scoped organization</li>
+ *   <li><strong>Text Extraction:</strong> Content extraction using Apache Tika for multiple formats</li>
+ *   <li><strong>Metadata Extraction:</strong> Document properties and custom metadata processing</li>
+ *   <li><strong>Text Chunking:</strong> Intelligent segmentation based on tenant configuration</li>
+ *   <li><strong>Embedding Pipeline:</strong> Kafka events for asynchronous vector generation</li>
+ * </ol>
+ * 
+ * <p><strong>Multi-Tenant Architecture:</strong></p>
+ * <ul>
+ *   <li>Complete document isolation between tenant organizations</li>
+ *   <li>Per-tenant resource limits (document count, storage usage)</li>
+ *   <li>Tenant-specific chunking and processing configurations</li>
+ *   <li>Secure access control with tenant validation on all operations</li>
+ * </ul>
+ * 
+ * <p><strong>Supported Document Types:</strong></p>
+ * <ul>
+ *   <li><strong>PDF:</strong> Portable Document Format with text and metadata extraction</li>
+ *   <li><strong>Microsoft Word:</strong> .doc and .docx files with full content extraction</li>
+ *   <li><strong>Plain Text:</strong> .txt files with encoding detection</li>
+ *   <li><strong>Markdown:</strong> .md files with structure preservation</li>
+ *   <li><strong>HTML:</strong> Web documents with tag stripping and content extraction</li>
+ * </ul>
+ * 
+ * <p><strong>Error Handling & Recovery:</strong></p>
+ * <ul>
+ *   <li>Comprehensive validation with descriptive error messages</li>
+ *   <li>Transactional integrity with rollback on failures</li>
+ *   <li>Graceful degradation for processing errors</li>
+ *   <li>Audit logging for all operations and failures</li>\n *   <li>Status tracking throughout the processing pipeline</li>\n * </ul>
+ * 
+ * <p><strong>Integration Points:</strong></p>
+ * <ul>
+ *   <li>{@link DocumentRepository} - Database persistence for document metadata</li>
+ *   <li>{@link FileStorageService} - Physical file storage and retrieval</li>
+ *   <li>{@link TextExtractionService} - Apache Tika integration for content extraction</li>
+ *   <li>{@link DocumentChunkService} - Text chunking and segmentation operations</li>
+ *   <li>{@link DocumentProcessingKafkaServiceInterface} - Event-driven async processing</li>
+ * </ul>
+ * 
+ * @author Enterprise RAG Development Team
+ * @version 1.0
+ * @since 1.0
+ * @see DocumentController
+ * @see com.enterprise.rag.shared.dto.DocumentDto
+ * @see com.enterprise.rag.shared.entity.Document
+ */
 @Service
 @Transactional
 public class DocumentService {

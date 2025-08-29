@@ -14,8 +14,58 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for User entity operations in the admin service.
- * Provides CRUD operations and custom queries for user management across tenants.
+ * Enterprise-grade repository interface for comprehensive user data access and multi-tenant user management.
+ * 
+ * <p>This repository provides extensive user management capabilities across the multi-tenant Enterprise RAG
+ * system, including CRUD operations, advanced search functionality, tenant-scoped operations, analytics queries,
+ * and administrative reporting features. All operations maintain strict tenant isolation and data integrity.</p>
+ * 
+ * <p><strong>Core Capabilities:</strong></p>
+ * <ul>
+ *   <li><strong>Multi-Tenant Operations:</strong> Tenant-scoped user queries with strict isolation</li>
+ *   <li><strong>Authentication Support:</strong> Email-based user lookup and credential validation</li>
+ *   <li><strong>Advanced Search:</strong> Full-text search across names and email addresses</li>
+ *   <li><strong>Role Management:</strong> Role-based filtering and administrative privilege queries</li>
+ *   <li><strong>Status Tracking:</strong> User lifecycle and verification status management</li>
+ *   <li><strong>Analytics Queries:</strong> Comprehensive user statistics and reporting</li>
+ * </ul>
+ * 
+ * <p><strong>Multi-Tenant Architecture:</strong></p>
+ * <ul>
+ *   <li>Complete user isolation between tenant organizations</li>
+ *   <li>Tenant administrator identification and protection</li>
+ *   <li>Cross-tenant administrative operations with proper authorization</li>
+ *   <li>Tenant-specific user analytics and capacity monitoring</li>
+ * </ul>
+ * 
+ * <p><strong>Security Features:</strong></p>
+ * <ul>
+ *   <li>Email uniqueness validation across the entire system</li>
+ *   <li>Role-based access control query support</li>
+ *   <li>Email verification token management</li>
+ *   <li>Inactive user identification for security audits</li>
+ *   <li>Administrative user protection mechanisms</li>
+ * </ul>
+ * 
+ * <p><strong>Administrative Analytics:</strong></p>
+ * <ul>
+ *   <li>System-wide user statistics and role distribution</li>
+ *   <li>Tenant-specific user activity and status summaries</li>
+ *   <li>User onboarding and verification tracking</li>
+ *   <li>Activity-based user engagement analysis</li>
+ * </ul>
+ * 
+ * <p><strong>Performance Optimization:</strong></p>
+ * <p>All queries are optimized for enterprise-scale operations with proper indexing considerations.
+ * Custom JPQL queries include parameterization to prevent SQL injection and maintain optimal
+ * performance under high concurrent load across multiple tenant boundaries.</p>
+ * 
+ * @author Enterprise RAG Development Team
+ * @version 1.0
+ * @since 1.0
+ * @see com.enterprise.rag.shared.entity.User
+ * @see com.enterprise.rag.admin.service.UserService
+ * @see com.enterprise.rag.shared.entity.Tenant
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {

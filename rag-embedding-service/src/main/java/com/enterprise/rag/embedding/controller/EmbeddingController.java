@@ -24,7 +24,69 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * REST controller for embedding and vector search operations.
+ * Enterprise-grade REST controller for comprehensive vector embedding and semantic search operations.
+ * 
+ * <p>This controller provides the complete vector operations interface for the Enterprise RAG system,
+ * including embedding generation, semantic similarity search, hybrid search capabilities, and vector
+ * storage management. All operations are multi-tenant aware with comprehensive security and validation.</p>
+ * 
+ * <p><strong>Core Capabilities:</strong></p>
+ * <ul>
+ *   <li><strong>Embedding Generation:</strong> Text-to-vector conversion using multiple AI models</li>
+ *   <li><strong>Semantic Search:</strong> High-performance similarity search with configurable parameters</li>
+ *   <li><strong>Hybrid Search:</strong> Combined semantic and keyword search for enhanced relevance</li>
+ *   <li><strong>Batch Operations:</strong> Efficient bulk processing for enterprise-scale workloads</li>
+ *   <li><strong>Async Processing:</strong> Non-blocking operations with CompletableFuture support</li>
+ *   <li><strong>Vector Management:</strong> Complete vector lifecycle and storage operations</li>
+ * </ul>
+ * 
+ * <p><strong>Multi-Tenant Architecture:</strong></p>
+ * <ul>
+ *   <li>Complete vector isolation between tenant organizations</li>
+ *   <li>Tenant-specific embedding models and configurations</li>
+ *   <li>Per-tenant caching and performance optimization</li>
+ *   <li>Secure access control through X-Tenant-ID header validation</li>
+ * </ul>
+ * 
+ * <p><strong>Supported AI Models:</strong></p>
+ * <ul>
+ *   <li><strong>OpenAI Models:</strong> text-embedding-3-small, text-embedding-3-large</li>
+ *   <li><strong>Sentence Transformers:</strong> all-MiniLM-L6-v2 for local processing</li>
+ *   <li><strong>Custom Models:</strong> Extensible architecture for additional embedding models</li>
+ * </ul>
+ * 
+ * <p><strong>Search Features:</strong></p>
+ * <ul>
+ *   <li><strong>Semantic Search:</strong> Vector similarity with cosine distance</li>
+ *   <li><strong>Keyword Search:</strong> Traditional text matching capabilities</li>
+ *   <li><strong>Hybrid Search:</strong> Weighted combination of semantic and keyword results</li>
+ *   <li><strong>Filtered Search:</strong> Document-specific and metadata-based filtering</li>
+ *   <li><strong>Batch Search:</strong> Multiple queries processed efficiently</li>
+ * </ul>
+ * 
+ * <p><strong>Performance Features:</strong></p>
+ * <ul>
+ *   <li>Redis-based vector caching for enhanced performance</li>
+ *   <li>Asynchronous processing with CompletableFuture</li>
+ *   <li>Batch operations for reduced API overhead</li>
+ *   <li>Configurable search thresholds and result limits</li>
+ *   <li>Real-time statistics and performance monitoring</li>
+ * </ul>
+ * 
+ * <p><strong>Integration Points:</strong></p>
+ * <ul>
+ *   <li>{@link EmbeddingService} - Core embedding generation and AI model integration</li>
+ *   <li>{@link SimilaritySearchService} - Advanced search algorithms and result ranking</li>
+ *   <li>{@link VectorStorageService} - Redis-based vector storage and retrieval</li>
+ *   <li>{@link EmbeddingCacheService} - Performance optimization through intelligent caching</li>
+ * </ul>
+ * 
+ * @author Enterprise RAG Development Team
+ * @version 1.0
+ * @since 1.0
+ * @see EmbeddingService
+ * @see SimilaritySearchService
+ * @see VectorStorageService
  */
 @RestController
 @RequestMapping("/api/v1/embeddings")

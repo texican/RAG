@@ -14,6 +14,60 @@ import org.springframework.kafka.core.ProducerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Apache Kafka configuration for the Enterprise RAG Document Service.
+ * <p>
+ * This configuration sets up Kafka producers for event-driven document processing
+ * pipeline. It enables asynchronous communication between the document service
+ * and downstream services (embedding service, core service) for real-time
+ * document processing and indexing.
+ * 
+ * <h2>Event-Driven Architecture</h2>
+ * <ul>
+ *   <li><strong>Document Processing Events</strong> - Publishes document lifecycle events</li>
+ *   <li><strong>Chunking Notifications</strong> - Notifies when document chunks are ready</li>
+ *   <li><strong>Processing Status</strong> - Publishes processing status updates</li>
+ *   <li><strong>Error Notifications</strong> - Publishes processing error events</li>
+ * </ul>
+ * 
+ * <h2>Kafka Producer Configuration</h2>
+ * <ul>
+ *   <li><strong>String Serialization</strong> - JSON string serialization for message payloads</li>
+ *   <li><strong>Acknowledgment Level</strong> - Level 1 acknowledgments for performance/reliability balance</li>
+ *   <li><strong>Retry Configuration</strong> - 3 retry attempts for transient failures</li>
+ *   <li><strong>Batch Configuration</strong> - Optimized batching for high throughput</li>
+ *   <li><strong>Memory Management</strong> - Configured buffer memory for efficient processing</li>
+ * </ul>
+ * 
+ * <h2>Performance Optimization</h2>
+ * <ul>
+ *   <li><strong>Batch Size</strong> - 16KB batches for optimal network utilization</li>
+ *   <li><strong>Linger Time</strong> - 1ms linger for low-latency message delivery</li>
+ *   <li><strong>Buffer Memory</strong> - 32MB buffer for high-throughput scenarios</li>
+ *   <li><strong>Connection Pooling</strong> - Efficient connection management</li>
+ * </ul>
+ * 
+ * <h2>Conditional Configuration</h2>
+ * <ul>
+ *   <li><strong>Environment Switching</strong> - Kafka can be disabled for testing</li>
+ *   <li><strong>Development Mode</strong> - Simplified configuration for local development</li>
+ *   <li><strong>Production Ready</strong> - Scalable configuration for production workloads</li>
+ * </ul>
+ * 
+ * <h2>Message Topics</h2>
+ * <ul>
+ *   <li><strong>document.processed</strong> - Document processing completion events</li>
+ *   <li><strong>document.chunked</strong> - Document chunking completion events</li>
+ *   <li><strong>document.error</strong> - Document processing error events</li>
+ *   <li><strong>document.deleted</strong> - Document deletion events</li>
+ * </ul>
+ * 
+ * @author Enterprise RAG Development Team
+ * @version 0.8.0
+ * @since 0.1.0
+ * @see org.springframework.kafka.core.KafkaTemplate
+ * @see org.apache.kafka.clients.producer.ProducerConfig
+ */
 @Configuration
 public class KafkaConfig {
 

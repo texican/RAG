@@ -28,6 +28,58 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Enterprise-grade REST controller for comprehensive document management operations in the RAG system.
+ * 
+ * <p>This controller provides a complete set of document lifecycle operations including upload, processing,
+ * retrieval, metadata management, and analytics. All operations are multi-tenant aware and include
+ * comprehensive validation, error handling, and audit logging.</p>
+ * 
+ * <p><strong>Core Capabilities:</strong></p>
+ * <ul>
+ *   <li><strong>Document Upload:</strong> Multi-format file upload with metadata support</li>
+ *   <li><strong>Document Management:</strong> CRUD operations with tenant isolation</li>
+ *   <li><strong>Text Processing:</strong> Automatic text extraction and chunking</li>
+ *   <li><strong>Analytics:</strong> Storage usage and document count statistics</li>
+ *   <li><strong>Pagination:</strong> Efficient large dataset handling</li>
+ * </ul>
+ * 
+ * <p><strong>Multi-Tenant Architecture:</strong></p>
+ * <ul>
+ *   <li>Complete tenant isolation through X-Tenant-ID header</li>
+ *   <li>Tenant-scoped document access and operations</li>
+ *   <li>Per-tenant resource limits and quota enforcement</li>
+ *   <li>Secure document storage with tenant boundaries</li>
+ * </ul>
+ * 
+ * <p><strong>File Processing Pipeline:</strong></p>
+ * <ol>
+ *   <li><strong>Upload Validation:</strong> File type, size, and security checks</li>
+ *   <li><strong>Metadata Extraction:</strong> File properties and custom metadata</li>
+ *   <li><strong>Text Extraction:</strong> Content extraction using Apache Tika</li>
+ *   <li><strong>Text Chunking:</strong> Intelligent text segmentation for embeddings</li>
+ *   <li><strong>Async Processing:</strong> Kafka-based embedding generation pipeline</li>
+ * </ol>
+ * 
+ * <p><strong>Security Features:</strong></p>
+ * <ul>
+ *   <li>Tenant-based access control and data isolation</li>
+ *   <li>File upload security scanning and validation</li>
+ *   <li>Rate limiting and resource quota enforcement</li>
+ *   <li>Comprehensive audit logging for all operations</li>
+ * </ul>
+ * 
+ * <p><strong>API Documentation:</strong></p>
+ * <p>This controller is fully documented with OpenAPI 3.0 annotations for automatic
+ * Swagger documentation generation, including detailed parameter descriptions,
+ * response schemas, and error code documentation.</p>
+ * 
+ * @author Enterprise RAG Development Team
+ * @version 1.0
+ * @since 1.0
+ * @see DocumentService
+ * @see com.enterprise.rag.shared.dto.DocumentDto
+ */
 @RestController
 @RequestMapping("/api/v1/documents")
 @Tag(name = "Document Management", description = "Document upload, processing, and management operations")
@@ -38,10 +90,47 @@ public class DocumentController {
 
     private final DocumentService documentService;
 
+    /**
+     * Constructs a new DocumentController with the required document service dependency.
+     * 
+     * @param documentService the service for document processing and management operations
+     */
     public DocumentController(DocumentService documentService) {
         this.documentService = documentService;
     }
 
+    /**
+     * Uploads a document file for processing and integration into the RAG system.
+     * 
+     * <p>This endpoint handles multi-format document uploads with comprehensive validation,
+     * security scanning, and automatic text processing. The uploaded document is processed
+     * asynchronously through the RAG pipeline for text extraction, chunking, and embedding generation.</p>
+     * 
+     * <p><strong>Processing Pipeline:</strong></p>
+     * <ol>
+     *   <li>File validation (size, type, security)</li>
+     *   <li>Metadata extraction and storage</li>
+     *   <li>Text extraction using Apache Tika</li>
+     *   <li>Intelligent text chunking for optimal embeddings</li>
+     *   <li>Kafka event publishing for async embedding generation</li>
+     * </ol>
+     * 
+     * <p><strong>Supported File Types:</strong></p>
+     * <ul>
+     *   <li>PDF documents (.pdf)</li>
+     *   <li>Microsoft Word documents (.doc, .docx)</li>
+     *   <li>Plain text files (.txt)</li>
+     *   <li>Markdown files (.md)</li>
+     *   <li>HTML documents (.html, .htm)</li>
+     * </ul>
+     * 
+     * @param file the multipart file to upload (required)
+     * @param metadata optional key-value metadata for document categorization
+     * @param tenantId the tenant identifier for multi-tenant isolation (required)
+     * @return ResponseEntity containing the document response with processing status
+     * @throws org.springframework.web.multipart.MaxUploadSizeExceededException if file exceeds size limits
+     * @throws com.enterprise.rag.shared.exception.DocumentProcessingException if processing fails
+     */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload a document", description = "Upload a document file for processing and text extraction")
     @ApiResponses({
@@ -75,6 +164,27 @@ public class DocumentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * Retrieves a paginated list of documents for the specified tenant.
+     * 
+     * <p>This endpoint provides efficient access to tenant-scoped document collections
+     * with pagination support for large datasets. Results include document summaries
+     * optimized for list displays and overview interfaces.</p>
+     * 
+     * <p><strong>Response Optimization:</strong></p>
+     * <ul>
+     *   <li>Lightweight document summaries (not full document details)</li>
+     *   <li>Pagination metadata for client-side navigation</li>
+     *   <li>Sorting support by creation date, name, or processing status</li>
+     *   <li>Tenant-isolated results for security compliance</li>
+     * </ul>
+     * 
+     * @param tenantId the tenant identifier for document scope filtering (required)
+     * @param pageable pagination and sorting parameters (default: 20 items per page)
+     * @return ResponseEntity containing paginated document summaries
+     * @see org.springframework.data.domain.Pageable
+     * @see DocumentDto.DocumentSummary
+     */
     @GetMapping
     @Operation(summary = "List documents", description = "Get paginated list of documents for a tenant")
     @ApiResponses({
@@ -94,6 +204,28 @@ public class DocumentController {
         return ResponseEntity.ok(documents);
     }
 
+    /**
+     * Retrieves detailed information about a specific document within the tenant scope.
+     * 
+     * <p>This endpoint provides comprehensive document metadata including processing status,
+     * chunk count, embedding information, and complete audit trail. The response includes
+     * all details necessary for document management and monitoring operations.</p>
+     * 
+     * <p><strong>Response Details:</strong></p>
+     * <ul>
+     *   <li>Complete document metadata and processing status</li>
+     *   <li>Text chunking and embedding generation details</li>
+     *   <li>File properties (size, type, upload information)</li>
+     *   <li>Audit information (creation, modification timestamps)</li>
+     *   <li>User context (uploaded by information)</li>
+     * </ul>
+     * 
+     * @param documentId the unique identifier of the document to retrieve (required)
+     * @param tenantId the tenant identifier for access control validation (required)
+     * @return ResponseEntity containing complete document details
+     * @throws com.enterprise.rag.shared.exception.DocumentNotFoundException if document doesn't exist
+     * @see DocumentDto.DocumentResponse
+     */
     @GetMapping("/{documentId}")
     @Operation(summary = "Get document", description = "Get detailed information about a specific document")
     @ApiResponses({
@@ -160,6 +292,33 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Retrieves comprehensive document statistics for the specified tenant.
+     * 
+     * <p>This endpoint provides essential analytics data for tenant resource monitoring,
+     * capacity planning, and billing operations. The statistics include real-time counts
+     * and storage usage calculations across all tenant documents.</p>
+     * 
+     * <p><strong>Statistics Included:</strong></p>
+     * <ul>
+     *   <li>Total document count across all processing states</li>
+     *   <li>Storage usage in bytes (sum of all file sizes)</li>
+     *   <li>Real-time calculations for accurate resource monitoring</li>
+     *   <li>Tenant-scoped data for multi-tenant compliance</li>
+     * </ul>
+     * 
+     * <p><strong>Use Cases:</strong></p>
+     * <ul>
+     *   <li>Administrative dashboards and monitoring</li>
+     *   <li>Capacity planning and resource allocation</li>
+     *   <li>Billing and subscription management integration</li>
+     *   <li>Quota enforcement and limit notifications</li>
+     * </ul>
+     * 
+     * @param tenantId the tenant identifier for statistics scope (required)
+     * @return ResponseEntity containing document count and storage usage statistics
+     * @see DocumentStatsResponse
+     */
     @GetMapping("/stats")
     @Operation(summary = "Get document statistics", description = "Get document count and storage usage for a tenant")
     @ApiResponses({
