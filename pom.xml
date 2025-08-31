@@ -53,6 +53,7 @@
         <module>rag-embedding-service</module>
         <module>rag-core-service</module>
         <module>rag-admin-service</module>
+        <module>rag-gateway</module>
     </modules>
 
     <dependencyManagement>
