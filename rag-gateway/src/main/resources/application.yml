@@ -1,0 +1,292 @@
+# Enterprise RAG Gateway Configuration
+# This configuration file defines settings for the API Gateway service
+
+server:
+  port: 8080
+  netty:
+    connection-timeout: 5000
+    idle-timeout: 300000
+
+spring:
+  application:
+    name: rag-gateway
+  
+  # Spring Cloud Gateway Configuration
+  cloud:
+    gateway:
+      # Global settings
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: 
+              - "http://localhost:3000"
+              - "http://localhost:8080"
+              - "https://*.enterprise-rag.com"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+      
+      # Default filters applied to all routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - AddResponseHeader=X-Gateway-Service, Enterprise-RAG-Gateway
+        - AddResponseHeader=X-Response-Time, #{T(System).currentTimeMillis() - #root.attributes['start-time']}
+      
+      # Route timeout configuration
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 30s
+        pool:
+          max-connections: 500
+          max-idle-time: 30s
+          max-life-time: 60s
+      
+      # Discovery configuration (for service registry integration)
+      discovery:
+        locator:
+          enabled: false # Disabled for explicit routing
+          lower-case-service-id: true
+
+  # Redis Configuration (for rate limiting and caching)
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000
+    password: # Set in production
+    database: 0
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 2000ms
+
+  # Security Configuration
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8081/auth/.well-known/jwks.json}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForDevelopmentOnlyChangeInProduction123456789012345678901234567890}
+  access-token-expiration: 3600 # 1 hour
+  refresh-token-expiration: 604800 # 7 days
+
+# Circuit Breaker Configuration (Resilience4j)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.net.ConnectException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      auth-circuit-breaker:
+        base-config: default
+      document-circuit-breaker:
+        base-config: default
+        slow-call-duration-threshold: 5s
+      embedding-circuit-breaker:
+        base-config: default
+        slow-call-duration-threshold: 10s
+        failure-rate-threshold: 60
+      core-circuit-breaker:
+        base-config: default
+        slow-call-duration-threshold: 15s
+        failure-rate-threshold: 60
+      admin-circuit-breaker:
+        base-config: default
+
+  # Retry Configuration
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 100ms
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.net.ConnectException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      auth-retry:
+        base-config: default
+      document-retry:
+        base-config: default
+        max-attempts: 2
+      embedding-retry:
+        base-config: default
+        max-attempts: 2
+      core-retry:
+        base-config: default
+        max-attempts: 1
+      admin-retry:
+        base-config: default
+
+  # Rate Limiter Configuration
+  ratelimiter:
+    configs:
+      default:
+        limit-for-period: 100
+        limit-refresh-period: 60s
+        timeout-duration: 1s
+    instances:
+      user-rate-limiter:
+        base-config: default
+
+# Service URLs (for direct routing in development)
+services:
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}
+  document-service:
+    url: ${DOCUMENT_SERVICE_URL:http://localhost:8082}
+  embedding-service:
+    url: ${EMBEDDING_SERVICE_URL:http://localhost:8083}
+  core-service:
+    url: ${CORE_SERVICE_URL:http://localhost:8084}
+  admin-service:
+    url: ${ADMIN_SERVICE_URL:http://localhost:8085}
+
+# Monitoring and Observability
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway,circuitbreakers,ratelimiters
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s,2s,5s
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web.reactive: INFO
+    reactor.netty: INFO
+    com.enterprise.rag.gateway: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/gateway.log
+    max-size: 100MB
+    max-history: 30
+
+# Application Information
+info:
+  app:
+    name: Enterprise RAG Gateway
+    description: API Gateway for Enterprise RAG System
+    version: 0.8.0-SNAPSHOT
+    contact:
+      team: Enterprise RAG Team
+      email: team@enterprise-rag.com
+  build:
+    artifact: rag-gateway
+    group: com.enterprise.rag
+    time: ${build.time:unknown}
+    version: ${build.version:unknown}
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  redis:
+    host: localhost
+    port: 6379
+    password: # No password for development
+
+logging:
+  level:
+    com.enterprise.rag: DEBUG
+    org.springframework.cloud.gateway.filter: DEBUG
+    org.springframework.security: DEBUG
+
+---
+# Test Profile
+spring:
+  config:
+    activate:
+      on-profile: test
+  
+  redis:
+    host: localhost
+    port: 6379
+    # Use embedded Redis for tests
+
+jwt:
+  secret: testSecretKeyForTestingOnly123456789012345678901234567890
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD}
+    ssl: true
+
+# Production service URLs (with load balancers)
+services:
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://auth-service:8081}
+  document-service:
+    url: ${DOCUMENT_SERVICE_URL:http://document-service:8082}
+  embedding-service:
+    url: ${EMBEDDING_SERVICE_URL:http://embedding-service:8083}
+  core-service:
+    url: ${CORE_SERVICE_URL:http://core-service:8084}
+  admin-service:
+    url: ${ADMIN_SERVICE_URL:http://admin-service:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    com.enterprise.rag: INFO
+    org.springframework.cloud.gateway: WARN
+  file:
+    name: /app/logs/gateway.log
