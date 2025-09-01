@@ -132,15 +132,17 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.8</version>
                 <configuration>
                     <mainClass>com.enterprise.rag.auth.AuthServiceApplication</mainClass>
-                    <jvmArguments>
-                        --add-opens java.base/java.lang=ALL-UNNAMED
-                        --add-opens java.base/sun.nio.ch=ALL-UNNAMED
-                        --add-opens java.base/sun.misc=ALL-UNNAMED
-                        --illegal-access=permit
-                    </jvmArguments>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
