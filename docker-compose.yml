@@ -1,5 +1,5 @@
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database with pgvector extension
   postgres:
     image: pgvector/pgvector:pg15
     container_name: rag-postgres
@@ -19,6 +19,194 @@ services:
       retries: 5
     networks:
       - rag-network
+
+  # ==================================================
+  # MICROSERVICES - Enterprise RAG System (6 Services)
+  # ==================================================
+
+  # API Gateway Service - Routes all external traffic
+  rag-gateway:
+    build:
+      context: .
+      dockerfile: rag-gateway/Dockerfile
+    container_name: rag-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - DOCUMENT_SERVICE_URL=${DOCUMENT_SERVICE_URL}
+      - EMBEDDING_SERVICE_URL=${EMBEDDING_SERVICE_URL}
+      - CORE_SERVICE_URL=${CORE_SERVICE_URL}
+      - ADMIN_SERVICE_URL=${ADMIN_SERVICE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      redis:
+        condition: service_healthy
+      rag-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
+  # Authentication Service - JWT auth, user/tenant management
+  rag-auth:
+    build:
+      context: .
+      dockerfile: rag-auth-service/Dockerfile
+    container_name: rag-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
+  # Document Processing Service - File upload, text extraction, chunking
+  rag-document:
+    build:
+      context: .
+      dockerfile: rag-document-service/Dockerfile
+    container_name: rag-document
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - document_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
+  # Embedding Service - Vector generation and similarity search
+  rag-embedding:
+    build:
+      context: .
+      dockerfile: rag-embedding-service/Dockerfile
+    container_name: rag-embedding
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - OLLAMA_URL=${OLLAMA_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
+  # RAG Core Service - Query processing, LLM integration, response generation
+  rag-core:
+    build:
+      context: .
+      dockerfile: rag-core-service/Dockerfile
+    container_name: rag-core
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EMBEDDING_SERVICE_URL=${EMBEDDING_SERVICE_URL}
+      - OLLAMA_URL=${OLLAMA_URL}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+    depends_on:
+      rag-embedding:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
+  # Admin Service - System administration, tenant management, analytics
+  rag-admin:
+    build:
+      context: .
+      dockerfile: rag-admin-service/Dockerfile
+    container_name: rag-admin
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
+  # ==================================================
+  # INFRASTRUCTURE SERVICES
+  # ==================================================
 
   # Redis Stack (includes RediSearch for vector operations)
   redis:
@@ -151,6 +339,7 @@ volumes:
   ollama_data:
   prometheus_data:
   grafana_data:
+  document_storage:
 
 networks:
   rag-network:

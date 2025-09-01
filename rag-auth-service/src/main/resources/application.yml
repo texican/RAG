@@ -46,6 +46,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    redis:
+      enabled: false
   metrics:
     export:
       prometheus:
@@ -79,6 +82,7 @@ spring:
   
   redis:
     host: redis
+    password: redis_password
 
 ---
 spring:
