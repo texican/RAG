@@ -2,9 +2,9 @@
 
 [![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-blue.svg)](https://semver.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen.svg)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](https://github.com/your-org/enterprise-rag)
+[![Status](https://img.shields.io/badge/Status-Development-yellow.svg)](https://github.com/your-org/enterprise-rag)
 
-> **✅ Production Ready (2025-09-03)**: All 6 microservices fully implemented and successfully deployed in Docker with working infrastructure.
+> **🚧 Development Status (2025-09-03)**: 4/6 microservices operational in Docker. Core service debugging in progress. Infrastructure stable.
 
 A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Generation) system across development, staging, and production environments.
 
@@ -52,29 +52,43 @@ A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Gen
 
 ### Quick Start (Docker - Recommended)
 
-> **✅ Current Status**: Docker Compose deployment is fully working with all microservices operational.
+> **🚧 Current Status**: Docker infrastructure stable (PostgreSQL + Redis). 4/6 microservices operational. Core service debugging needed.
 
 ```bash
 # 1. Clone and setup
 git clone <repository-url>
 cd enterprise-rag
 
-# 2. Start infrastructure services
-docker-compose up -d
+# 2. Build all services
+mvn clean package -DskipTests
 
-# 3. Verify infrastructure health
-./scripts/health-check.sh
+# 3. Start all services with Docker Compose
+docker-compose -f docker-compose.fixed.yml up -d
 
-# 4. Build application
-mvn clean install -DskipTests
+# 4. Check service status
+docker-compose -f docker-compose.fixed.yml ps
 
-# 5. Start services (each in separate terminal)
-cd rag-auth-service && mvn spring-boot:run
-cd rag-document-service && mvn spring-boot:run
-cd rag-embedding-service && mvn spring-boot:run
-cd rag-core-service && mvn spring-boot:run
-cd rag-gateway && mvn spring-boot:run
-cd rag-admin-service && mvn spring-boot:run
+# 5. View service logs
+docker-compose -f docker-compose.fixed.yml logs -f
+
+# 6. Health check working services
+curl http://localhost:8081/actuator/health  # Auth Service
+curl http://localhost:8083/actuator/health  # Embedding Service
+curl http://localhost:8085/admin/api/actuator/health  # Admin Service
+```
+
+**Alternative: Individual Maven Services**
+```bash
+# Start infrastructure first
+docker-compose up -d postgres redis
+
+# Then start each service in separate terminal
+cd rag-auth-service && mvn spring-boot:run        # Port 8081
+cd rag-document-service && mvn spring-boot:run    # Port 8082
+cd rag-embedding-service && mvn spring-boot:run   # Port 8083
+cd rag-core-service && mvn spring-boot:run        # Port 8084 (currently failing)
+cd rag-admin-service && mvn spring-boot:run       # Port 8085
+cd rag-gateway && mvn spring-boot:run             # Port 8080 (depends on core)
 ```
 
 ### Development Environment Variables

@@ -1,10 +1,10 @@
 # 🐳 Docker Setup - Enterprise RAG System
 
 [![Docker](https://img.shields.io/badge/Docker-Working-brightgreen.svg)](https://www.docker.com/)
-[![Services](https://img.shields.io/badge/Services-6%2F6%20Running-success.svg)]()
-[![Infrastructure](https://img.shields.io/badge/Infrastructure-PostgreSQL%20%2B%20Redis-blue.svg)]()
+[![Services](https://img.shields.io/badge/Services-4%2F6%20Running-yellow.svg)]()
+[![Infrastructure](https://img.shields.io/badge/Infrastructure-PostgreSQL%20%2B%20Redis%20Stable-blue.svg)]()
 
-> **✅ Status (2025-09-03)**: All 6 microservices successfully running in Docker with complete infrastructure integration. Spring Boot JAR packaging and database dependency issues resolved.
+> **🚧 Status (2025-09-03)**: 4/6 microservices operational in Docker. Core service startup issues under investigation. Infrastructure components stable and healthy.
 
 Complete Docker Compose configuration for the Enterprise RAG System with all 6 microservices, infrastructure components, and monitoring stack.
 
@@ -38,15 +38,15 @@ chmod +x docker-start.sh docker-health.sh
 
 ## 📋 System Architecture
 
-### 🏗️ Microservices (6 Services)
+### 🏗️ Microservices Status (4/6 Operational)
 | Service | Port | Status | Description |
 |---------|------|---------|-------------|
-| **rag-gateway** | 8080 | ✅ **Working** | API Gateway - Routes all external traffic |
 | **rag-auth** | 8081 | ✅ **Healthy** | Authentication - JWT auth, user/tenant management |
-| **rag-document** | 8082 | ✅ **Ready** | Document Processing - File upload, text extraction, chunking |
-| **rag-embedding** | 8083 | ✅ **Working** | Embedding Service - Vector generation and similarity search |
-| **rag-core** | 8084 | ✅ **Ready** | RAG Core - Query processing, LLM integration |
-| **rag-admin** | 8085 | ✅ **Healthy** | Admin Service - System administration, analytics |
+| **rag-document** | 8082 | 🔄 **Running** | Document Processing - File upload, text extraction, chunking |
+| **rag-embedding** | 8083 | ✅ **Healthy** | Embedding Service - Vector generation and similarity search |
+| **rag-admin** | 8085 | 🔄 **Redis Issues** | Admin Service - System administration, analytics |
+| **rag-core** | 8084 | ❌ **Startup Failure** | RAG Core - Query processing, LLM integration |
+| **rag-gateway** | 8080 | ❌ **Depends on Core** | API Gateway - Routes all external traffic |
 
 ### 🔧 Infrastructure Services
 | Service | Port | Description |
@@ -98,8 +98,8 @@ graph TD
 
 ## 🛠️ Configuration Files & Current Status (2025-09-03)
 
-### ✅ Working Docker Compose Configurations
-- **`docker-compose.fixed.yml`** - **CURRENT WORKING CONFIG** - 5/6 services running successfully
+### 🔧 Docker Compose Configurations
+- **`docker-compose.fixed.yml`** - **CURRENT CONFIG** - 4/6 services operational (core service debugging needed)
 - **`docker-compose.working.yml`** - Basic infrastructure + auth service (proven stable)  
 - **`docker-compose.yml`** - Complete system with Kafka + monitoring (future expansion)
 - **`.env`** - Environment variables for Docker deployment
@@ -150,13 +150,15 @@ docker-compose -f docker-compose.working.yml up -d
 # Run comprehensive health check
 ./docker-health.sh
 
-# Check individual service health
-curl http://localhost:8080/actuator/health  # Gateway
-curl http://localhost:8081/actuator/health  # Auth
-curl http://localhost:8082/actuator/health  # Document
-curl http://localhost:8083/actuator/health  # Embedding
-curl http://localhost:8084/actuator/health  # Core
-curl http://localhost:8085/actuator/health  # Admin
+# Check individual service health (working services)
+curl http://localhost:8081/actuator/health  # Auth (✅ Healthy)
+curl http://localhost:8083/actuator/health  # Embedding (✅ Healthy)
+curl http://localhost:8085/admin/api/actuator/health  # Admin (🔄 Redis issues)
+
+# Check problematic services  
+curl http://localhost:8082/actuator/health  # Document (🔄 Status unclear)
+curl http://localhost:8084/actuator/health  # Core (❌ Not responding)
+curl http://localhost:8080/actuator/health  # Gateway (❌ Not running)
 ```
 
 ### Database Operations
