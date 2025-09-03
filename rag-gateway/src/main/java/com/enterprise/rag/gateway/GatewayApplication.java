@@ -62,7 +62,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @see com.enterprise.rag.gateway.filter.JwtAuthenticationFilter
  * @see com.enterprise.rag.gateway.service.JwtValidationService
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+    org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
+    org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+})
 public class GatewayApplication {
 
     /**

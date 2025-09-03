@@ -1,6 +1,6 @@
 # 🦙 Ollama Chat Frontend
 
-A lightweight, responsive web interface for chatting with your local Ollama AI models.
+A lightweight, responsive web interface for chatting with your local Ollama AI models, integrated with the Enterprise RAG System's Docker environment.
 
 ## ✨ Features
 
@@ -17,7 +17,7 @@ A lightweight, responsive web interface for chatting with your local Ollama AI m
 
 ```bash
 # Navigate to the chat directory
-cd /Users/stryfe/Projects/RAG/ollama-chat
+cd ollama-chat
 
 # Start the server (includes CORS handling)
 python3 server.py
@@ -36,9 +36,15 @@ open index.html
 
 ## 📋 Prerequisites
 
-1. **Ollama Running**: Make sure your Ollama instance is running
+### For Docker Integration (Enterprise RAG System)
+
+1. **Docker Environment Running**: Ensure the Enterprise RAG system is running
    ```bash
-   # Check if Ollama is running
+   # From the main project directory
+   ./docker-start.sh
+   
+   # Check if Ollama is running in Docker
+   docker-compose ps ollama
    curl http://localhost:11434/api/tags
    ```
 
@@ -47,22 +53,53 @@ open index.html
    # Check available models
    docker-compose exec ollama ollama list
    
-   # Pull a model if needed
-   docker-compose exec ollama ollama pull llama2:7b
+   # Pull a model if needed (popular choices)
+   docker-compose exec ollama ollama pull llama2:7b-chat
+   docker-compose exec ollama ollama pull codellama:7b
+   docker-compose exec ollama ollama pull mistral:7b
+   ```
+
+### For Standalone Ollama
+
+1. **Ollama Running**: Make sure your Ollama instance is running
+   ```bash
+   # Check if Ollama is running
+   curl http://localhost:11434/api/tags
+   
+   # Or start Ollama directly
+   ollama serve
    ```
 
 ## 🎯 Usage
 
-1. **Start the Frontend**:
+### With Enterprise RAG Docker Environment
+
+1. **Ensure RAG System is Running**:
    ```bash
+   # Start the complete system (includes Ollama)
+   ./docker-start.sh
+   
+   # Verify Ollama is ready
+   ./docker-health.sh
+   ```
+
+2. **Start the Chat Frontend**:
+   ```bash
+   cd ollama-chat
    python3 server.py
    ```
 
-2. **Open Browser**: Navigate to `http://localhost:8888`
+3. **Open Browser**: Navigate to `http://localhost:8888`
 
-3. **Select Model**: Use the dropdown to choose your preferred model
+4. **Select Model**: Use the dropdown to choose your preferred model
 
-4. **Start Chatting**: Type your question and press Enter or click Send
+5. **Start Chatting**: Type your question and press Enter or click Send
+
+### Standalone Usage
+
+1. **Start Ollama**: `ollama serve`
+2. **Start Frontend**: `python3 server.py` 
+3. **Browse**: `http://localhost:8888`
 
 ## 🔧 Configuration
 
@@ -107,22 +144,49 @@ port = 8888  # Change to your preferred port
 
 ## 🔍 Troubleshooting
 
-### Ollama Not Connected
+### Enterprise RAG Docker Environment
+
+#### Ollama Not Connected
 ```bash
-# Check if Ollama is running
+# Check if the Docker environment is running
+docker-compose ps
+
+# Specifically check Ollama container
 docker-compose ps ollama
+
+# Check Ollama logs
+docker-compose logs ollama
 
 # Check Ollama status
 curl http://localhost:11434/api/tags
 ```
 
-### No Models Available
+#### No Models Available
 ```bash
-# List current models
+# List current models in Docker
 docker-compose exec ollama ollama list
 
-# Pull a model
-docker-compose exec ollama ollama pull llama2:7b
+# Pull recommended models for RAG system
+docker-compose exec ollama ollama pull llama2:7b-chat
+docker-compose exec ollama ollama pull codellama:7b
+docker-compose exec ollama ollama pull mistral:7b
+
+# Check model download progress
+docker-compose exec ollama ollama ps
+```
+
+### Standalone Environment
+
+#### Ollama Not Connected
+```bash
+# Check if Ollama service is running
+ps aux | grep ollama
+
+# Start Ollama if not running
+ollama serve
+
+# Check Ollama status
+curl http://localhost:11434/api/tags
 ```
 
 ### CORS Issues
@@ -186,13 +250,27 @@ Content-Type: application/json
    - `Shift+Enter`: New line
    
 2. **Model Selection**: 
-   - Try different models for different tasks
-   - Smaller models respond faster
-   - Larger models give better quality
+   - **llama2:7b-chat**: Great for general conversation
+   - **codellama:7b**: Excellent for code generation and technical discussions
+   - **mistral:7b**: Good balance of speed and quality
+   - Smaller models respond faster, larger models give better quality
 
 3. **Performance**:
    - First message may be slow (model loading)
    - Subsequent messages are typically faster
-   - Monitor Ollama logs for troubleshooting
+   - Monitor Ollama logs: `docker-compose logs -f ollama`
+
+4. **Integration with RAG System**:
+   - This frontend works alongside the Enterprise RAG system
+   - Both use the same Ollama instance in Docker
+   - You can switch between RAG queries and direct chat
+
+## 🔗 Enterprise RAG Integration
+
+This chat frontend is part of the Enterprise RAG System:
+- **RAG API**: Access the full RAG pipeline at `http://localhost:8080/api/rag`
+- **Document Processing**: Upload documents through `http://localhost:8080/api/documents`
+- **Admin Interface**: Manage tenants at `http://localhost:8080/api/admin`
+- **Monitoring**: View system metrics at `http://localhost:3000` (Grafana)
 
 Enjoy chatting with your local AI! 🚀

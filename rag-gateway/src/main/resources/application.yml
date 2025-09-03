@@ -290,3 +290,39 @@ logging:
     org.springframework.cloud.gateway: WARN
   file:
     name: /app/logs/gateway.log
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD}
+
+# Docker service URLs
+services:
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://rag-auth:8081}
+  document-service:
+    url: ${DOCUMENT_SERVICE_URL:http://rag-document:8082}
+  embedding-service:
+    url: ${EMBEDDING_SERVICE_URL:http://rag-embedding:8083}
+  core-service:
+    url: ${CORE_SERVICE_URL:http://rag-core:8084}
+  admin-service:
+    url: ${ADMIN_SERVICE_URL:http://rag-admin:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    com.enterprise.rag: INFO
+    org.springframework.cloud.gateway: INFO

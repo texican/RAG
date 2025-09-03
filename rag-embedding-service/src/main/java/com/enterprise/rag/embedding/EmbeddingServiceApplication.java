@@ -2,13 +2,8 @@ package com.enterprise.rag.embedding;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * Spring Boot application class for the Enterprise RAG Embedding Service.
@@ -76,17 +71,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @see org.springframework.kafka.annotation.EnableKafka
  * @see org.springframework.data.redis.repository.configuration.EnableRedisRepositories
  */
-@SpringBootApplication(scanBasePackages = {
-    "com.enterprise.rag.embedding",
-    "com.enterprise.rag.shared.exception"
-})
-@EntityScan("com.enterprise.rag.shared.entity")
-@EnableJpaRepositories(basePackages = "com.enterprise.rag.embedding.repository")
+@SpringBootApplication(
+    scanBasePackages = {
+        "com.enterprise.rag.embedding",
+        "com.enterprise.rag.shared.exception"
+    },
+    exclude = {
+        org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+    }
+)
 @EnableRedisRepositories(basePackages = "com.enterprise.rag.embedding.redis")
-@EnableJpaAuditing
-@EnableTransactionManagement
 @EnableAsync
-@EnableKafka
 public class EmbeddingServiceApplication {
 
     public static void main(String[] args) {
