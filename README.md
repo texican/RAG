@@ -1,4 +1,5 @@
-# Enterprise RAG System
+# BYO RAG System
+*Build Your Own Retrieval Augmented Generation System*
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.8-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -6,33 +7,85 @@
 [![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-blue.svg)](https://semver.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **🚧 Development Status**: 4/6 microservices running in Docker. Core service debugging in progress. Infrastructure fully operational. See [Development Status](#development-status) for details.
+## 🎯 Project Overview
 
-An enterprise-grade RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
+**BYO RAG System** is a comprehensive AI-powered knowledge platform that shows you how to **build your own enterprise-grade RAG solution** from the ground up. This complete implementation demonstrates the intersection of **modern software architecture** and **artificial intelligence** through a fully-realized microservices ecosystem that enables intelligent document processing and conversational AI capabilities.
+
+### What is RAG?
+**Retrieval Augmented Generation (RAG)** combines the power of large language models with your organization's private knowledge base, enabling AI-powered question answering over your documents while maintaining complete data privacy and control.
+
+### Key Value Propositions
+- 🏢 **Multi-tenant Architecture**: Complete data isolation for multiple organizations
+- 🔒 **Enterprise Security**: JWT-based authentication with role-based access control  
+- ⚡ **High Performance**: Sub-200ms query responses with vector similarity search
+- 📄 **Document Intelligence**: Extract insights from PDF, DOCX, TXT, MD, and HTML files
+- 🔍 **Hybrid Search**: Combines semantic understanding with keyword precision
+- 🚀 **Production Ready**: Containerized microservices with monitoring and observability
+
+> **🚧 Current Status**: 4/6 microservices running in Docker. Core service debugging in progress. Infrastructure fully operational. [View detailed status](#development-status)
 
 ## 📚 Table of Contents
 
-- [🚀 Quick Start for Developers](#-quick-start-for-developers)
-  - [Prerequisites](#prerequisites)
-  - [1️⃣ Setup Your Environment](#1️⃣-setup-your-environment)
-  - [2️⃣ Build and Run Services](#2️⃣-build-and-run-services)
-  - [3️⃣ Verify Installation](#3️⃣-verify-installation)
-  - [4️⃣ Test the System](#4️⃣-test-the-system)
+- [🎯 Project Overview](#-project-overview)
+- [🏗️ Architecture & Design](#️-architecture--design)
+- [🌟 Key Features](#-key-features)
 - [📊 Development Status](#-development-status)
-- [🏗️ Architecture Overview](#️-architecture-overview)
-- [🛠️ Tech Stack Reference](#️-tech-stack-reference)
-- [🧰 Developer Workflows](#-developer-workflows)
-  - [Running Tests](#running-tests)
-  - [Development Mode](#development-mode)
-  - [Debugging](#debugging)
-  - [Working with Docker Services](#working-with-docker-services)
-- [🌟 Key Features Implemented](#-key-features-implemented)
-- [🚨 Common Development Issues](#-common-development-issues)
+- [🚀 Quick Start Guide](#-quick-start-guide)
+- [🛠️ Developer Reference](#️-developer-reference)
 - [📈 Performance & Monitoring](#-performance--monitoring)
-- [🎯 Next Development Priorities](#-next-development-priorities)
-- [📚 Additional Documentation](#-additional-documentation)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [🎯 Roadmap](#-roadmap)
+- [📚 Documentation](#-documentation)
 
-## 🚀 Quick Start for Developers
+## 🏗️ Architecture & Design
+
+This system implements a **microservices architecture** with complete **multi-tenant isolation**, demonstrating enterprise-grade patterns and modern cloud-native design principles.
+
+### Core Architecture Principles
+- **Domain-Driven Design**: Each microservice owns its domain and data
+- **Event-Driven Processing**: Asynchronous operations via Apache Kafka  
+- **Polyglot Persistence**: PostgreSQL for structured data, Redis for vectors
+- **Security-First**: JWT authentication with tenant-scoped data access
+- **Observability**: Comprehensive monitoring and distributed tracing
+
+### Microservices Overview
+```
+🌐 API Gateway (Port 8080)     → Routes and secures all external traffic
+🔐 Auth Service (Port 8081)    → JWT authentication & tenant management  
+📄 Document Service (Port 8082) → File processing & text extraction
+🔍 Embedding Service (Port 8083) → Vector generation & similarity search
+🤖 RAG Core Service (Port 8084)  → LLM integration & query processing
+⚙️  Admin Service (Port 8085)    → Administrative operations & analytics
+```
+
+## 🌟 Key Features
+
+### 🔐 Enterprise Security & Multi-Tenancy
+- **Complete Data Isolation**: Each tenant's data is fully segregated
+- **JWT-Based Authentication**: Secure, stateless authentication
+- **Role-Based Access Control**: ADMIN, USER, and READER permissions
+- **Audit Logging**: Complete traceability of all operations
+
+### 📄 Intelligent Document Processing
+- **Multi-Format Support**: PDF, DOCX, TXT, Markdown, HTML
+- **Smart Text Extraction**: Apache Tika-powered content analysis
+- **Configurable Chunking**: Optimized for different document types
+- **Asynchronous Processing**: Non-blocking operations via Kafka events
+
+### 🤖 Advanced RAG Pipeline  
+- **Multiple Embedding Models**: OpenAI, local models, custom implementations
+- **Vector Similarity Search**: Redis-powered with tenant isolation
+- **Hybrid Search Strategy**: Semantic + keyword search combination
+- **LLM Integration**: Support for OpenAI GPT models and local Ollama
+- **Streaming Responses**: Real-time answer generation
+
+### 📊 Administration & Analytics
+- **Multi-Tenant Management**: Complete tenant lifecycle operations
+- **User Administration**: Database-backed user management with roles
+- **Usage Analytics**: Comprehensive reporting and monitoring
+- **Health Monitoring**: Deep service health checks and diagnostics
+
+## 🚀 Quick Start Guide
 
 ### Prerequisites
 - **Java 21+** (OpenJDK recommended)
@@ -172,7 +225,9 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 - 🔄 **Service mesh**: Inter-service communication partially working
 - ✅ **Test coverage**: High test coverage with comprehensive integration tests
 
-## 🏗️ Architecture Overview
+## 🛠️ Developer Reference
+
+### Architecture Diagram
 
 ```mermaid
 graph TB
@@ -217,7 +272,7 @@ graph TB
 - **Polyglot persistence**: PostgreSQL + Redis for different data types
 - **Horizontal scaling**: Stateless services with shared infrastructure
 
-## 🛠️ Tech Stack Reference
+### Tech Stack Reference
 
 <details>
 <summary><strong>📋 Core Framework & Runtime</strong></summary>
@@ -267,7 +322,7 @@ graph TB
 
 </details>
 
-## 🧰 Developer Workflows
+### Developer Workflows
 
 ### Running Tests
 ```bash
@@ -320,33 +375,7 @@ docker exec -it enterprise-rag-redis redis-cli
 docker exec -it enterprise-rag-kafka kafka-topics --bootstrap-server localhost:9092 --list
 ```
 
-## 🌟 Key Features Implemented
-
-### 🔐 Multi-Tenant Authentication
-- JWT-based authentication with tenant scoping
-- Role-based access control (ADMIN, USER, READER)
-- Complete data isolation between tenants
-- Password hashing with BCrypt
-
-### 📄 Document Processing Pipeline
-- Support for PDF, DOCX, TXT, MD, HTML formats
-- Intelligent text extraction using Apache Tika
-- Configurable chunking strategies
-- Async processing with Kafka events
-
-### 🔍 Vector Search & RAG
-- Multiple embedding models (OpenAI, local models)
-- Redis-based vector storage with tenant isolation
-- Hybrid search (semantic + keyword)
-- Sub-200ms query response times
-
-### 📊 Admin Operations
-- Complete tenant management
-- User administration with database persistence
-- Analytics and reporting endpoints
-- 100% test coverage achieved
-
-## 🚨 Common Development Issues
+## 🔧 Troubleshooting
 
 <details>
 <summary><strong>🔧 Service Won't Start</strong></summary>
@@ -416,7 +445,7 @@ docker-compose logs testcontainers
 # Kafka UI: http://localhost:8080
 ```
 
-## 🎯 Next Development Priorities
+## 🎯 Roadmap
 
 **🚀 All Core Services Complete! Focus on System Integration:**
 
@@ -438,7 +467,7 @@ docker-compose logs testcontainers
 - 🔄 **Multi-model support**: Additional embedding and LLM model integrations
 - 🔄 **Advanced caching**: Distributed caching strategies
 
-## 📚 Additional Documentation
+## 📚 Documentation
 
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide with Kubernetes configurations
 - **[DOCKER.md](DOCKER.md)** - Complete Docker setup and management guide
