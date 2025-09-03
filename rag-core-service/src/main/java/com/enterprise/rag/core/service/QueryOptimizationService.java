@@ -83,7 +83,7 @@ public class QueryOptimizationService {
     // Common stop words (could be externalized)
     private static final Set<String> STOP_WORDS = Set.of(
         "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it", 
-        "of", "on", "that", "the", "to", "was", "will", "with", "the", "this", "these", "those"
+        "of", "on", "that", "the", "to", "was", "will", "with", "this", "these", "those"
     );
 
     // Common acronym expansions (could be loaded from configuration)

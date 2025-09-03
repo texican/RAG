@@ -2,6 +2,7 @@ package com.enterprise.rag.admin.controller;
 
 import com.enterprise.rag.admin.AdminServiceApplication;
 import com.enterprise.rag.admin.config.TestSecurityConfig;
+import com.enterprise.rag.admin.config.TestDataConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class})
 @DisplayName("AdminAuthController Integration Tests")
 class AdminAuthControllerIntegrationTest {
 

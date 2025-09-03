@@ -97,6 +97,31 @@ services:
     networks:
       - rag-network
 
+  # Document Service - File processing, text extraction, and chunking
+  rag-document:
+    build:
+      context: .
+      dockerfile: rag-document-service/Dockerfile
+    container_name: rag-document
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_NAME=rag_enterprise
+      - DB_USERNAME=rag_user
+      - DB_PASSWORD=rag_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
   # Embedding Service - Vector generation and similarity search  
   rag-embedding:
     build:
@@ -120,6 +145,32 @@ services:
     networks:
       - rag-network
 
+  # Core Service - RAG pipeline orchestration and LLM integration
+  rag-core:
+    build:
+      context: .
+      dockerfile: rag-core-service/Dockerfile
+    container_name: rag-core
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EMBEDDING_SERVICE_URL=http://rag-embedding:8083
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=redis_password
+    depends_on:
+      redis:
+        condition: service_healthy
+      rag-embedding:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - rag-network
+
   # API Gateway Service - Routes all external traffic
   rag-gateway:
     build:
@@ -133,13 +184,21 @@ services:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=redis_password
       - AUTH_SERVICE_URL=http://rag-auth:8081
+      - DOCUMENT_SERVICE_URL=http://rag-document:8082
       - EMBEDDING_SERVICE_URL=http://rag-embedding:8083
+      - CORE_SERVICE_URL=http://rag-core:8084
       - ADMIN_SERVICE_URL=http://rag-admin:8085
       - JWT_SECRET=YourVerySecureJWTSecretKeyThatIsAtLeast256BitsLongForHS256Algorithm
     depends_on:
       redis:
         condition: service_healthy
       rag-auth:
+        condition: service_healthy
+      rag-document:
+        condition: service_healthy
+      rag-embedding:
+        condition: service_healthy
+      rag-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
