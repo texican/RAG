@@ -5,16 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.enterprise.rag</groupId>
-        <artifactId>enterprise-rag</artifactId>
+        <groupId>com.byo.rag</groupId>
+        <artifactId>byo-rag</artifactId>
         <version>0.8.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>rag-shared</artifactId>
     <packaging>jar</packaging>
 
-    <name>RAG Shared Components</name>
-    <description>Common DTOs, entities, utilities, and configurations</description>
+    <name>BYO RAG Shared Components</name>
+    <description>Common DTOs, entities, utilities, and configurations for BYO RAG system</description>
 
     <dependencies>
         <!-- Spring Boot Starter -->

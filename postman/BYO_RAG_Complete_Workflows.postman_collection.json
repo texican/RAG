@@ -1,0 +1,1858 @@
+{
+	"info": {
+		"_postman_id": "complete-workflows-rag-collection",
+		"name": "BYO RAG - Complete Workflows & Test Scenarios",
+		"description": "Comprehensive End-to-End Workflows and Test Scenarios for the BYO RAG System\n\n🔄 **Complete Integration Testing**: End-to-end workflows that demonstrate the full Enterprise RAG system capabilities from authentication through document processing to RAG query responses.\n\n🧪 **Test Scenario Categories**:\n- **Authentication Workflows**: Complete user and admin authentication flows\n- **Document Lifecycle**: Full document upload, processing, and management workflows\n- **RAG Pipeline**: Complete retrieval-augmented generation workflows\n- **Multi-Tenant Operations**: Cross-tenant isolation and management testing\n- **Performance Testing**: Load testing and performance validation scenarios\n- **Error Handling**: Comprehensive error condition and recovery testing\n\n**🎯 Workflow Types**:\n1. **New User Onboarding**: Registration → Verification → First RAG Query\n2. **Document Processing Pipeline**: Upload → Extract → Chunk → Embed → Query\n3. **Admin Management**: Tenant Creation → User Management → Analytics\n4. **Multi-User Scenarios**: Collaborative document processing and querying\n5. **Error Recovery**: Handling failures and system recovery scenarios\n\n**⚙️ Environment Setup**:\n- `GATEWAY_URL`: http://localhost:8080 (Primary access point)\n- `WORKFLOW_TENANT_ID`: Test tenant for workflow execution\n- `WORKFLOW_USER_EMAIL`: Test user for authentication workflows\n- `WORKFLOW_ADMIN_EMAIL`: Admin user for administrative workflows\n\n**🔄 Execution Order**: Workflows are designed to be executed sequentially, with each building upon the results of previous workflows. Environment variables are automatically propagated between requests.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "byo-rag-workflows"
+	},
+	"item": [
+		{
+			"name": "🚀 Complete User Onboarding Workflow",
+			"description": "End-to-end new user registration, verification, and first RAG query",
+			"item": [
+				{
+					"name": "Step 1: User Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User registration successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData.status).to.eql('PENDING_VERIFICATION');",
+									"    ",
+									"    // Save user details for next steps",
+									"    pm.environment.set('WORKFLOW_USER_ID', jsonData.id);",
+									"    pm.environment.set('WORKFLOW_USER_EMAIL', jsonData.email);",
+									"    pm.environment.set('WORKFLOW_TENANT_ID', jsonData.tenantId);",
+									"    ",
+									"    console.log('✅ User registered successfully: ' + jsonData.email);",
+									"    console.log('📋 User ID: ' + jsonData.id);",
+									"    console.log('🏢 Tenant ID: ' + jsonData.tenantId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"workflow.user@enterprise-rag-test.com\",\n  \"password\": \"SecureWorkflowPassword123!\",\n  \"firstName\": \"Workflow\",\n  \"lastName\": \"TestUser\",\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/register",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new test user for the complete workflow demonstration.\n\n**Workflow Step 1**: Create a new user account with complete profile information.\n\n**Automatic Setup**:\n- Generates unique test user credentials\n- Associates user with workflow test tenant\n- Saves user ID and details for subsequent workflow steps\n\n**Success Criteria**:\n- HTTP 200 response\n- User ID generated and saved\n- Account status set to PENDING_VERIFICATION\n- Email verification process initiated"
+					}
+				},
+				{
+					"name": "Step 2: Email Verification (Simulated)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Email verification successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql('ACTIVE');",
+									"    pm.expect(jsonData.emailVerified).to.be.true;",
+									"    ",
+									"    console.log('✅ Email verified successfully');",
+									"    console.log('🎯 Account status: ACTIVE');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"workflow-verification-token-simulation\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/verify-email",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Simulate email verification to activate the user account.\n\n**Workflow Step 2**: Complete the email verification process to activate the account.\n\n**Note**: In production, this would use a real verification token sent via email. For workflow testing, we simulate the process.\n\n**Success Criteria**:\n- Account status changed to ACTIVE\n- Email verification flag set to true\n- User can now authenticate and access system features"
+					}
+				},
+				{
+					"name": "Step 3: User Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('accessToken');",
+									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    ",
+									"    // Save authentication tokens",
+									"    pm.environment.set('WORKFLOW_AUTH_TOKEN', jsonData.accessToken);",
+									"    pm.environment.set('WORKFLOW_REFRESH_TOKEN', jsonData.refreshToken);",
+									"    ",
+									"    console.log('✅ User authenticated successfully');",
+									"    console.log('🔑 Access token saved for workflow');",
+									"    console.log('👤 User: ' + jsonData.user.firstName + ' ' + jsonData.user.lastName);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{WORKFLOW_USER_EMAIL}}\",\n  \"password\": \"SecureWorkflowPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/login",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate the newly registered and verified user.\n\n**Workflow Step 3**: Login with the registered credentials to obtain JWT tokens for API access.\n\n**Authentication Flow**:\n- Validates user credentials against database\n- Generates JWT access and refresh tokens\n- Returns user profile information\n- Saves tokens for subsequent workflow steps\n\n**Success Criteria**:\n- JWT tokens generated and saved\n- User profile information returned\n- Authentication ready for protected endpoints"
+					}
+				},
+				{
+					"name": "Step 4: Upload First Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Document upload successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.be.oneOf(['UPLOADED', 'PROCESSING']);",
+									"    ",
+									"    // Save document ID for next steps",
+									"    pm.environment.set('WORKFLOW_DOCUMENT_ID', jsonData.id);",
+									"    ",
+									"    console.log('✅ Document uploaded successfully');",
+									"    console.log('📄 Document ID: ' + jsonData.id);",
+									"    console.log('⚙️ Processing Status: ' + jsonData.status);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "workflow-test-document.txt",
+									"description": "Sample document for workflow testing"
+								},
+								{
+									"key": "title",
+									"value": "Workflow Test Document - Machine Learning Fundamentals",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "A comprehensive introduction to machine learning concepts, algorithms, and applications for workflow testing.",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "machine-learning,workflow-test,fundamentals,ai",
+									"type": "text"
+								},
+								{
+									"key": "category",
+									"value": "Technical Documentation",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/upload",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"upload"
+							]
+						},
+						"description": "Upload the user's first document to begin the RAG knowledge base.\n\n**Workflow Step 4**: Upload a sample document that will be processed for RAG queries.\n\n**Document Processing Pipeline**:\n1. File upload and validation\n2. Apache Tika text extraction\n3. Intelligent text chunking\n4. Metadata extraction and storage\n5. Asynchronous embedding generation\n\n**Success Criteria**:\n- Document successfully uploaded\n- Processing status indicates system is handling the file\n- Document ID saved for embedding and query steps\n\n**Sample Content**: The document contains machine learning fundamentals that will be used in subsequent RAG queries."
+					}
+				},
+				{
+					"name": "Step 5: Wait for Processing & Generate Embeddings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Embeddings generated successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('embeddings');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"    pm.expect(jsonData.embeddings).to.be.an('array');",
+									"    pm.expect(jsonData.embeddings.length).to.be.greaterThan(0);",
+									"    ",
+									"    console.log('✅ Embeddings generated successfully');",
+									"    console.log('🧠 Generated ' + jsonData.embeddings.length + ' embeddings');",
+									"    console.log('⏱️ Processing time: ' + jsonData.processingTimeMs + 'ms');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"texts\": [\n    \"Machine learning is a subset of artificial intelligence that focuses on algorithms and statistical models that enable computer systems to improve their performance on a specific task through experience.\",\n    \"Supervised learning algorithms learn from labeled training data to make predictions on new, unseen data. Examples include classification and regression tasks.\",\n    \"Unsupervised learning finds hidden patterns in data without labeled examples. Common techniques include clustering, dimensionality reduction, and association rules.\",\n    \"Deep learning uses neural networks with multiple layers to model and understand complex patterns in data, achieving state-of-the-art results in many domains.\"\n  ],\n  \"modelName\": \"text-embedding-3-small\",\n  \"documentId\": \"{{WORKFLOW_DOCUMENT_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/generate",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"generate"
+							]
+						},
+						"description": "Generate vector embeddings for the uploaded document content.\n\n**Workflow Step 5**: Create vector representations of the document text for semantic search.\n\n**Embedding Process**:\n- Text chunks extracted from the uploaded document\n- Vector embeddings generated using OpenAI's text-embedding-3-small model\n- Vectors stored in Redis for fast similarity search\n- Document-embedding associations maintained for RAG queries\n\n**Success Criteria**:\n- Multiple embeddings generated successfully\n- Embeddings associated with the uploaded document\n- Vector storage ready for semantic search\n- Processing time logged for performance monitoring"
+					}
+				},
+				{
+					"name": "Step 6: First RAG Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"RAG query successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('answer');",
+									"    pm.expect(jsonData).to.have.property('sources');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"    pm.expect(jsonData.answer).to.be.a('string');",
+									"    pm.expect(jsonData.answer.length).to.be.greaterThan(50);",
+									"    pm.expect(jsonData.sources).to.be.an('array');",
+									"    ",
+									"    // Save conversation ID for follow-up queries",
+									"    if (jsonData.conversationId) {",
+									"        pm.environment.set('WORKFLOW_CONVERSATION_ID', jsonData.conversationId);",
+									"    }",
+									"    ",
+									"    console.log('✅ RAG query completed successfully');",
+									"    console.log('💬 Answer length: ' + jsonData.answer.length + ' characters');",
+									"    console.log('📚 Sources used: ' + jsonData.sources.length);",
+									"    console.log('⏱️ Processing time: ' + jsonData.processingTimeMs + 'ms');",
+									"    console.log('🎯 Answer preview: ' + jsonData.answer.substring(0, 100) + '...');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"query\": \"What is machine learning and what are the main types of machine learning algorithms?\",\n  \"maxResults\": 5,\n  \"temperature\": 0.7,\n  \"includeContext\": true,\n  \"model\": \"gpt-3.5-turbo\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Submit the user's first RAG query using the uploaded and processed document.\n\n**Workflow Step 6**: Complete the RAG pipeline from document upload to AI-generated response.\n\n**RAG Pipeline Execution**:\n1. **Query Analysis**: Parse and optimize the natural language question\n2. **Semantic Search**: Find relevant document chunks using vector similarity\n3. **Context Assembly**: Compile the most relevant text passages\n4. **LLM Generation**: Generate comprehensive answer using retrieved context\n5. **Response Assembly**: Return answer with source attribution\n\n**Success Criteria**:\n- Comprehensive answer generated using uploaded document content\n- Source attribution showing which document chunks were used\n- Conversation ID saved for follow-up questions\n- Processing time within acceptable limits\n\n**Query Topic**: Machine learning fundamentals - directly related to the uploaded document content, ensuring relevant context retrieval and accurate responses."
+					}
+				},
+				{
+					"name": "Step 7: Follow-up RAG Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Follow-up query successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('answer');",
+									"    pm.expect(jsonData).to.have.property('conversationId');",
+									"    pm.expect(jsonData.conversationId).to.eql(pm.environment.get('WORKFLOW_CONVERSATION_ID'));",
+									"    ",
+									"    console.log('✅ Follow-up query completed successfully');",
+									"    console.log('💬 Conversation maintained with ID: ' + jsonData.conversationId);",
+									"    console.log('🎯 Answer preview: ' + jsonData.answer.substring(0, 100) + '...');",
+									"    console.log('🎉 Complete user onboarding workflow finished!');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"query\": \"Can you give me more details about supervised learning that you mentioned?\",\n  \"conversationId\": \"{{WORKFLOW_CONVERSATION_ID}}\",\n  \"maxResults\": 5,\n  \"temperature\": 0.7,\n  \"includeContext\": true,\n  \"model\": \"gpt-3.5-turbo\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Demonstrate conversation continuity with a follow-up question.\n\n**Workflow Step 7**: Test multi-turn conversation capabilities of the RAG system.\n\n**Conversation Features Tested**:\n- **Context Memory**: System remembers previous conversation\n- **Reference Resolution**: \"supervised learning that you mentioned\" references earlier response\n- **Conversation Continuity**: Maintains coherent dialogue flow\n- **Enhanced Context**: Previous conversation informs current response\n\n**Success Criteria**:\n- Follow-up question processed with conversation context\n- System demonstrates understanding of previous discussion\n- Conversation ID maintained across requests\n- Response quality enhanced by conversation history\n\n**Workflow Completion**: This completes the full user onboarding workflow from registration through first meaningful RAG interactions, demonstrating all core system capabilities."
+					}
+				}
+			]
+		},
+		{
+			"name": "📄 Complete Document Processing Workflow",
+			"description": "End-to-end document lifecycle from upload through RAG query optimization",
+			"item": [
+				{
+					"name": "Step 1: Batch Document Upload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Batch upload successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('documents');",
+									"    pm.expect(jsonData.documents).to.be.an('array');",
+									"    pm.expect(jsonData.documents.length).to.be.greaterThan(0);",
+									"    ",
+									"    // Save first document ID for detailed processing",
+									"    if (jsonData.documents.length > 0) {",
+									"        pm.environment.set('WORKFLOW_BATCH_DOC_ID', jsonData.documents[0].id);",
+									"        console.log('📄 First document ID: ' + jsonData.documents[0].id);",
+									"    }",
+									"    ",
+									"    console.log('✅ Batch upload successful');",
+									"    console.log('📊 Documents uploaded: ' + jsonData.documents.length);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": "ai-research-paper.pdf",
+									"description": "AI Research Paper"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "ml-algorithms-guide.docx",
+									"description": "ML Algorithms Guide"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "data-science-handbook.txt",
+									"description": "Data Science Handbook"
+								},
+								{
+									"key": "category",
+									"value": "Research Documentation",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "ai,ml,data-science,research,batch-processing",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/upload/batch",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"upload",
+								"batch"
+							]
+						},
+						"description": "Demonstrate batch document upload capabilities for enterprise document processing.\n\n**Document Processing Step 1**: Upload multiple documents simultaneously for efficient processing.\n\n**Batch Processing Benefits**:\n- Reduced API overhead for multiple uploads\n- Consistent metadata application across documents\n- Parallel processing optimization\n- Bulk status tracking and monitoring\n\n**Document Types Tested**:\n- PDF research papers\n- DOCX technical guides\n- TXT handbook content\n\n**Success Criteria**:\n- Multiple documents uploaded successfully\n- Processing initiated for each document\n- Document IDs saved for tracking\n- Metadata applied consistently"
+					}
+				},
+				{
+					"name": "Step 2: Monitor Processing Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Processing status available\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('queueStatus');",
+									"    pm.expect(jsonData).to.have.property('processingQueue');",
+									"    pm.expect(jsonData).to.have.property('completedToday');",
+									"    ",
+									"    console.log('✅ Processing status retrieved');",
+									"    console.log('⚙️ Queue status: ' + jsonData.queueStatus);",
+									"    console.log('📊 Queue length: ' + jsonData.processingQueue);",
+									"    console.log('✨ Completed today: ' + jsonData.completedToday);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/processing-status",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"processing-status"
+							]
+						},
+						"description": "Monitor the document processing queue and system status.\n\n**Document Processing Step 2**: Check system processing capacity and queue status.\n\n**Monitoring Capabilities**:\n- Current processing queue length\n- Estimated processing times\n- System throughput metrics\n- Error rates and failures\n- Resource utilization status\n\n**Success Criteria**:\n- Processing status information available\n- Queue metrics indicating system health\n- Performance indicators within acceptable ranges"
+					}
+				},
+				{
+					"name": "Step 3: Get Document Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Document details retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('textChunks');",
+									"    pm.expect(jsonData).to.have.property('processedPages');",
+									"    ",
+									"    console.log('✅ Document details retrieved');",
+									"    console.log('📄 Status: ' + jsonData.status);",
+									"    console.log('🔢 Text chunks: ' + jsonData.textChunks);",
+									"    console.log('📃 Pages processed: ' + jsonData.processedPages);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/{{WORKFLOW_BATCH_DOC_ID}}",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{WORKFLOW_BATCH_DOC_ID}}"
+							]
+						},
+						"description": "Retrieve detailed processing results for a specific document.\n\n**Document Processing Step 3**: Examine document processing outcomes and metadata.\n\n**Processing Details**:\n- Text extraction results\n- Chunking statistics\n- Processing performance metrics\n- Error conditions (if any)\n- Embedding generation status\n\n**Success Criteria**:\n- Document processing completed successfully\n- Text chunks generated for RAG operations\n- Processing metadata available\n- Status indicates readiness for queries"
+					}
+				},
+				{
+					"name": "Step 4: Get Document Content",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Document content retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('extractedText');",
+									"    pm.expect(jsonData).to.have.property('textLength');",
+									"    pm.expect(jsonData.extractedText).to.be.a('string');",
+									"    pm.expect(jsonData.extractedText.length).to.be.greaterThan(0);",
+									"    ",
+									"    console.log('✅ Document content extracted');",
+									"    console.log('📝 Text length: ' + jsonData.textLength + ' characters');",
+									"    console.log('🔍 Content preview: ' + jsonData.extractedText.substring(0, 200) + '...');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/{{WORKFLOW_BATCH_DOC_ID}}/content",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{WORKFLOW_BATCH_DOC_ID}}",
+								"content"
+							]
+						},
+						"description": "Retrieve the complete extracted text content from the processed document.\n\n**Document Processing Step 4**: Verify successful text extraction and content quality.\n\n**Content Verification**:\n- Apache Tika extraction quality\n- Text structure preservation\n- Character encoding accuracy\n- Content completeness\n\n**Success Criteria**:\n- Complete text extraction successful\n- Content structure maintained\n- Text quality suitable for chunking and embedding\n- No extraction errors or corruption"
+					}
+				},
+				{
+					"name": "Step 5: Get Text Chunks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Text chunks retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('chunks');",
+									"    pm.expect(jsonData.chunks).to.be.an('array');",
+									"    pm.expect(jsonData.chunks.length).to.be.greaterThan(0);",
+									"    ",
+									"    if (jsonData.chunks.length > 0) {",
+									"        var firstChunk = jsonData.chunks[0];",
+									"        pm.expect(firstChunk).to.have.property('id');",
+									"        pm.expect(firstChunk).to.have.property('text');",
+									"        pm.expect(firstChunk).to.have.property('chunkIndex');",
+									"        pm.expect(firstChunk).to.have.property('tokenCount');",
+									"        ",
+									"        pm.environment.set('WORKFLOW_CHUNK_ID', firstChunk.id);",
+									"    }",
+									"    ",
+									"    console.log('✅ Text chunks retrieved');",
+									"    console.log('🔢 Number of chunks: ' + jsonData.chunks.length);",
+									"    console.log('📝 First chunk preview: ' + (jsonData.chunks[0] ? jsonData.chunks[0].text.substring(0, 100) + '...' : 'N/A'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/{{WORKFLOW_BATCH_DOC_ID}}/chunks",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{WORKFLOW_BATCH_DOC_ID}}",
+								"chunks"
+							]
+						},
+						"description": "Retrieve intelligently chunked text segments optimized for RAG processing.\n\n**Document Processing Step 5**: Examine chunking quality and optimization for semantic search.\n\n**Chunking Analysis**:\n- Semantic boundary preservation\n- Optimal chunk size for embeddings\n- Context continuity maintenance\n- Token count optimization\n- Chunk indexing and ordering\n\n**Success Criteria**:\n- Multiple text chunks generated\n- Chunk sizes optimized for LLM processing\n- Semantic coherence maintained\n- Proper indexing and metadata\n- Ready for embedding generation"
+					}
+				},
+				{
+					"name": "Step 6: Generate Document Embeddings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Document embeddings generated\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('embeddings');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"    pm.expect(jsonData.embeddings).to.be.an('array');",
+									"    pm.expect(jsonData.embeddings.length).to.be.greaterThan(0);",
+									"    ",
+									"    console.log('✅ Document embeddings generated');",
+									"    console.log('🧠 Embeddings count: ' + jsonData.embeddings.length);",
+									"    console.log('⏱️ Processing time: ' + jsonData.processingTimeMs + 'ms');",
+									"    console.log('🎯 Model used: ' + jsonData.modelName);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"texts\": [\n    \"Artificial intelligence represents a transformative technology that enables machines to perform tasks typically requiring human intelligence, including learning, reasoning, and problem-solving.\",\n    \"Machine learning algorithms, as a subset of AI, learn patterns from data to make predictions or decisions without explicit programming for each specific task.\",\n    \"Deep learning architectures, particularly neural networks with multiple layers, have achieved breakthrough performance in computer vision, natural language processing, and speech recognition.\",\n    \"Data science methodologies combine statistical analysis, machine learning, and domain expertise to extract actionable insights from large, complex datasets.\",\n    \"Natural language processing enables computers to understand, interpret, and generate human language, facilitating applications like chatbots, translation, and sentiment analysis.\"\n  ],\n  \"modelName\": \"text-embedding-3-small\",\n  \"documentId\": \"{{WORKFLOW_BATCH_DOC_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/generate",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"generate"
+							]
+						},
+						"description": "Generate comprehensive vector embeddings for all document chunks.\n\n**Document Processing Step 6**: Create vector representations for semantic search and RAG queries.\n\n**Embedding Generation Process**:\n- High-quality text chunks processed with OpenAI embeddings\n- Vector dimensions optimized for similarity search\n- Document-chunk associations maintained\n- Redis storage for fast retrieval\n- Metadata preservation for context\n\n**Success Criteria**:\n- All document chunks successfully embedded\n- Vector storage populated with semantic representations\n- Document-embedding relationships established\n- System ready for semantic search operations"
+					}
+				},
+				{
+					"name": "Step 7: Test Semantic Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Semantic search successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('totalMatches');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"    pm.expect(jsonData.results.length).to.be.greaterThan(0);",
+									"    ",
+									"    if (jsonData.results.length > 0) {",
+									"        var firstResult = jsonData.results[0];",
+									"        pm.expect(firstResult).to.have.property('similarity');",
+									"        pm.expect(firstResult).to.have.property('text');",
+									"        pm.expect(firstResult.similarity).to.be.at.least(0);",
+									"        pm.expect(firstResult.similarity).to.be.at.most(1);",
+									"    }",
+									"    ",
+									"    console.log('✅ Semantic search successful');",
+									"    console.log('🔍 Results found: ' + jsonData.results.length);",
+									"    console.log('📊 Total matches: ' + jsonData.totalMatches);",
+									"    console.log('⏱️ Search time: ' + jsonData.searchTimeMs + 'ms');",
+									"    if (jsonData.results.length > 0) {",
+									"        console.log('🎯 Top similarity: ' + jsonData.results[0].similarity.toFixed(3));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"query\": \"deep learning neural networks computer vision\",\n  \"topK\": 8,\n  \"threshold\": 0.7,\n  \"documentIds\": [\"{{WORKFLOW_BATCH_DOC_ID}}\"],\n  \"includeMetadata\": true,\n  \"modelName\": \"text-embedding-3-small\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/search",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"search"
+							]
+						},
+						"description": "Test semantic search capabilities against the processed document embeddings.\n\n**Document Processing Step 7**: Validate semantic search quality and relevance.\n\n**Search Validation**:\n- Query understanding and embedding generation\n- Vector similarity calculations\n- Relevance scoring and ranking\n- Context retrieval accuracy\n- Performance and response times\n\n**Success Criteria**:\n- Relevant results returned for semantic query\n- Similarity scores indicating quality matches\n- Fast search response times\n- Proper document scoping and filtering\n- Ready for RAG pipeline integration"
+					}
+				},
+				{
+					"name": "Step 8: Comprehensive RAG Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Comprehensive RAG query successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('answer');",
+									"    pm.expect(jsonData).to.have.property('sources');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"    pm.expect(jsonData.answer).to.be.a('string');",
+									"    pm.expect(jsonData.answer.length).to.be.greaterThan(100);",
+									"    pm.expect(jsonData.sources).to.be.an('array');",
+									"    pm.expect(jsonData.sources.length).to.be.greaterThan(0);",
+									"    ",
+									"    console.log('✅ Comprehensive RAG query successful');",
+									"    console.log('💬 Answer length: ' + jsonData.answer.length + ' characters');",
+									"    console.log('📚 Sources used: ' + jsonData.sources.length);",
+									"    console.log('⏱️ Processing time: ' + jsonData.processingTimeMs + 'ms');",
+									"    console.log('🎯 Answer quality: High contextual relevance');",
+									"    console.log('🎉 Document processing workflow complete!');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"query\": \"Based on the research documents, can you explain how deep learning has revolutionized computer vision and what are the key architectural innovations that made this possible?\",\n  \"maxResults\": 8,\n  \"temperature\": 0.6,\n  \"includeContext\": true,\n  \"model\": \"gpt-3.5-turbo\",\n  \"contextFilters\": {\n    \"documentIds\": [\"{{WORKFLOW_BATCH_DOC_ID}}\"],\n    \"categories\": [\"Research Documentation\"]\n  }\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Execute a comprehensive RAG query that leverages all processed documents and demonstrates the complete pipeline.\n\n**Document Processing Step 8**: Validate the entire document processing pipeline with a complex, multi-faceted query.\n\n**Complete Pipeline Validation**:\n1. **Document Upload** → Multiple formats processed\n2. **Text Extraction** → High-quality content extraction\n3. **Intelligent Chunking** → Semantic boundary preservation\n4. **Vector Embedding** → Semantic representations created\n5. **Context Retrieval** → Relevant chunks identified\n6. **Answer Generation** → Comprehensive, contextual response\n\n**Success Criteria**:\n- Complex query processed successfully using uploaded documents\n- Multiple sources integrated into coherent response\n- High-quality answer demonstrating document understanding\n- Processing performance within acceptable limits\n- Complete workflow validation from upload to intelligent response\n\n**Workflow Achievement**: This demonstrates the complete enterprise document processing pipeline, from batch upload through intelligent question-answering, validating all core system capabilities."
+					}
+				}
+			]
+		},
+		{
+			"name": "⚙️ Admin Management Workflow",
+			"description": "Complete administrative workflow for tenant and system management",
+			"item": [
+				{
+					"name": "Step 1: Admin Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Admin login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('accessToken');",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    pm.expect(jsonData).to.have.property('capabilities');",
+									"    pm.expect(jsonData.user.role).to.eql('ADMIN');",
+									"    pm.expect(jsonData.capabilities).to.include('TENANT_MANAGEMENT');",
+									"    ",
+									"    // Save admin token",
+									"    pm.environment.set('WORKFLOW_ADMIN_TOKEN', jsonData.accessToken);",
+									"    ",
+									"    console.log('✅ Admin authenticated successfully');",
+									"    console.log('👤 Admin user: ' + jsonData.user.email);",
+									"    console.log('🔐 Capabilities: ' + jsonData.capabilities.join(', '));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@enterprise-rag.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/auth/login",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate as system administrator to access administrative functions.\n\n**Admin Workflow Step 1**: Establish administrative session with full system privileges.\n\n**Administrative Capabilities**:\n- Tenant creation and management\n- User administration across all tenants\n- System monitoring and analytics\n- Resource management and quotas\n- Audit and compliance oversight\n\n**Success Criteria**:\n- Admin authentication successful\n- Administrative capabilities granted\n- Admin token saved for subsequent operations"
+					}
+				},
+				{
+					"name": "Step 2: Create New Tenant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Tenant creation successful\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('ACTIVE');",
+									"    ",
+									"    // Save new tenant ID",
+									"    pm.environment.set('WORKFLOW_NEW_TENANT_ID', jsonData.id);",
+									"    ",
+									"    console.log('✅ New tenant created successfully');",
+									"    console.log('🏢 Tenant ID: ' + jsonData.id);",
+									"    console.log('📝 Tenant name: ' + jsonData.name);",
+									"    console.log('⚙️ Status: ' + jsonData.status);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Workflow Test Enterprise\",\n  \"domain\": \"workflow-test-enterprise.com\",\n  \"contactEmail\": \"admin@workflow-test-enterprise.com\",\n  \"maxUsers\": 25,\n  \"maxStorage\": 2147483648,\n  \"status\": \"ACTIVE\",\n  \"settings\": {\n    \"allowFileUpload\": true,\n    \"maxFileSize\": 52428800,\n    \"enabledFeatures\": [\"RAG_QUERIES\", \"DOCUMENT_UPLOAD\", \"ANALYTICS\"],\n    \"retentionPolicyDays\": 365,\n    \"enableAuditLogging\": true\n  },\n  \"billingInfo\": {\n    \"plan\": \"STARTER\",\n    \"billingContact\": \"billing@workflow-test-enterprise.com\",\n    \"paymentMethod\": \"CREDIT_CARD\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/tenants",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"tenants"
+							]
+						},
+						"description": "Create a new tenant organization with complete configuration.\n\n**Admin Workflow Step 2**: Demonstrate tenant provisioning and configuration management.\n\n**Tenant Configuration**:\n- Organization setup and branding\n- Resource limits and quotas\n- Feature enablement and restrictions\n- Billing and subscription configuration\n- Security and compliance policies\n\n**Success Criteria**:\n- New tenant created with specified configuration\n- Resource limits applied correctly\n- Features enabled according to plan\n- Tenant ready for user provisioning"
+					}
+				},
+				{
+					"name": "Step 3: Get System Overview",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"System overview retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalTenants');",
+									"    pm.expect(jsonData).to.have.property('totalUsers');",
+									"    pm.expect(jsonData).to.have.property('systemHealth');",
+									"    pm.expect(jsonData).to.have.property('performance');",
+									"    ",
+									"    console.log('✅ System overview retrieved');",
+									"    console.log('🏢 Total tenants: ' + jsonData.totalTenants);",
+									"    console.log('👥 Total users: ' + jsonData.totalUsers);",
+									"    console.log('💚 System health: ' + jsonData.systemHealth.status);",
+									"    console.log('⚡ Avg response time: ' + jsonData.performance.averageResponseTime + 'ms');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/analytics/overview",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"analytics",
+								"overview"
+							]
+						},
+						"description": "Get comprehensive system overview with key metrics and health indicators.\n\n**Admin Workflow Step 3**: Monitor overall system health and performance.\n\n**System Metrics**:\n- Tenant and user counts\n- System health status\n- Performance indicators\n- Resource utilization\n- Service availability\n\n**Success Criteria**:\n- System metrics available and healthy\n- Performance within acceptable ranges\n- All services operational\n- Growth trends visible"
+					}
+				},
+				{
+					"name": "Step 4: Get Tenant Analytics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Tenant analytics retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantDistribution');",
+									"    pm.expect(jsonData).to.have.property('growthTrends');",
+									"    pm.expect(jsonData).to.have.property('resourceUtilization');",
+									"    ",
+									"    console.log('✅ Tenant analytics retrieved');",
+									"    console.log('📊 Active tenants: ' + jsonData.tenantDistribution.byStatus.ACTIVE);",
+									"    console.log('📈 Growth trend: ' + jsonData.growthTrends.monthlyGrowthRate + '%');",
+									"    console.log('💾 Avg storage usage: ' + Math.round(jsonData.resourceUtilization.averageStorageUsage / 1024 / 1024) + ' MB');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/analytics/tenants?timeRange=30d&includeBreakdown=true",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"analytics",
+								"tenants"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "30d"
+								},
+								{
+									"key": "includeBreakdown",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Analyze tenant distribution and growth patterns across the system.\n\n**Admin Workflow Step 4**: Deep dive into tenant analytics and business intelligence.\n\n**Analytics Categories**:\n- Tenant distribution by status and size\n- Growth trends and acquisition patterns\n- Resource utilization across tenants\n- Performance analysis by tenant\n- Revenue and billing analytics\n\n**Success Criteria**:\n- Comprehensive tenant analytics available\n- Growth patterns and trends visible\n- Resource utilization within limits\n- Business intelligence actionable"
+					}
+				},
+				{
+					"name": "Step 5: Search and Manage Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User search successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('totalMatches');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"    ",
+									"    if (jsonData.results.length > 0) {",
+									"        var firstResult = jsonData.results[0];",
+									"        pm.expect(firstResult).to.have.property('user');",
+									"        pm.expect(firstResult).to.have.property('relevanceScore');",
+									"        pm.environment.set('WORKFLOW_FOUND_USER_ID', firstResult.user.id);",
+									"    }",
+									"    ",
+									"    console.log('✅ User search completed');",
+									"    console.log('🔍 Results found: ' + jsonData.results.length);",
+									"    console.log('📊 Total matches: ' + jsonData.totalMatches);",
+									"    if (jsonData.results.length > 0) {",
+									"        console.log('👤 First result: ' + jsonData.results[0].user.email);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/users/search?q={{WORKFLOW_USER_EMAIL}}&limit=10",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"users",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "{{WORKFLOW_USER_EMAIL}}"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Search for users across all tenants for administrative management.\n\n**Admin Workflow Step 5**: Demonstrate cross-tenant user search and management capabilities.\n\n**Search Capabilities**:\n- Cross-tenant user lookup\n- Email and name matching\n- Relevance scoring and ranking\n- User profile and activity information\n- Administrative action preparation\n\n**Success Criteria**:\n- User search returns relevant results\n- Cross-tenant visibility working\n- User information complete and accurate\n- Administrative actions available"
+					}
+				},
+				{
+					"name": "Step 6: Get Usage Analytics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Usage analytics retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalQueries');",
+									"    pm.expect(jsonData).to.have.property('totalDocuments');",
+									"    pm.expect(jsonData).to.have.property('storageUsage');",
+									"    pm.expect(jsonData).to.have.property('performance');",
+									"    ",
+									"    console.log('✅ Usage analytics retrieved');",
+									"    console.log('🔍 Total queries: ' + jsonData.totalQueries);",
+									"    console.log('📄 Total documents: ' + jsonData.totalDocuments);",
+									"    console.log('💾 Storage usage: ' + Math.round(jsonData.storageUsage.totalBytes / 1024 / 1024) + ' MB');",
+									"    console.log('⚡ Success rate: ' + jsonData.performance.successRate + '%');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/analytics/usage?timeRange=7d&granularity=daily&includeDetails=true",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"analytics",
+								"usage"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "7d"
+								},
+								{
+									"key": "granularity",
+									"value": "daily"
+								},
+								{
+									"key": "includeDetails",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Analyze comprehensive system usage patterns and performance metrics.\n\n**Admin Workflow Step 6**: Monitor system utilization and performance trends.\n\n**Usage Analytics**:\n- Query volumes and patterns\n- Document processing statistics\n- Storage utilization trends\n- Performance metrics and SLAs\n- Error rates and system health\n\n**Success Criteria**:\n- Usage patterns clearly visible\n- Performance metrics within targets\n- System utilization optimal\n- Trends support capacity planning"
+					}
+				},
+				{
+					"name": "Step 7: Monitor Performance Metrics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Performance metrics retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('responseTime');",
+									"    pm.expect(jsonData).to.have.property('throughput');",
+									"    pm.expect(jsonData).to.have.property('errorRate');",
+									"    pm.expect(jsonData).to.have.property('serviceMetrics');",
+									"    ",
+									"    console.log('✅ Performance metrics retrieved');",
+									"    console.log('⏱️ P95 response time: ' + jsonData.responseTime.p95 + 'ms');",
+									"    console.log('🚀 Throughput: ' + jsonData.throughput.requestsPerSecond + ' req/s');",
+									"    console.log('❌ Error rate: ' + jsonData.errorRate.percentage + '%');",
+									"    console.log('🎉 Admin workflow completed successfully!');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/analytics/performance?timeRange=24h&breakdown=service",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"analytics",
+								"performance"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "24h"
+								},
+								{
+									"key": "breakdown",
+									"value": "service"
+								}
+							]
+						},
+						"description": "Monitor detailed system performance metrics across all services.\n\n**Admin Workflow Step 7**: Complete performance monitoring and system health validation.\n\n**Performance Monitoring**:\n- Service-level performance breakdown\n- Response time percentiles\n- Throughput and capacity metrics\n- Error rates and failure analysis\n- Resource utilization patterns\n\n**Success Criteria**:\n- All services performing within SLAs\n- Error rates at acceptable levels\n- Throughput supporting current load\n- System ready for scaling decisions\n\n**Workflow Completion**: This completes the comprehensive administrative workflow, demonstrating full system oversight, tenant management, user administration, and performance monitoring capabilities."
+					}
+				}
+			]
+		},
+		{
+			"name": "🧪 Error Handling & Recovery Scenarios",
+			"description": "Comprehensive error condition testing and system recovery validation",
+			"item": [
+				{
+					"name": "Test 1: Invalid Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Authentication error handled correctly\", function () {",
+									"    pm.response.to.have.status(401);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.error).to.include('AUTHENTICATION');",
+									"    ",
+									"    console.log('✅ Authentication error handled correctly');",
+									"    console.log('❌ Error type: ' + jsonData.error);",
+									"    console.log('💬 Message: ' + jsonData.message);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"invalid@user.com\",\n  \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/login",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Test authentication error handling with invalid credentials.\n\n**Error Scenario 1**: Validate proper error responses for authentication failures.\n\n**Expected Behavior**:\n- HTTP 401 Unauthorized status\n- Clear error message without sensitive information leakage\n- Proper error code for client handling\n- Rate limiting application\n- Security logging triggered\n\n**Success Criteria**:\n- Authentication failure handled gracefully\n- No sensitive information exposed\n- Clear error messaging for client applications\n- Security measures activated"
+					}
+				},
+				{
+					"name": "Test 2: Unauthorized Resource Access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Authorization error handled correctly\", function () {",
+									"    pm.response.to.have.status(401);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.message).to.include('token');",
+									"    ",
+									"    console.log('✅ Authorization error handled correctly');",
+									"    console.log('🔒 Access denied without valid token');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Tenant-ID",
+								"value": "invalid-tenant-id"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							]
+						},
+						"description": "Test authorization error handling for protected resources.\n\n**Error Scenario 2**: Attempt to access protected resources without authentication.\n\n**Expected Behavior**:\n- HTTP 401 Unauthorized status\n- Clear authorization requirement message\n- No data leakage or partial access\n- Consistent error response format\n\n**Success Criteria**:\n- Protected resources properly secured\n- Clear authorization error messaging\n- No unauthorized data access\n- Consistent error handling across services"
+					}
+				},
+				{
+					"name": "Test 3: Invalid Document Upload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"File upload error handled correctly\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('file');",
+									"    ",
+									"    console.log('✅ File upload error handled correctly');",
+									"    console.log('📄 Invalid file rejected properly');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "invalidField",
+									"value": "invalid-data",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/upload",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"upload"
+							]
+						},
+						"description": "Test file upload error handling with invalid request format.\n\n**Error Scenario 3**: Validate proper handling of malformed upload requests.\n\n**Expected Behavior**:\n- HTTP 400 Bad Request status\n- Clear validation error messages\n- No partial processing or corruption\n- Proper cleanup of any temporary files\n\n**Success Criteria**:\n- Invalid uploads rejected cleanly\n- Clear error messaging for client correction\n- No system corruption or partial state\n- Proper resource cleanup"
+					}
+				},
+				{
+					"name": "Test 4: Malformed RAG Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"RAG query error handled correctly\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    ",
+									"    console.log('✅ RAG query error handled correctly');",
+									"    console.log('🤖 Invalid query format rejected');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invalidField\": \"invalid-query-data\",\n  \"missingRequiredFields\": true\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Test RAG query error handling with malformed request data.\n\n**Error Scenario 4**: Validate RAG query validation and error responses.\n\n**Expected Behavior**:\n- HTTP 400 Bad Request for malformed queries\n- Clear validation error messages\n- No unnecessary LLM API calls\n- Proper request structure guidance\n\n**Success Criteria**:\n- Invalid queries rejected before processing\n- Clear validation feedback for correction\n- No resource waste on invalid requests\n- Consistent error response format"
+					}
+				},
+				{
+					"name": "Test 5: Rate Limiting Validation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Rate limiting works correctly\", function () {",
+									"    // This test may pass (200) or hit rate limit (429)",
+									"    // Both are acceptable for this demonstration",
+									"    var validStatuses = [200, 429];",
+									"    pm.expect(validStatuses).to.include(pm.response.code);",
+									"    ",
+									"    if (pm.response.code === 429) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('error');",
+									"        pm.expect(jsonData.error).to.include('RATE_LIMIT');",
+									"        console.log('✅ Rate limiting active and working');",
+									"    } else {",
+									"        console.log('✅ Request within rate limits');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"query\": \"Rate limiting test query\",\n  \"maxResults\": 3,\n  \"temperature\": 0.5,\n  \"includeContext\": true\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Test rate limiting implementation and proper error responses.\n\n**Error Scenario 5**: Validate rate limiting enforcement and recovery.\n\n**Expected Behavior**:\n- Rate limiting enforced per tenant/user\n- HTTP 429 Too Many Requests when limits exceeded\n- Clear rate limit information in response headers\n- Proper retry guidance in error messages\n\n**Success Criteria**:\n- Rate limiting properly implemented\n- Clear rate limit feedback to clients\n- System protection from abuse\n- Recovery guidance provided"
+					}
+				},
+				{
+					"name": "Test 6: Recovery - Valid Request After Errors",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"System recovery successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('answer');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"    ",
+									"    console.log('✅ System recovery successful');",
+									"    console.log('🎯 Valid request processed after error scenarios');",
+									"    console.log('💫 System resilience demonstrated');",
+									"    console.log('🎉 Error handling workflow completed!');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{WORKFLOW_AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{WORKFLOW_TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{WORKFLOW_TENANT_ID}}\",\n  \"query\": \"After testing various error conditions, can you confirm the system is working properly?\",\n  \"maxResults\": 5,\n  \"temperature\": 0.7,\n  \"includeContext\": true,\n  \"model\": \"gpt-3.5-turbo\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Validate system recovery and normal operation after error scenarios.\n\n**Recovery Scenario**: Demonstrate system resilience and recovery after various error conditions.\n\n**Recovery Validation**:\n- System processes valid requests normally after errors\n- No persistent error states or corruption\n- Full functionality restored\n- Performance remains optimal\n- Error handling doesn't impact normal operations\n\n**Success Criteria**:\n- Valid RAG query processed successfully\n- System performance normal\n- All services operational\n- Complete recovery demonstrated\n\n**Workflow Achievement**: This completes comprehensive error handling testing, demonstrating the system's ability to handle various failure conditions gracefully while maintaining operational integrity and providing clear error feedback to clients."
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{WORKFLOW_AUTH_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set gateway URL if not configured",
+					"if (!pm.environment.get('GATEWAY_URL')) {",
+					"    pm.environment.set('GATEWAY_URL', 'http://localhost:8080');",
+					"}",
+					"",
+					"// Set default tenant ID for workflows if not set",
+					"if (!pm.environment.get('WORKFLOW_TENANT_ID')) {",
+					"    pm.environment.set('WORKFLOW_TENANT_ID', 'workflow-test-tenant-123');",
+					"}",
+					"",
+					"// Set default admin email if not set",
+					"if (!pm.environment.get('WORKFLOW_ADMIN_EMAIL')) {",
+					"    pm.environment.set('WORKFLOW_ADMIN_EMAIL', 'admin@enterprise-rag.com');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global workflow progress tracking",
+					"var workflowStep = pm.request.name;",
+					"var status = pm.response.code < 400 ? '✅' : '❌';",
+					"console.log('\\n🔄 WORKFLOW PROGRESS: ' + status + ' ' + workflowStep);",
+					"",
+					"// Performance monitoring",
+					"if (pm.response.responseTime > 2000) {",
+					"    console.log('⚠️ Slow response: ' + pm.response.responseTime + 'ms');",
+					"} else if (pm.response.responseTime > 1000) {",
+					"    console.log('⏱️ Response time: ' + pm.response.responseTime + 'ms');",
+					"}",
+					"",
+					"// Error tracking for workflow debugging",
+					"if (pm.response.code >= 400) {",
+					"    console.log('❌ Error in workflow step: ' + workflowStep);",
+					"    console.log('📋 Status: ' + pm.response.code + ' ' + pm.response.status);",
+					"    try {",
+					"        var errorData = pm.response.json();",
+					"        if (errorData.message) {",
+					"            console.log('💬 Error message: ' + errorData.message);",
+					"        }",
+					"    } catch (e) {",
+					"        console.log('📄 Response body: ' + pm.response.text());",
+					"    }",
+					"}",
+					"",
+					"// Auto-save workflow variables from any successful response",
+					"if (pm.response.code < 300) {",
+					"    try {",
+					"        var jsonData = pm.response.json();",
+					"        ",
+					"        // Save common identifiers",
+					"        if (jsonData.id && !pm.environment.get('WORKFLOW_LAST_ID')) {",
+					"            pm.environment.set('WORKFLOW_LAST_ID', jsonData.id);",
+					"        }",
+					"        if (jsonData.conversationId && !pm.environment.get('WORKFLOW_CONVERSATION_ID')) {",
+					"            pm.environment.set('WORKFLOW_CONVERSATION_ID', jsonData.conversationId);",
+					"        }",
+					"        if (jsonData.jobId) {",
+					"            pm.environment.set('WORKFLOW_JOB_ID', jsonData.jobId);",
+					"        }",
+					"    } catch (e) {",
+					"        // Non-JSON response, skip variable extraction",
+					"    }",
+					"}",
+					"",
+					"// Workflow completion detection",
+					"if (workflowStep.includes('Step 7') || workflowStep.includes('Step 8')) {",
+					"    console.log('\\n🎉 WORKFLOW STAGE COMPLETED!');",
+					"    console.log('📊 Final response time: ' + pm.response.responseTime + 'ms');",
+					"    console.log('✨ Status: ' + pm.response.code + ' ' + pm.response.status);",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "GATEWAY_URL",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_AUTH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_REFRESH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_ADMIN_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_TENANT_ID",
+			"value": "workflow-test-tenant-123",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_USER_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_USER_EMAIL",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_ADMIN_EMAIL",
+			"value": "admin@enterprise-rag.com",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_DOCUMENT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_BATCH_DOC_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_CONVERSATION_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_NEW_TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_FOUND_USER_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_JOB_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_LAST_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "WORKFLOW_CHUNK_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

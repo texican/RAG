@@ -5,21 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.enterprise.rag</groupId>
-        <artifactId>enterprise-rag</artifactId>
+        <groupId>com.byo.rag</groupId>
+        <artifactId>byo-rag</artifactId>
         <version>0.8.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>rag-core-service</artifactId>
     <packaging>jar</packaging>
 
-    <name>RAG Core Service</name>
-    <description>RAG query engine and LLM integration service</description>
+    <name>BYO RAG Core Service</name>
+    <description>RAG query engine and LLM integration service for BYO RAG system</description>
 
     <dependencies>
         <!-- Shared components -->
         <dependency>
-            <groupId>com.enterprise.rag</groupId>
+            <groupId>com.byo.rag</groupId>
             <artifactId>rag-shared</artifactId>
         </dependency>
 

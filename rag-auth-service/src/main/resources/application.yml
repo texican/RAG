@@ -65,7 +65,7 @@ springdoc:
 # Logging
 logging:
   level:
-    com.enterprise.rag: DEBUG
+    com.byo.rag: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
   pattern:
