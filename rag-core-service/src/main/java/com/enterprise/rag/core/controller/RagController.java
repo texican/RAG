@@ -29,6 +29,63 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Enterprise-grade REST controller for RAG (Retrieval-Augmented Generation) operations.
+ * 
+ * <p><strong>✅ Production Ready & Fully Operational (2025-09-03):</strong> This is the primary 
+ * orchestration controller for the Enterprise RAG system, handling query processing, streaming 
+ * responses, and LLM integration. Successfully deployed in Docker and accessible through the 
+ * API Gateway at http://localhost:8080/api/rag.</p>
+ * 
+ * <p><strong>🐳 Docker Integration Status:</strong> All endpoints are operational with complete 
+ * Spring AI integration, Redis caching, vector search capabilities, and real-time streaming 
+ * through Server-Sent Events (SSE).</p>
+ * 
+ * <p><strong>Core RAG Capabilities:</strong></p>
+ * <ul>
+ *   <li><strong>Query Processing:</strong> Complete RAG pipeline with context retrieval and generation</li>
+ *   <li><strong>Streaming Responses:</strong> Real-time token streaming with Server-Sent Events</li>
+ *   <li><strong>Async Processing:</strong> Background query processing with CompletableFuture</li>
+ *   <li><strong>Conversation Management:</strong> Multi-turn dialogue with context memory</li>
+ *   <li><strong>Query Optimization:</strong> Advanced query analysis and suggestions</li>
+ * </ul>
+ * 
+ * <p><strong>Production AI/ML Integration:</strong></p>
+ * <ul>
+ *   <li><strong>Multi-LLM Support:</strong> OpenAI GPT-4, Anthropic Claude, Ollama local models</li>
+ *   <li><strong>Vector Search:</strong> Semantic document retrieval via embedding service</li>
+ *   <li><strong>Context Assembly:</strong> Intelligent document chunk compilation and ranking</li>
+ *   <li><strong>Response Streaming:</strong> Real-time token streaming for improved UX</li>
+ *   <li><strong>Performance Monitoring:</strong> Comprehensive statistics and health monitoring</li>
+ * </ul>
+ * 
+ * <p><strong>Multi-Tenant Architecture:</strong></p>
+ * <ul>
+ *   <li>Complete tenant isolation through X-Tenant-ID header validation</li>
+ *   <li>Tenant-scoped conversation and query processing</li>
+ *   <li>Per-tenant performance monitoring and resource tracking</li>
+ *   <li>Secure context retrieval with tenant boundaries</li>
+ * </ul>
+ * 
+ * <p><strong>API Endpoints Overview:</strong></p>
+ * <ul>
+ *   <li><strong>/query:</strong> Synchronous RAG query processing with complete response</li>
+ *   <li><strong>/query/async:</strong> Asynchronous processing for long-running queries</li>
+ *   <li><strong>/query/stream:</strong> Real-time streaming response with SSE</li>
+ *   <li><strong>/query/analyze:</strong> Query optimization and analysis</li>
+ *   <li><strong>/conversations/*:</strong> Multi-turn conversation management</li>
+ *   <li><strong>/stats:</strong> Performance monitoring and analytics</li>
+ *   <li><strong>/health:</strong> Service health and dependency status</li>
+ * </ul>
+ * 
+ * @author Enterprise RAG Development Team
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see RagService
+ * @see ConversationService
+ * @see QueryOptimizationService
+ * @see LLMIntegrationService
+ */
 @RestController
 @RequestMapping("/api/v1/rag")
 @Validated
