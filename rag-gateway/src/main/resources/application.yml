@@ -195,7 +195,7 @@ logging:
     org.springframework.cloud.gateway: INFO
     org.springframework.web.reactive: INFO
     reactor.netty: INFO
-    com.enterprise.rag.gateway: DEBUG
+    com.byo.rag.gateway: DEBUG
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
@@ -215,7 +215,7 @@ info:
       email: team@enterprise-rag.com
   build:
     artifact: rag-gateway
-    group: com.enterprise.rag
+    group: com.byo.rag
     time: ${build.time:unknown}
     version: ${build.version:unknown}
 
@@ -233,7 +233,7 @@ spring:
 
 logging:
   level:
-    com.enterprise.rag: DEBUG
+    com.byo.rag: DEBUG
     org.springframework.cloud.gateway.filter: DEBUG
     org.springframework.security: DEBUG
 
@@ -286,7 +286,7 @@ management:
 
 logging:
   level:
-    com.enterprise.rag: INFO
+    com.byo.rag: INFO
     org.springframework.cloud.gateway: WARN
   file:
     name: /app/logs/gateway.log
@@ -324,5 +324,5 @@ management:
 
 logging:
   level:
-    com.enterprise.rag: INFO
+    com.byo.rag: INFO
     org.springframework.cloud.gateway: INFO

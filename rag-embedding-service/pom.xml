@@ -5,19 +5,19 @@
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
-        <groupId>com.enterprise.rag</groupId>
-        <artifactId>enterprise-rag</artifactId>
+        <groupId>com.byo.rag</groupId>
+        <artifactId>byo-rag</artifactId>
         <version>0.8.0-SNAPSHOT</version>
     </parent>
     
     <artifactId>rag-embedding-service</artifactId>
-    <name>RAG Embedding Service</name>
-    <description>Vector operations and similarity search service</description>
+    <name>BYO RAG Embedding Service</name>
+    <description>Vector operations and similarity search service for BYO RAG system</description>
     
     <dependencies>
         <!-- Shared module -->
         <dependency>
-            <groupId>com.enterprise.rag</groupId>
+            <groupId>com.byo.rag</groupId>
             <artifactId>rag-shared</artifactId>
             <version>${project.version}</version>
             <exclusions>

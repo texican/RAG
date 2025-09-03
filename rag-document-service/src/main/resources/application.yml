@@ -30,7 +30,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.enterprise.rag.shared.dto"
+        spring.json.trusted.packages: "com.byo.rag.shared.dto"
   
   servlet:
     multipart:
@@ -78,7 +78,7 @@ springdoc:
 # Logging
 logging:
   level:
-    com.enterprise.rag: DEBUG
+    com.byo.rag: DEBUG
     org.springframework.kafka: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"

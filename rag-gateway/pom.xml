@@ -5,21 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.enterprise.rag</groupId>
-        <artifactId>enterprise-rag</artifactId>
+        <groupId>com.byo.rag</groupId>
+        <artifactId>byo-rag</artifactId>
         <version>0.8.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>rag-gateway</artifactId>
     <packaging>jar</packaging>
 
-    <name>RAG API Gateway</name>
-    <description>Spring Cloud Gateway for API routing, security, and load balancing</description>
+    <name>BYO RAG API Gateway</name>
+    <description>Spring Cloud Gateway for API routing, security, and load balancing in BYO RAG system</description>
 
     <dependencies>
         <!-- Internal Dependencies -->
         <dependency>
-            <groupId>com.enterprise.rag</groupId>
+            <groupId>com.byo.rag</groupId>
             <artifactId>rag-shared</artifactId>
             <exclusions>
                 <exclusion>
@@ -142,7 +142,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.enterprise.rag.gateway.GatewayApplication</mainClass>
+                    <mainClass>com.byo.rag.gateway.GatewayApplication</mainClass>
                     <jvmArguments>
                         --add-opens java.base/java.lang=ALL-UNNAMED
                         --add-opens java.base/sun.nio.ch=ALL-UNNAMED

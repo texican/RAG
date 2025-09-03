@@ -5,21 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.enterprise.rag</groupId>
-        <artifactId>enterprise-rag</artifactId>
+        <groupId>com.byo.rag</groupId>
+        <artifactId>byo-rag</artifactId>
         <version>0.8.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>rag-document-service</artifactId>
     <packaging>jar</packaging>
 
-    <name>RAG Document Service</name>
-    <description>Document processing and text extraction service</description>
+    <name>BYO RAG Document Service</name>
+    <description>Document processing and text extraction service for BYO RAG system</description>
 
     <dependencies>
         <!-- Internal Dependencies -->
         <dependency>
-            <groupId>com.enterprise.rag</groupId>
+            <groupId>com.byo.rag</groupId>
             <artifactId>rag-shared</artifactId>
         </dependency>
 
@@ -142,7 +142,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.enterprise.rag.document.DocumentServiceApplication</mainClass>
+                    <mainClass>com.byo.rag.document.DocumentServiceApplication</mainClass>
                     <jvmArguments>
                         --add-opens java.base/java.lang=ALL-UNNAMED
                         --add-opens java.base/sun.nio.ch=ALL-UNNAMED

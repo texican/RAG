@@ -59,7 +59,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
-        spring.json.trusted.packages: "com.enterprise.rag.*"
+        spring.json.trusted.packages: "com.byo.rag.*"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -192,7 +192,7 @@ management:
 # Logging Configuration
 logging:
   level:
-    com.enterprise.rag: DEBUG
+    com.byo.rag: DEBUG
     org.springframework.ai: INFO
     org.springframework.kafka: WARN
     dev.langchain4j: INFO

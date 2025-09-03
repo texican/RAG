@@ -290,7 +290,7 @@ EOF
 # Local development configuration
 logging:
   level:
-    com.enterprise.rag: DEBUG
+    com.byo.rag: DEBUG
     org.springframework.security: INFO
     org.hibernate.SQL: DEBUG
   pattern:

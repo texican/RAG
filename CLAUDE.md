@@ -1,8 +1,8 @@
-# CLAUDE.md - Enterprise RAG System
+# CLAUDE.md - BYO RAG System
 
 ## 🎯 Project Overview
 
-You are helping build an **enterprise-grade Enterprise RAG (Retrieval Augmented Generation) system** - a sophisticated AI platform that demonstrates both advanced backend engineering and cutting-edge AI integration skills.
+You are helping build an **enterprise-grade BYO RAG (Build Your Own Retrieval Augmented Generation) system** - a sophisticated AI platform that demonstrates both advanced backend engineering and cutting-edge AI integration skills.
 
 This is a **portfolio project** designed to showcase senior-level backend development capabilities combined with modern AI/ML engineering practices.
 
@@ -34,7 +34,7 @@ Deployment: Docker, Kubernetes, Helm
 
 ### Project Structure
 ```
-enterprise-rag/
+byo-rag/
 ├── rag-shared/           # Common DTOs, entities, utilities
 ├── rag-gateway/          # API Gateway with Spring Cloud Gateway
 ├── rag-auth-service/     # JWT auth, tenant & user management
@@ -180,6 +180,12 @@ enterprise-rag/
 
 ### 🎯 **Recent Major Achievements (2025-09-03)**
 
+#### ✅ **BYO RAG System Rebrand Complete (2025-09-03)**
+- **Project Rebrand**: Updated from "Enterprise RAG" to "BYO RAG System" (Build Your Own RAG)
+- **Package Refactoring**: Complete Java package rename from `com.enterprise.rag` to `com.byo.rag`
+- **Maven Configuration**: Updated all pom.xml files with new groupId and project descriptions
+- **Documentation Update**: Consistent BYO RAG terminology across all project documentation
+
 #### 🚧 **Docker System Integration IN PROGRESS (2025-09-03)**
 - **Partial Docker Deployment**: Significant progress on Docker integration with 4/6 services running
 - **Configuration Fixes Applied**: Resolved YAML duplication, Kafka dependency, and Set element issues
@@ -206,7 +212,7 @@ enterprise-rag/
 - **Configuration Management**: Environment-specific configurations for dev/test/docker/prod
 
 #### ✅ **Previous Achievement - rag-gateway Service Implementation COMPLETE (2025-08-31)**
-- **Final Microservice Completed**: Enterprise RAG system now has all 6 microservices implemented (100%)
+- **Final Microservice Completed**: BYO RAG system now has all 6 microservices implemented (100%)
 - **Spring Cloud Gateway**: Complete API Gateway with reactive architecture and WebFlux integration
 - **Comprehensive Security**: JWT authentication filter with tenant isolation and user context propagation
 - **Enterprise Routing**: All 5 backend services properly routed with path-based routing patterns

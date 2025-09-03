@@ -56,7 +56,7 @@ management:
 
 logging:
   level:
-    com.enterprise.rag.admin: DEBUG
+    com.byo.rag.admin: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
   pattern:

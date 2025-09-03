@@ -87,7 +87,7 @@
             
             <!-- Internal modules -->
             <dependency>
-                <groupId>com.enterprise.rag</groupId>
+                <groupId>com.byo.rag</groupId>
                 <artifactId>rag-shared</artifactId>
                 <version>${project.version}</version>
             </dependency>
