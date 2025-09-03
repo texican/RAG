@@ -6,6 +6,8 @@ import com.enterprise.rag.admin.dto.AdminRefreshRequest;
 import com.enterprise.rag.admin.dto.AdminUserValidationResponse;
 import com.enterprise.rag.admin.dto.LogoutResponse;
 import com.enterprise.rag.admin.service.AdminJwtService;
+import com.enterprise.rag.admin.repository.UserRepository;
+import com.enterprise.rag.shared.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,9 +22,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -37,6 +42,9 @@ class AdminAuthControllerTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+    
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private Authentication authentication;
@@ -51,7 +59,7 @@ class AdminAuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        reset(jwtService, passwordEncoder, authentication);
+        reset(jwtService, passwordEncoder, userRepository, authentication);
     }
 
     @Test
@@ -59,8 +67,10 @@ class AdminAuthControllerTest {
     void shouldLoginSuccessfullyWithValidCredentials() {
         // Given
         AdminLoginRequest request = new AdminLoginRequest(validUsername, validPassword);
+        User validUser = createValidAdminUser();
+        when(userRepository.findByEmail(validUsername)).thenReturn(Optional.of(validUser));
         when(passwordEncoder.matches(validPassword, encodedPassword())).thenReturn(true);
-        when(jwtService.generateToken(validUsername, adminRoles)).thenReturn(validToken);
+        when(jwtService.generateToken(validUsername, List.of("ADMIN"))).thenReturn(validToken);
 
         // When
         ResponseEntity<?> response = controller.login(request);
@@ -71,11 +81,12 @@ class AdminAuthControllerTest {
         assertNotNull(loginResponse);
         assertEquals(validToken, loginResponse.token());
         assertEquals(validUsername, loginResponse.username());
-        assertEquals(adminRoles, loginResponse.roles());
+        assertEquals(List.of("ADMIN"), loginResponse.roles());
         assertEquals(86400000L, loginResponse.expiresIn());
 
+        verify(userRepository).findByEmail(validUsername);
         verify(passwordEncoder).matches(validPassword, encodedPassword());
-        verify(jwtService).generateToken(validUsername, adminRoles);
+        verify(jwtService).generateToken(validUsername, List.of("ADMIN"));
     }
 
     @Test
@@ -83,6 +94,8 @@ class AdminAuthControllerTest {
     void shouldReturn401WithInvalidCredentials() {
         // Given
         AdminLoginRequest request = new AdminLoginRequest(validUsername, "WrongPassword");
+        User validUser = createValidAdminUser();
+        when(userRepository.findByEmail(validUsername)).thenReturn(Optional.of(validUser));
         when(passwordEncoder.matches("WrongPassword", encodedPassword())).thenReturn(false);
 
         // When
@@ -97,6 +110,7 @@ class AdminAuthControllerTest {
         assertEquals("Invalid credentials", errorResponse.get("error"));
         assertNotNull(errorResponse.get("message"));
 
+        verify(userRepository).findByEmail(validUsername);
         verify(passwordEncoder).matches("WrongPassword", encodedPassword());
         verifyNoInteractions(jwtService);
     }
@@ -107,6 +121,7 @@ class AdminAuthControllerTest {
         // Given
         String nonExistentUser = "nonexistent@enterprise.com";
         AdminLoginRequest request = new AdminLoginRequest(nonExistentUser, validPassword);
+        when(userRepository.findByEmail(nonExistentUser)).thenReturn(Optional.empty());
 
         // When
         ResponseEntity<?> response = controller.login(request);
@@ -119,6 +134,7 @@ class AdminAuthControllerTest {
         assertNotNull(errorResponse);
         assertEquals("Invalid credentials", errorResponse.get("error"));
 
+        verify(userRepository).findByEmail(nonExistentUser);
         verifyNoInteractions(passwordEncoder, jwtService);
     }
 
@@ -127,11 +143,12 @@ class AdminAuthControllerTest {
     void shouldRefreshTokenSuccessfullyWithValidToken() {
         // Given
         String newToken = "new.jwt.token";
+        List<String> roles = List.of("ADMIN");
         AdminRefreshRequest request = new AdminRefreshRequest(validToken);
         when(jwtService.isTokenValid(validToken)).thenReturn(true);
         when(jwtService.extractUsername(validToken)).thenReturn(validUsername);
-        when(jwtService.extractRoles(validToken)).thenReturn(adminRoles);
-        when(jwtService.generateToken(validUsername, adminRoles)).thenReturn(newToken);
+        when(jwtService.extractRoles(validToken)).thenReturn(roles);
+        when(jwtService.generateToken(validUsername, roles)).thenReturn(newToken);
 
         // When
         ResponseEntity<?> response = controller.refresh(request);
@@ -142,12 +159,12 @@ class AdminAuthControllerTest {
         assertNotNull(refreshResponse);
         assertEquals(newToken, refreshResponse.token());
         assertEquals(validUsername, refreshResponse.username());
-        assertEquals(adminRoles, refreshResponse.roles());
+        assertEquals(roles, refreshResponse.roles());
 
         verify(jwtService).isTokenValid(validToken);
         verify(jwtService).extractUsername(validToken);
         verify(jwtService).extractRoles(validToken);
-        verify(jwtService).generateToken(validUsername, adminRoles);
+        verify(jwtService).generateToken(validUsername, roles);
     }
 
     @Test
@@ -190,6 +207,10 @@ class AdminAuthControllerTest {
     @Test
     @DisplayName("Should validate admin user exists")
     void shouldValidateAdminUserExists() {
+        // Given
+        User validUser = createValidAdminUser();
+        when(userRepository.findByEmail(validUsername)).thenReturn(Optional.of(validUser));
+        
         // When
         ResponseEntity<AdminUserValidationResponse> response = controller.validateUser(validUsername);
 
@@ -199,6 +220,8 @@ class AdminAuthControllerTest {
         assertNotNull(validationResponse);
         assertTrue(validationResponse.exists());
         assertEquals(validUsername, validationResponse.username());
+        
+        verify(userRepository).findByEmail(validUsername);
     }
 
     @Test
@@ -206,6 +229,7 @@ class AdminAuthControllerTest {
     void shouldReturnFalseForNonExistentAdminUser() {
         // Given
         String nonExistentUser = "nonexistent@enterprise.com";
+        when(userRepository.findByEmail(nonExistentUser)).thenReturn(Optional.empty());
 
         // When
         ResponseEntity<AdminUserValidationResponse> response = controller.validateUser(nonExistentUser);
@@ -216,6 +240,8 @@ class AdminAuthControllerTest {
         assertNotNull(validationResponse);
         assertFalse(validationResponse.exists());
         assertEquals(nonExistentUser, validationResponse.username());
+        
+        verify(userRepository).findByEmail(nonExistentUser);
     }
 
     @Test
@@ -282,5 +308,18 @@ class AdminAuthControllerTest {
     // Helper method to simulate encoded password
     private String encodedPassword() {
         return "$2a$10$KBdADFHGKGYwIjnfh56vq.i2AcnMUAdYgkEfnoqJxUr1vBD8AWODm";
+    }
+    
+    // Helper method to create a valid admin user
+    private User createValidAdminUser() {
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setEmail(validUsername);
+        user.setPasswordHash(encodedPassword());
+        user.setRole(User.UserRole.ADMIN);
+        user.setStatus(User.UserStatus.ACTIVE);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        return user;
     }
 }

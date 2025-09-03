@@ -149,15 +149,14 @@ spring:
           min-idle: 2
           max-wait: -1ms
 
+  # Disable Kafka in Docker for now (will be enabled later)
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
 # Spring AI Configuration for Docker
 spring.ai:
   ollama:
     base-url: ${OLLAMA_URL:http://ollama:11434}
-
-# Disable Kafka in Docker for now (will be enabled later)
-spring:
-  kafka:
-    bootstrap-servers: # Disabled for initial deployment
 
 logging:
   level:

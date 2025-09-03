@@ -6,6 +6,7 @@ import com.enterprise.rag.shared.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -19,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
  * Service for handling embedding operations via Kafka messaging.
  */
 @Service
+@ConditionalOnBean(KafkaTemplate.class)
 public class EmbeddingKafkaService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddingKafkaService.class);
