@@ -1,0 +1,1719 @@
+{
+	"info": {
+		"_postman_id": "admin-service-rag-collection",
+		"name": "BYO RAG - Admin Service Collection",
+		"description": "Administrative Management Service API Collection for the BYO RAG System\n\n⚙️ **Service URL**: http://localhost:8085 (Docker deployment)\n📊 **Service Status**: Fully operational with complete administrative capabilities\n🏗️ **Architecture**: Enterprise-grade admin operations with PostgreSQL persistence and comprehensive tenant management\n\n**Administrative Capabilities:**\n- **Tenant Management**: Complete organizational administration and configuration\n- **User Administration**: Comprehensive user lifecycle and access control management\n- **System Monitoring**: Real-time analytics, usage statistics, and performance monitoring\n- **Resource Management**: Storage quotas, usage limits, and capacity planning\n- **Audit & Compliance**: Complete activity logging and compliance reporting\n- **Security Administration**: Role-based access control and security policy management\n\n**Production Admin Features:**\n- **Multi-Tenant Administration**: Complete isolation and management of tenant organizations\n- **Database-Backed Operations**: Full PostgreSQL integration with JPA repositories\n- **Role-Based Access Control**: Comprehensive RBAC with admin privilege validation\n- **Real-Time Analytics**: Live usage statistics and performance monitoring dashboards\n- **Compliance & Auditing**: Complete audit trails and regulatory compliance features\n\n**Admin Security Model:**\n- **Admin Authentication**: Separate admin authentication with enhanced security\n- **Privilege Validation**: Role-based access control for all administrative operations\n- **Audit Logging**: Comprehensive logging of all administrative actions\n- **Multi-Factor Authentication**: Enhanced security for administrative access (future)\n\n**Environment Variables:**\n- `ADMIN_SERVICE_URL`: http://localhost:8085\n- `ADMIN_TOKEN`: JWT admin authentication token\n- `AUTH_TOKEN`: Regular user token (for some operations)\n- `TENANT_ID`: Tenant identifier for management operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "byo-rag-admin-service"
+	},
+	"item": [
+		{
+			"name": "🔐 Admin Authentication",
+			"description": "Administrative authentication and session management",
+			"item": [
+				{
+					"name": "Admin Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains admin token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('accessToken');",
+									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.environment.set('ADMIN_TOKEN', jsonData.accessToken);",
+									"    pm.environment.set('ADMIN_REFRESH_TOKEN', jsonData.refreshToken);",
+									"});",
+									"",
+									"pm.test(\"Admin user has correct role\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    pm.expect(jsonData.user).to.have.property('role');",
+									"    pm.expect(jsonData.user.role).to.eql('ADMIN');",
+									"});",
+									"",
+									"pm.test(\"Response includes admin capabilities\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('capabilities');",
+									"    pm.expect(jsonData.capabilities).to.be.an('array');",
+									"    pm.expect(jsonData.capabilities).to.include('TENANT_MANAGEMENT');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@enterprise-rag.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/auth/login",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate as system administrator to access administrative functions.\n\n**Request Body:**\n- `email`: Administrator email address (required)\n- `password`: Administrator password (required)\n\n**Authentication Requirements:**\n- User must have ADMIN role in the system\n- Account must have ACTIVE status\n- Credentials verified against database with BCrypt hashing\n\n**Response:**\n- `accessToken`: JWT token for admin API access\n- `refreshToken`: Token for session renewal\n- `user`: Admin user profile with role and capabilities\n- `capabilities`: Array of granted administrative capabilities\n- `sessionExpiry`: Token expiration information\n\n**Admin Capabilities:**\n- `TENANT_MANAGEMENT`: Create, update, delete tenant organizations\n- `USER_ADMINISTRATION`: Manage users across all tenants\n- `SYSTEM_MONITORING`: Access system statistics and performance data\n- `AUDIT_ACCESS`: View audit logs and compliance reports\n- `RESOURCE_MANAGEMENT`: Manage quotas and resource limits\n\n**Security Features:**\n- Enhanced JWT tokens with admin-specific claims\n- Comprehensive audit logging of admin sessions\n- Rate limiting for admin login attempts\n- Session tracking and management"
+					},
+					"response": [
+						{
+							"name": "Successful Admin Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"admin@enterprise-rag.com\",\n  \"password\": \"admin123\"\n}"
+								},
+								"url": {
+									"raw": "{{ADMIN_SERVICE_URL}}/auth/login",
+									"host": [
+										"{{ADMIN_SERVICE_URL}}"
+									],
+									"path": [
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"accessToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBlbnRlcnByaXNlLXJhZy5jb20iLCJpc3MiOiJlbnRlcnByaXNlLXJhZy1hZG1pbiIsImV4cCI6MTY5MzQ2NDA0MCwicm9sZSI6IkFETUlOIiwiY2FwYWJpbGl0aWVzIjpbIlRFTkFOVF9NQU5BR0VNRU5UIiwiVVNFUl9BRE1JTklTVFJBVElPTiIsIlNZU1RFTV9NT05JVE9SSU5HIl0sInVzZXJJZCI6ImFkbWluLTEyMyIsInNlc3Npb25JZCI6InNlc3MtYWJjZGVmIn0...\",\n  \"refreshToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBlbnRlcnByaXNlLXJhZy5jb20iLCJpc3MiOiJlbnRlcnByaXNlLXJhZy1hZG1pbiIsImV4cCI6MTY5NDA2OTI0MCwidHlwZSI6InJlZnJlc2giLCJzZXNzaW9uSWQiOiJzZXNzLWFiY2RlZiJ9...\",\n  \"user\": {\n    \"id\": \"admin-123\",\n    \"email\": \"admin@enterprise-rag.com\",\n    \"firstName\": \"System\",\n    \"lastName\": \"Administrator\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"lastLogin\": \"2023-08-31T10:30:00Z\",\n    \"loginCount\": 42\n  },\n  \"capabilities\": [\n    \"TENANT_MANAGEMENT\",\n    \"USER_ADMINISTRATION\",\n    \"SYSTEM_MONITORING\",\n    \"AUDIT_ACCESS\",\n    \"RESOURCE_MANAGEMENT\"\n  ],\n  \"sessionExpiry\": {\n    \"accessTokenExpiry\": \"2023-08-31T12:30:00Z\",\n    \"refreshTokenExpiry\": \"2023-09-07T10:30:00Z\"\n  },\n  \"systemInfo\": {\n    \"version\": \"1.0.0\",\n    \"environment\": \"production\",\n    \"maintenanceMode\": false\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Admin Token Refresh",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains new admin token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('accessToken');",
+									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.environment.set('ADMIN_TOKEN', jsonData.accessToken);",
+									"    pm.environment.set('ADMIN_REFRESH_TOKEN', jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin refresh token exists",
+									"if (!pm.environment.get('ADMIN_REFRESH_TOKEN')) {",
+									"    throw new Error('ADMIN_REFRESH_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{ADMIN_REFRESH_TOKEN}}\"\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/auth/refresh",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Refresh admin session tokens without re-authentication.\n\n**Request Body:**\n- `refreshToken`: Valid admin refresh token from login\n\n**Response:**\n- New access and refresh tokens with extended validity\n- Updated session information and capabilities\n- Token rotation for enhanced security\n\n**Security Features:**\n- Single-use refresh tokens (token rotation)\n- Admin session validation and tracking\n- Enhanced expiration policies for admin sessions"
+					}
+				},
+				{
+					"name": "Admin Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Logout successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('logout');",
+									"});",
+									"",
+									"// Clear admin tokens from environment",
+									"pm.environment.unset('ADMIN_TOKEN');",
+									"pm.environment.unset('ADMIN_REFRESH_TOKEN');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/auth/logout",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logout from admin session and invalidate tokens.\n\n**Behavior:**\n- Invalidates current access and refresh tokens\n- Logs logout event for audit purposes\n- Clears server-side session state\n- Updates last activity timestamps\n\n**Security:**\n- Token blacklisting to prevent replay attacks\n- Session termination logging\n- Cleanup of temporary admin privileges"
+					}
+				},
+				{
+					"name": "Validate Admin User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User exists and has admin role\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('exists');",
+									"    pm.expect(jsonData).to.have.property('hasAdminRole');",
+									"    pm.expect(jsonData.exists).to.be.true;",
+									"    pm.expect(jsonData.hasAdminRole).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/auth/validate?email=admin@enterprise-rag.com",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"auth",
+								"validate"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "admin@enterprise-rag.com",
+									"description": "Email to validate for admin access"
+								}
+							]
+						},
+						"description": "Validate user existence and admin role privileges.\n\n**Query Parameters:**\n- `email`: Email address to validate\n\n**Response:**\n- `exists`: Whether user exists in system\n- `hasAdminRole`: Whether user has admin privileges\n- `isActive`: Whether account is currently active\n- `lastLogin`: Last successful login timestamp\n\n**Use Cases:**\n- Admin privilege verification\n- User access validation\n- Security auditing\n- Role-based authorization checks"
+					}
+				}
+			]
+		},
+		{
+			"name": "🏢 Tenant Management",
+			"description": "Comprehensive tenant organization administration",
+			"item": [
+				{
+					"name": "Get All Tenants",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains tenant list\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Tenants have required properties\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstTenant = jsonData[0];",
+									"        pm.expect(firstTenant).to.have.property('id');",
+									"        pm.expect(firstTenant).to.have.property('name');",
+									"        pm.expect(firstTenant).to.have.property('domain');",
+									"        pm.expect(firstTenant).to.have.property('status');",
+									"        pm.expect(firstTenant).to.have.property('createdAt');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/tenants",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"tenants"
+							]
+						},
+						"description": "Retrieve complete list of all tenant organizations in the system.\n\n**Response:**\n- Array of tenant objects with complete metadata\n- Tenant configuration and limits information\n- Usage statistics and status indicators\n- Contact and billing information\n\n**Tenant Properties:**\n- `id`: Unique tenant identifier (UUID)\n- `name`: Organization name\n- `domain`: Primary domain name\n- `status`: Tenant status (ACTIVE, INACTIVE, SUSPENDED, DELETED)\n- `contactEmail`: Primary contact email address\n- `maxUsers`: Maximum allowed users\n- `maxStorage`: Storage limit in bytes\n- `currentUsers`: Current user count\n- `storageUsed`: Current storage utilization\n- `createdAt`: Tenant creation timestamp\n- `updatedAt`: Last modification timestamp\n- `billingInfo`: Subscription and billing details\n\n**Admin Privileges Required:**\n- TENANT_MANAGEMENT capability\n- ADMIN role with active status\n- Valid admin session token\n\n**Use Cases:**\n- System-wide tenant oversight\n- Usage monitoring and reporting\n- Billing and subscription management\n- Compliance and audit reporting\n- Resource planning and capacity management"
+					},
+					"response": [
+						{
+							"name": "Tenant List Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{ADMIN_TOKEN}}"
+									}
+								],
+								"url": {
+									"raw": "{{ADMIN_SERVICE_URL}}/tenants",
+									"host": [
+										"{{ADMIN_SERVICE_URL}}"
+									],
+									"path": [
+										"tenants"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n  {\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"name\": \"TechCorp Solutions\",\n    \"domain\": \"techcorp.com\",\n    \"status\": \"ACTIVE\",\n    \"contactEmail\": \"admin@techcorp.com\",\n    \"maxUsers\": 100,\n    \"maxStorage\": 10737418240,\n    \"currentUsers\": 42,\n    \"storageUsed\": 5368709120,\n    \"createdAt\": \"2023-06-15T10:30:00Z\",\n    \"updatedAt\": \"2023-08-30T14:22:00Z\",\n    \"settings\": {\n      \"allowFileUpload\": true,\n      \"maxFileSize\": 52428800,\n      \"enabledFeatures\": [\"RAG_QUERIES\", \"DOCUMENT_UPLOAD\", \"ANALYTICS\"]\n    },\n    \"usage\": {\n      \"queriesThisMonth\": 1250,\n      \"documentsProcessed\": 89,\n      \"embeddingsGenerated\": 3420\n    }\n  },\n  {\n    \"id\": \"789a0123-b45c-67d8-e90f-123456789abc\",\n    \"name\": \"DataScience Inc\",\n    \"domain\": \"datascience-inc.com\",\n    \"status\": \"ACTIVE\",\n    \"contactEmail\": \"ops@datascience-inc.com\",\n    \"maxUsers\": 50,\n    \"maxStorage\": 5368709120,\n    \"currentUsers\": 23,\n    \"storageUsed\": 2684354560,\n    \"createdAt\": \"2023-07-20T09:15:00Z\",\n    \"updatedAt\": \"2023-08-28T16:45:00Z\",\n    \"settings\": {\n      \"allowFileUpload\": true,\n      \"maxFileSize\": 20971520,\n      \"enabledFeatures\": [\"RAG_QUERIES\", \"DOCUMENT_UPLOAD\"]\n    },\n    \"usage\": {\n      \"queriesThisMonth\": 678,\n      \"documentsProcessed\": 45,\n      \"embeddingsGenerated\": 1890\n    }\n  }\n]"
+						}
+					]
+				},
+				{
+					"name": "Get Tenant by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains tenant details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"});",
+									"",
+									"pm.test(\"Tenant includes usage statistics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('usage');",
+									"    pm.expect(jsonData).to.have.property('settings');",
+									"    pm.expect(jsonData.usage).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and tenant ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please set a tenant ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/tenants/{{TENANT_ID}}",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"tenants",
+								"{{TENANT_ID}}"
+							]
+						},
+						"description": "Get detailed information about a specific tenant organization.\n\n**Response:**\n- Complete tenant configuration and metadata\n- Real-time usage statistics and analytics\n- User and resource utilization metrics\n- Billing and subscription information\n- Feature enablement and restrictions\n\n**Detailed Analytics:**\n- Document processing statistics\n- RAG query analytics and performance\n- User activity and engagement metrics\n- Storage utilization breakdown\n- Cost analysis and billing projections\n\n**Use Cases:**\n- Tenant health monitoring\n- Usage analysis and optimization\n- Billing verification and reporting\n- Support and troubleshooting\n- Compliance auditing"
+					}
+				},
+				{
+					"name": "Create New Tenant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response contains created tenant\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('domain');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    // Save tenant ID for other requests",
+									"    if (jsonData.id) {",
+									"        pm.environment.set('NEW_TENANT_ID', jsonData.id);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Tenant created with correct settings\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var requestData = JSON.parse(pm.request.body.raw);",
+									"    pm.expect(jsonData.name).to.eql(requestData.name);",
+									"    pm.expect(jsonData.domain).to.eql(requestData.domain);",
+									"    pm.expect(jsonData.status).to.eql('ACTIVE');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"NewTech Enterprises\",\n  \"domain\": \"newtech-ent.com\",\n  \"contactEmail\": \"admin@newtech-ent.com\",\n  \"maxUsers\": 50,\n  \"maxStorage\": 5368709120,\n  \"status\": \"ACTIVE\",\n  \"settings\": {\n    \"allowFileUpload\": true,\n    \"maxFileSize\": 52428800,\n    \"enabledFeatures\": [\"RAG_QUERIES\", \"DOCUMENT_UPLOAD\", \"ANALYTICS\"],\n    \"retentionPolicyDays\": 365,\n    \"enableAuditLogging\": true\n  },\n  \"billingInfo\": {\n    \"plan\": \"PROFESSIONAL\",\n    \"billingContact\": \"billing@newtech-ent.com\",\n    \"paymentMethod\": \"CREDIT_CARD\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/tenants",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"tenants"
+							]
+						},
+						"description": "Create a new tenant organization with complete configuration.\n\n**Request Body:**\n- `name`: Organization name (required)\n- `domain`: Primary domain name (required, unique)\n- `contactEmail`: Primary contact email (required)\n- `maxUsers`: Maximum allowed users (required)\n- `maxStorage`: Storage limit in bytes (required)\n- `status`: Initial status (ACTIVE, INACTIVE)\n- `settings`: Tenant-specific feature and policy settings\n- `billingInfo`: Billing and subscription configuration\n\n**Tenant Settings:**\n- `allowFileUpload`: Enable/disable document uploads\n- `maxFileSize`: Maximum file size per upload\n- `enabledFeatures`: Array of enabled system features\n- `retentionPolicyDays`: Data retention period\n- `enableAuditLogging`: Audit trail configuration\n\n**Response:**\n- Created tenant object with assigned UUID\n- Default configuration applied\n- Initial usage statistics (all zeros)\n- Activation timestamp and status\n\n**Automatic Setup:**\n- Database schema initialization for tenant data isolation\n- Default admin user creation (optional)\n- Initial resource allocation\n- Monitoring and alerting setup\n\n**Validation:**\n- Domain uniqueness across system\n- Contact email format validation\n- Resource limit validation\n- Feature compatibility checking"
+					}
+				},
+				{
+					"name": "Update Tenant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Tenant updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('updatedAt');",
+									"});",
+									"",
+									"pm.test(\"Changes applied correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var requestData = JSON.parse(pm.request.body.raw);",
+									"    if (requestData.name) {",
+									"        pm.expect(jsonData.name).to.eql(requestData.name);",
+									"    }",
+									"    if (requestData.maxUsers) {",
+									"        pm.expect(jsonData.maxUsers).to.eql(requestData.maxUsers);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and tenant ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please set a tenant ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"TechCorp Solutions (Updated)\",\n  \"contactEmail\": \"newadmin@techcorp.com\",\n  \"maxUsers\": 150,\n  \"maxStorage\": 21474836480,\n  \"status\": \"ACTIVE\",\n  \"settings\": {\n    \"allowFileUpload\": true,\n    \"maxFileSize\": 104857600,\n    \"enabledFeatures\": [\"RAG_QUERIES\", \"DOCUMENT_UPLOAD\", \"ANALYTICS\", \"ADVANCED_SEARCH\"],\n    \"retentionPolicyDays\": 730,\n    \"enableAuditLogging\": true,\n    \"rateLimits\": {\n      \"queriesPerHour\": 1000,\n      \"uploadsPerDay\": 100\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/tenants/{{TENANT_ID}}",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"tenants",
+								"{{TENANT_ID}}"
+							]
+						},
+						"description": "Update tenant configuration, limits, and settings.\n\n**Updatable Fields:**\n- `name`: Organization name\n- `contactEmail`: Primary contact\n- `maxUsers`: User limit (can increase/decrease)\n- `maxStorage`: Storage limit (can increase/decrease)\n- `status`: Tenant status (ACTIVE, INACTIVE, SUSPENDED)\n- `settings`: Feature configuration and policies\n- `billingInfo`: Billing and subscription details\n\n**Resource Limit Changes:**\n- **Increases**: Applied immediately\n- **Decreases**: Validated against current usage\n- **Warnings**: Generated for limits near current usage\n- **Enforcement**: New limits applied to future operations\n\n**Feature Updates:**\n- Add or remove enabled features\n- Update rate limiting and quotas\n- Modify retention policies\n- Configure audit and compliance settings\n\n**Validation:**\n- Current usage validation for limit decreases\n- Feature dependency checking\n- Contact email format validation\n- Status transition validation\n\n**Audit Trail:**\n- Complete change logging\n- Administrator identification\n- Before/after value tracking\n- Timestamp and reason recording"
+					}
+				},
+				{
+					"name": "Deactivate Tenant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Tenant deactivated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"    pm.expect(jsonData.message).to.include('deactivated');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and tenant ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please set a tenant ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reason\": \"Subscription expired\",\n  \"effectiveDate\": \"2023-09-01T00:00:00Z\",\n  \"preserveData\": true,\n  \"notifyUsers\": true\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/tenants/{{TENANT_ID}}/deactivate",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"tenants",
+								"{{TENANT_ID}}",
+								"deactivate"
+							]
+						},
+						"description": "Deactivate a tenant organization (soft delete with data preservation).\n\n**Request Body:**\n- `reason`: Deactivation reason (required for audit)\n- `effectiveDate`: When deactivation takes effect (optional)\n- `preserveData`: Keep tenant data for potential reactivation\n- `notifyUsers`: Send deactivation notifications to tenant users\n\n**Deactivation Process:**\n1. **User Notification**: Email all tenant users about deactivation\n2. **Service Suspension**: Block all API access and operations\n3. **Data Preservation**: Mark data as inactive but retain for recovery\n4. **Billing Suspension**: Stop usage-based billing calculations\n5. **Audit Logging**: Record deactivation event with full context\n\n**Data Handling:**\n- **preserveData=true**: Data retained for reactivation\n- **preserveData=false**: Data marked for deletion after retention period\n- **Immediate Effect**: All tenant operations blocked immediately\n- **Backup Creation**: Automatic backup before deactivation\n\n**Reversibility:**\n- Deactivated tenants can be reactivated by administrators\n- Data and settings preserved during deactivation period\n- User accounts remain but are blocked from access\n- Billing can be resumed upon reactivation\n\n**Use Cases:**\n- Subscription expiration handling\n- Policy violation responses\n- Voluntary account closure\n- Billing dispute resolution\n- Compliance requirement enforcement"
+					}
+				},
+				{
+					"name": "Get Tenant Usage Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Usage statistics include key metrics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData).to.have.property('usage');",
+									"    pm.expect(jsonData).to.have.property('limits');",
+									"    pm.expect(jsonData).to.have.property('trends');",
+									"});",
+									"",
+									"pm.test(\"Usage data includes resource utilization\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.usage).to.have.property('users');",
+									"    pm.expect(jsonData.usage).to.have.property('storage');",
+									"    pm.expect(jsonData.usage).to.have.property('queries');",
+									"    pm.expect(jsonData.usage).to.have.property('documents');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and tenant ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please set a tenant ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/tenants/{{TENANT_ID}}/usage?timeRange=30d&includeBreakdown=true",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"tenants",
+								"{{TENANT_ID}}",
+								"usage"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "30d",
+									"description": "Usage time window (7d, 30d, 90d)"
+								},
+								{
+									"key": "includeBreakdown",
+									"value": "true",
+									"description": "Include detailed usage breakdown"
+								}
+							]
+						},
+						"description": "Get comprehensive usage statistics and analytics for a specific tenant.\n\n**Query Parameters:**\n- `timeRange`: Statistics time window (7d, 30d, 90d, all)\n- `includeBreakdown`: Include detailed usage breakdown by category\n\n**Response Analytics:**\n- **User Metrics**: Active users, login frequency, feature usage\n- **Storage Analytics**: Document count, file sizes, growth trends\n- **Query Statistics**: RAG queries, response times, success rates\n- **Document Processing**: Upload volume, processing times, formats\n- **Performance Metrics**: System response times, error rates\n- **Cost Analysis**: Resource consumption, billing projections\n\n**Trend Analysis:**\n- Daily/weekly/monthly usage patterns\n- Growth rates and projections\n- Seasonal usage variations\n- Feature adoption trends\n- Performance improvements or degradations\n\n**Resource Utilization:**\n- Current vs. allocated limits\n- Peak usage periods\n- Resource efficiency metrics\n- Capacity planning recommendations\n\n**Use Cases:**\n- Billing verification and cost analysis\n- Performance monitoring and optimization\n- Capacity planning and resource allocation\n- Feature usage analysis and optimization\n- Customer success and support insights"
+					}
+				}
+			]
+		},
+		{
+			"name": "👥 User Administration",
+			"description": "System-wide user management and administration",
+			"item": [
+				{
+					"name": "Get All Users (System-wide)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is paginated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('totalElements');",
+									"    pm.expect(jsonData).to.have.property('totalPages');",
+									"    pm.expect(jsonData.content).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Users include tenant information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.content.length > 0) {",
+									"        var firstUser = jsonData.content[0];",
+									"        pm.expect(firstUser).to.have.property('id');",
+									"        pm.expect(firstUser).to.have.property('email');",
+									"        pm.expect(firstUser).to.have.property('tenantId');",
+									"        pm.expect(firstUser).to.have.property('role');",
+									"        pm.expect(firstUser).to.have.property('status');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/users?page=0&size=50&sort=createdAt,desc&status=ACTIVE&role=USER",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "50",
+									"description": "Number of items per page"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc",
+									"description": "Sort criteria"
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"description": "Filter by user status"
+								},
+								{
+									"key": "role",
+									"value": "USER",
+									"description": "Filter by user role"
+								},
+								{
+									"key": "tenantId",
+									"value": "{{TENANT_ID}}",
+									"description": "Filter by specific tenant",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "john@example.com",
+									"description": "Search by email or name",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of all users across all tenants in the system.\n\n**Query Parameters:**\n- `page`: Page number (0-based, default: 0)\n- `size`: Items per page (default: 20, max: 100)\n- `sort`: Sort criteria (createdAt,desc | email,asc | lastLogin,desc)\n- `status`: Filter by user status (ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION)\n- `role`: Filter by user role (USER, ADMIN, MANAGER)\n- `tenantId`: Filter by specific tenant (optional)\n- `search`: Search by email, name, or partial matches\n\n**Response:**\n- Paginated list of users with complete profile information\n- Cross-tenant user visibility for admin operations\n- Total counts and filtering statistics\n- User activity and engagement metrics\n\n**User Information:**\n- Complete profile data (excluding passwords)\n- Tenant association and context\n- Account status and verification state\n- Last activity and login information\n- Role and permission assignments\n- Usage statistics and engagement metrics\n\n**Security & Privacy:**\n- Admin-only access with RBAC validation\n- Sensitive information excluded from response\n- Audit logging of admin user access\n- Tenant isolation respect in detailed operations\n\n**Use Cases:**\n- System-wide user monitoring\n- Cross-tenant user analytics\n- Support and troubleshooting\n- Compliance and audit reporting\n- User lifecycle management"
+					}
+				},
+				{
+					"name": "Search Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Search results match query\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('totalMatches');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Results include relevance scores\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        var firstResult = jsonData.results[0];",
+									"        pm.expect(firstResult).to.have.property('user');",
+									"        pm.expect(firstResult).to.have.property('relevanceScore');",
+									"        pm.expect(firstResult).to.have.property('matchFields');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/users/search?q=john.doe@example.com&limit=20&tenantId={{TENANT_ID}}",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"users",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "john.doe@example.com",
+									"description": "Search query (email, name, or partial match)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Maximum results to return"
+								},
+								{
+									"key": "tenantId",
+									"value": "{{TENANT_ID}}",
+									"description": "Limit search to specific tenant"
+								}
+							]
+						},
+						"description": "Advanced user search across all tenants with relevance ranking.\n\n**Query Parameters:**\n- `q`: Search query text (email, name, or partial matches)\n- `limit`: Maximum number of results (default: 20, max: 100)\n- `tenantId`: Restrict search to specific tenant (optional)\n\n**Search Features:**\n- **Email Matching**: Exact and partial email address searches\n- **Name Matching**: First name, last name, and full name searches\n- **Fuzzy Matching**: Typo tolerance and phonetic matching\n- **Relevance Scoring**: Results ranked by match quality\n- **Cross-Tenant Search**: Search across all tenant organizations\n- **Field Highlighting**: Identify which fields matched the query\n\n**Response:**\n- `results`: Array of search results with relevance scores\n- `totalMatches`: Total number of matching users\n- `searchTime`: Query execution time\n- `suggestions`: Alternative search suggestions for typos\n\n**Result Properties:**\n- `user`: Complete user profile information\n- `relevanceScore`: Match quality score (0.0-1.0)\n- `matchFields`: Array of fields that matched the query\n- `tenant`: Associated tenant information\n\n**Use Cases:**\n- User lookup and identification\n- Support ticket user resolution\n- Account verification and validation\n- Duplicate account detection\n- Administrative user management"
+					}
+				},
+				{
+					"name": "Get User Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User details are complete\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData).to.have.property('profile');",
+									"    pm.expect(jsonData).to.have.property('activity');",
+									"});",
+									"",
+									"pm.test(\"Activity metrics included\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.activity).to.have.property('loginCount');",
+									"    pm.expect(jsonData.activity).to.have.property('lastLogin');",
+									"    pm.expect(jsonData.activity).to.have.property('documentsUploaded');",
+									"    pm.expect(jsonData.activity).to.have.property('queriesSubmitted');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and user ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('USER_ID')) {",
+									"    throw new Error('USER_ID not found. Please set a user ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/users/{{USER_ID}}?includeActivity=true&includeUsage=true",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"users",
+								"{{USER_ID}}"
+							],
+							"query": [
+								{
+									"key": "includeActivity",
+									"value": "true",
+									"description": "Include user activity metrics"
+								},
+								{
+									"key": "includeUsage",
+									"value": "true",
+									"description": "Include detailed usage statistics"
+								}
+							]
+						},
+						"description": "Get comprehensive details for a specific user including activity and usage analytics.\n\n**Query Parameters:**\n- `includeActivity`: Include login and activity metrics (default: true)\n- `includeUsage`: Include detailed usage statistics (default: false)\n\n**Response Details:**\n- **Profile Information**: Complete user profile (excluding password)\n- **Account Status**: Current status, verification state, role assignments\n- **Tenant Context**: Associated tenant information and permissions\n- **Activity Metrics**: Login history, session duration, feature usage\n- **Usage Statistics**: Document uploads, queries submitted, storage used\n- **Security Information**: Failed login attempts, security events\n\n**Activity Analytics:**\n- Login frequency and patterns\n- Feature usage and engagement\n- Document processing history\n- RAG query patterns and success rates\n- Time-based usage trends\n\n**Usage Statistics:**\n- Storage utilization and file counts\n- Query volume and complexity analysis\n- Processing time and performance metrics\n- Error rates and failure analysis\n- Resource consumption patterns\n\n**Use Cases:**\n- User support and troubleshooting\n- Account verification and validation\n- Usage analysis and optimization\n- Security incident investigation\n- Performance monitoring and assistance"
+					}
+				},
+				{
+					"name": "Update User Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User status updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('updatedAt');",
+									"});",
+									"",
+									"pm.test(\"Status change logged\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var requestData = JSON.parse(pm.request.body.raw);",
+									"    pm.expect(jsonData.status).to.eql(requestData.status);",
+									"    pm.expect(jsonData).to.have.property('statusChangeReason');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and user ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('USER_ID')) {",
+									"    throw new Error('USER_ID not found. Please set a user ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"SUSPENDED\",\n  \"reason\": \"Policy violation - inappropriate content upload\",\n  \"effectiveDate\": \"2023-09-01T00:00:00Z\",\n  \"duration\": \"P7D\",\n  \"notifyUser\": true,\n  \"allowAppeal\": true\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/users/{{USER_ID}}/status",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"users",
+								"{{USER_ID}}",
+								"status"
+							]
+						},
+						"description": "Update user account status with comprehensive administrative controls.\n\n**Request Body:**\n- `status`: New user status (ACTIVE, INACTIVE, SUSPENDED, DELETED)\n- `reason`: Reason for status change (required for audit)\n- `effectiveDate`: When status change takes effect (optional)\n- `duration`: Duration for temporary status changes (ISO 8601 duration)\n- `notifyUser`: Send status change notification to user\n- `allowAppeal`: Allow user to appeal the status change\n\n**Status Transitions:**\n- **ACTIVE**: Full system access restored\n- **INACTIVE**: Account disabled but data preserved\n- **SUSPENDED**: Temporary access restriction with appeal process\n- **DELETED**: Account marked for deletion (soft delete)\n\n**Suspension Features:**\n- **Temporary Suspensions**: Automatic reactivation after specified duration\n- **Appeal Process**: Users can request status review\n- **Graduated Penalties**: Progressive enforcement for repeat violations\n- **Custom Restrictions**: Selective feature access during suspension\n\n**Audit and Compliance:**\n- Complete change history with administrator identification\n- Reason tracking and documentation\n- User notification and communication logs\n- Appeal tracking and resolution history\n\n**Administrative Controls:**\n- **Immediate Effect**: Status changes applied in real-time\n- **Grace Periods**: Optional delay for user preparation\n- **Bulk Operations**: Mass status updates for multiple users\n- **Rollback Capability**: Undo recent status changes\n\n**Use Cases:**\n- Policy violation enforcement\n- Account security responses\n- Subscription management\n- Compliance requirement adherence\n- User lifecycle management"
+					}
+				},
+				{
+					"name": "Reset User Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Password reset initiated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('resetToken');",
+									"    pm.expect(jsonData).to.have.property('expiresAt');",
+									"    pm.expect(jsonData.status).to.eql('RESET_INITIATED');",
+									"});",
+									"",
+									"pm.test(\"Security measures applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('emailSent');",
+									"    pm.expect(jsonData).to.have.property('tokenExpiry');",
+									"    pm.expect(jsonData.emailSent).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token and user ID exist",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}",
+									"if (!pm.environment.get('USER_ID')) {",
+									"    throw new Error('USER_ID not found. Please set a user ID first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reason\": \"User support request - forgot password\",\n  \"notifyUser\": true,\n  \"temporaryPassword\": false,\n  \"requireChangeOnLogin\": true,\n  \"expiryHours\": 24\n}"
+						},
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/users/{{USER_ID}}/reset-password",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"users",
+								"{{USER_ID}}",
+								"reset-password"
+							]
+						},
+						"description": "Initiate administrative password reset for user account.\n\n**Request Body:**\n- `reason`: Administrative reason for password reset (required)\n- `notifyUser`: Send reset notification to user email (default: true)\n- `temporaryPassword`: Generate temporary password instead of reset token\n- `requireChangeOnLogin`: Force password change on next login\n- `expiryHours`: Reset token validity period (default: 24 hours)\n\n**Reset Methods:**\n- **Email Reset Token**: Secure token sent to user's verified email\n- **Temporary Password**: Admin-generated temporary password\n- **Direct Reset**: Admin sets new password directly\n\n**Security Features:**\n- **Token Expiration**: Time-limited reset tokens\n- **Single Use**: Reset tokens are invalidated after use\n- **Audit Logging**: Complete audit trail of password reset operations\n- **Multi-Factor Validation**: Additional verification for sensitive accounts\n- **IP Tracking**: Reset request origin tracking\n\n**Response:**\n- `status`: Reset operation status\n- `resetToken`: Secure reset token (if applicable)\n- `temporaryPassword`: Generated temporary password (if requested)\n- `expiresAt`: Token expiration timestamp\n- `emailSent`: Confirmation of user notification\n\n**User Notification:**\n- Email with reset instructions and security information\n- Account security alert about admin-initiated reset\n- Clear instructions for password reset completion\n- Contact information for support if reset was not requested\n\n**Use Cases:**\n- User support password assistance\n- Account recovery for locked users\n- Security incident response\n- Compromised account remediation\n- Employee onboarding password setup"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 System Analytics",
+			"description": "System-wide analytics, monitoring, and reporting",
+			"item": [
+				{
+					"name": "Get System Overview",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Overview includes key metrics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalTenants');",
+									"    pm.expect(jsonData).to.have.property('totalUsers');",
+									"    pm.expect(jsonData).to.have.property('systemHealth');",
+									"    pm.expect(jsonData).to.have.property('performance');",
+									"});",
+									"",
+									"pm.test(\"Health status is available\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.systemHealth).to.have.property('status');",
+									"    pm.expect(jsonData.systemHealth).to.have.property('services');",
+									"    pm.expect(jsonData.systemHealth.status).to.be.oneOf(['HEALTHY', 'DEGRADED', 'CRITICAL']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/analytics/overview",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"analytics",
+								"overview"
+							]
+						},
+						"description": "Get comprehensive system overview with key metrics and health indicators.\n\n**Response Metrics:**\n- **Tenant Statistics**: Total tenants, active/inactive counts, growth trends\n- **User Analytics**: Total users, active users, registration trends\n- **System Health**: Service status, dependency health, error rates\n- **Performance Metrics**: Response times, throughput, resource utilization\n- **Usage Statistics**: RAG queries, document processing, storage utilization\n- **Financial Metrics**: Revenue tracking, cost analysis, billing summaries\n\n**Health Monitoring:**\n- **Service Status**: All microservices health and availability\n- **Database Health**: Connection pools, query performance, storage capacity\n- **Infrastructure Status**: CPU, memory, network, storage metrics\n- **Dependencies**: External service connectivity and performance\n- **Alert Summary**: Active alerts and critical issues\n\n**Performance Analytics:**\n- **Response Times**: P50, P95, P99 latencies across all services\n- **Throughput**: Requests per second, peak load handling\n- **Error Rates**: Success rates, error categories, failure patterns\n- **Resource Utilization**: CPU, memory, disk, network usage\n- **Scalability Metrics**: Auto-scaling events, capacity planning data\n\n**Business Intelligence:**\n- **Growth Metrics**: User acquisition, tenant onboarding, feature adoption\n- **Usage Patterns**: Peak hours, seasonal trends, geographic distribution\n- **Revenue Analytics**: Subscription performance, usage-based billing\n- **Customer Success**: Retention rates, satisfaction scores, support metrics\n\n**Use Cases:**\n- Executive dashboard and reporting\n- System health monitoring and alerting\n- Capacity planning and resource allocation\n- Performance optimization and tuning\n- Business intelligence and growth analysis"
+					}
+				},
+				{
+					"name": "Get Tenant Analytics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Analytics include tenant metrics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantDistribution');",
+									"    pm.expect(jsonData).to.have.property('growthTrends');",
+									"    pm.expect(jsonData).to.have.property('resourceUtilization');",
+									"});",
+									"",
+									"pm.test(\"Distribution data is present\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.tenantDistribution).to.have.property('byStatus');",
+									"    pm.expect(jsonData.tenantDistribution).to.have.property('bySize');",
+									"    pm.expect(jsonData.tenantDistribution).to.have.property('byPlan');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/analytics/tenants?timeRange=30d&includeBreakdown=true",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"analytics",
+								"tenants"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "30d",
+									"description": "Analytics time window"
+								},
+								{
+									"key": "includeBreakdown",
+									"value": "true",
+									"description": "Include detailed breakdowns"
+								}
+							]
+						},
+						"description": "Get comprehensive tenant analytics and distribution insights.\n\n**Query Parameters:**\n- `timeRange`: Analysis time window (7d, 30d, 90d, 365d)\n- `includeBreakdown`: Include detailed category breakdowns\n\n**Analytics Categories:**\n- **Tenant Distribution**: Status, size, plan, geographic distribution\n- **Growth Trends**: New tenant acquisition, churn rates, expansion\n- **Resource Utilization**: Storage, compute, API usage across tenants\n- **Performance Analysis**: Response times, success rates by tenant\n- **Feature Adoption**: Feature usage patterns and adoption rates\n- **Revenue Analysis**: Billing, subscription performance, revenue trends\n\n**Distribution Analysis:**\n- **By Status**: Active, inactive, suspended tenant counts\n- **By Size**: Small, medium, large tenant categorization\n- **By Plan**: Subscription tier distribution and migration patterns\n- **By Industry**: Vertical market analysis and segmentation\n- **Geographic**: Regional distribution and performance variations\n\n**Trend Analysis:**\n- **Acquisition Trends**: New tenant onboarding patterns\n- **Churn Analysis**: Tenant departure reasons and patterns\n- **Expansion Tracking**: Upsell and feature adoption trends\n- **Seasonal Patterns**: Usage variations throughout the year\n- **Cohort Analysis**: Tenant behavior by acquisition period\n\n**Use Cases:**\n- Strategic business planning and decision making\n- Market analysis and competitive positioning\n- Resource planning and infrastructure scaling\n- Customer success and retention optimization\n- Sales and marketing strategy optimization"
+					}
+				},
+				{
+					"name": "Get Usage Analytics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Usage analytics include key metrics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalQueries');",
+									"    pm.expect(jsonData).to.have.property('totalDocuments');",
+									"    pm.expect(jsonData).to.have.property('storageUsage');",
+									"    pm.expect(jsonData).to.have.property('trends');",
+									"});",
+									"",
+									"pm.test(\"Performance metrics included\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('performance');",
+									"    pm.expect(jsonData.performance).to.have.property('averageResponseTime');",
+									"    pm.expect(jsonData.performance).to.have.property('successRate');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/analytics/usage?timeRange=7d&granularity=hourly&includeDetails=true",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"analytics",
+								"usage"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "7d",
+									"description": "Usage analysis time window"
+								},
+								{
+									"key": "granularity",
+									"value": "hourly",
+									"description": "Data granularity (hourly, daily, weekly)"
+								},
+								{
+									"key": "includeDetails",
+									"value": "true",
+									"description": "Include detailed breakdowns"
+								}
+							]
+						},
+						"description": "Get comprehensive system usage analytics and performance metrics.\n\n**Query Parameters:**\n- `timeRange`: Analysis period (1h, 24h, 7d, 30d, 90d)\n- `granularity`: Data resolution (hourly, daily, weekly, monthly)\n- `includeDetails`: Include detailed service breakdowns\n\n**Usage Metrics:**\n- **RAG Queries**: Total queries, success rates, response times\n- **Document Processing**: Uploads, processing volumes, formats\n- **Vector Operations**: Embedding generation, similarity searches\n- **Storage Analytics**: Usage growth, file types, tenant distribution\n- **API Usage**: Endpoint hit counts, rate limiting metrics\n- **User Activity**: Active users, session durations, feature usage\n\n**Performance Analytics:**\n- **Response Times**: Latency percentiles across all services\n- **Throughput**: Requests per second, peak load handling\n- **Error Analysis**: Error rates, failure categories, root causes\n- **Resource Utilization**: CPU, memory, storage, network usage\n- **Scaling Events**: Auto-scaling triggers and effectiveness\n\n**Service-Level Metrics:**\n- **Auth Service**: Login rates, token validation performance\n- **Document Service**: Processing throughput, format support\n- **Embedding Service**: Vector generation rates, search performance\n- **Core Service**: RAG query processing, LLM integration performance\n- **Admin Service**: Administrative operation volumes and performance\n\n**Trend Analysis:**\n- **Growth Patterns**: Usage growth rates and projections\n- **Seasonal Variations**: Time-based usage patterns\n- **Peak Load Analysis**: Traffic spikes and capacity handling\n- **Performance Trends**: Service improvement or degradation patterns\n\n**Use Cases:**\n- System performance monitoring and optimization\n- Capacity planning and infrastructure scaling\n- Cost analysis and resource optimization\n- SLA compliance monitoring and reporting\n- User experience analysis and improvement"
+					}
+				},
+				{
+					"name": "Get Performance Metrics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Performance metrics include latency data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('responseTime');",
+									"    pm.expect(jsonData).to.have.property('throughput');",
+									"    pm.expect(jsonData).to.have.property('errorRate');",
+									"});",
+									"",
+									"pm.test(\"Service breakdown available\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('serviceMetrics');",
+									"    pm.expect(jsonData.serviceMetrics).to.be.an('object');",
+									"    pm.expect(jsonData.serviceMetrics).to.have.property('auth');",
+									"    pm.expect(jsonData.serviceMetrics).to.have.property('document');",
+									"    pm.expect(jsonData.serviceMetrics).to.have.property('embedding');",
+									"    pm.expect(jsonData.serviceMetrics).to.have.property('core');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if admin token exists",
+									"if (!pm.environment.get('ADMIN_TOKEN')) {",
+									"    throw new Error('ADMIN_TOKEN not found. Please login as admin first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/analytics/performance?timeRange=24h&breakdown=service",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"analytics",
+								"performance"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "24h",
+									"description": "Performance analysis period"
+								},
+								{
+									"key": "breakdown",
+									"value": "service",
+									"description": "Breakdown level (service, endpoint, tenant)"
+								}
+							]
+						},
+						"description": "Get detailed system performance metrics and analysis.\n\n**Query Parameters:**\n- `timeRange`: Analysis period (1h, 6h, 24h, 7d)\n- `breakdown`: Metrics breakdown level (service, endpoint, tenant, user)\n\n**Performance Categories:**\n- **Response Time Analysis**: P50, P90, P95, P99 latency percentiles\n- **Throughput Metrics**: Requests per second, peak load capacity\n- **Error Rate Analysis**: Success rates, error categorization\n- **Resource Utilization**: CPU, memory, disk, network usage\n- **Availability Metrics**: Uptime, service availability, SLA compliance\n\n**Service-Level Performance:**\n- **Auth Service**: Authentication latency, token validation speed\n- **Document Service**: File processing times, upload throughput\n- **Embedding Service**: Vector generation speed, search performance\n- **Core Service**: RAG query processing times, LLM response latency\n- **Admin Service**: Administrative operation performance\n- **Gateway Service**: Routing latency, load balancing effectiveness\n\n**Endpoint Analysis:**\n- **High-Traffic Endpoints**: Most used APIs and their performance\n- **Slow Endpoints**: Performance bottlenecks and optimization opportunities\n- **Error-Prone Endpoints**: Endpoints with high failure rates\n- **Resource-Intensive Operations**: CPU/memory intensive endpoints\n\n**Infrastructure Metrics:**\n- **Database Performance**: Query execution times, connection pooling\n- **Cache Performance**: Hit rates, response times, memory usage\n- **Message Queue**: Processing rates, queue depths, latency\n- **External Dependencies**: Third-party service response times\n\n**Use Cases:**\n- Performance monitoring and alerting\n- Bottleneck identification and optimization\n- SLA compliance monitoring\n- Capacity planning and scaling decisions\n- System tuning and optimization"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Health & Monitoring",
+			"description": "Service health checks and monitoring endpoints",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('UP');",
+									"});",
+									"",
+									"pm.test(\"Dependencies are healthy\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.components) {",
+									"        // Check database connectivity",
+									"        if (jsonData.components.db) {",
+									"            pm.expect(jsonData.components.db.status).to.eql('UP');",
+									"        }",
+									"        // Check other service dependencies",
+									"        if (jsonData.components.authService) {",
+									"            pm.expect(jsonData.components.authService.status).to.eql('UP');",
+									"        }",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/actuator/health",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check admin service health status and dependencies.\n\n**Response:**\n- Overall service status (UP/DOWN)\n- Database connectivity status\n- Dependent service availability\n- Authentication service integration\n- Performance indicators\n- System resource status"
+					}
+				},
+				{
+					"name": "Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/actuator/info",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"info"
+							]
+						},
+						"description": "Get admin service information and version details."
+					}
+				},
+				{
+					"name": "Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ADMIN_SERVICE_URL}}/actuator/metrics",
+							"host": [
+								"{{ADMIN_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"metrics"
+							]
+						},
+						"description": "Get available performance metrics for monitoring and observability."
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{ADMIN_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set service URL if not configured",
+					"if (!pm.environment.get('ADMIN_SERVICE_URL')) {",
+					"    pm.environment.set('ADMIN_SERVICE_URL', 'http://localhost:8085');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract admin tokens from login responses",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/auth/login')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.accessToken) {",
+					"        pm.environment.set('ADMIN_TOKEN', jsonData.accessToken);",
+					"        console.log('✅ Admin access token saved to environment');",
+					"    }",
+					"    if (jsonData.refreshToken) {",
+					"        pm.environment.set('ADMIN_REFRESH_TOKEN', jsonData.refreshToken);",
+					"        console.log('✅ Admin refresh token saved to environment');",
+					"    }",
+					"    if (jsonData.user && jsonData.user.id) {",
+					"        pm.environment.set('ADMIN_USER_ID', jsonData.user.id);",
+					"        console.log('✅ Admin user ID saved to environment');",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract tenant IDs from tenant creation/retrieval",
+					"if (pm.response.code === 200 || pm.response.code === 201) {",
+					"    if (pm.request.url.toString().includes('/tenants')) {",
+					"        var jsonData = pm.response.json();",
+					"        // Handle single tenant response",
+					"        if (jsonData.id) {",
+					"            pm.environment.set('TENANT_ID', jsonData.id);",
+					"            console.log('✅ Tenant ID saved to environment: ' + jsonData.id);",
+					"        }",
+					"        // Handle tenant array response (get first tenant)",
+					"        if (Array.isArray(jsonData) && jsonData.length > 0) {",
+					"            pm.environment.set('TENANT_ID', jsonData[0].id);",
+					"            console.log('✅ First tenant ID saved to environment: ' + jsonData[0].id);",
+					"        }",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract user IDs from user operations",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/users')) {",
+					"    var jsonData = pm.response.json();",
+					"    // Handle paginated user response",
+					"    if (jsonData.content && jsonData.content.length > 0) {",
+					"        pm.environment.set('USER_ID', jsonData.content[0].id);",
+					"        console.log('✅ First user ID saved to environment: ' + jsonData.content[0].id);",
+					"    }",
+					"    // Handle single user response",
+					"    if (jsonData.id && !jsonData.content) {",
+					"        pm.environment.set('USER_ID', jsonData.id);",
+					"        console.log('✅ User ID saved to environment: ' + jsonData.id);",
+					"    }",
+					"    // Handle search results",
+					"    if (jsonData.results && jsonData.results.length > 0) {",
+					"        pm.environment.set('USER_ID', jsonData.results[0].user.id);",
+					"        console.log('✅ Search result user ID saved: ' + jsonData.results[0].user.id);",
+					"    }",
+					"}",
+					"",
+					"// Performance logging for admin operations",
+					"if (pm.response.responseTime) {",
+					"    if (pm.response.responseTime > 1000) {",
+					"        console.log('⚠️ Slow admin operation: ' + pm.response.responseTime + 'ms');",
+					"    } else if (pm.response.responseTime > 500) {",
+					"        console.log('⏱️ Admin operation: ' + pm.response.responseTime + 'ms');",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "ADMIN_SERVICE_URL",
+			"value": "http://localhost:8085",
+			"type": "string"
+		},
+		{
+			"key": "ADMIN_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "ADMIN_REFRESH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "AUTH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "USER_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "NEW_TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "ADMIN_USER_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

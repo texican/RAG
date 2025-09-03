@@ -1,0 +1,1465 @@
+{
+	"info": {
+		"_postman_id": "document-service-rag-collection",
+		"name": "BYO RAG - Document Service Collection",
+		"description": "Document Management Service API Collection for the BYO RAG System\n\n📁 **Service URL**: http://localhost:8082 (Docker deployment)\n📊 **Service Status**: Fully operational with complete document lifecycle management\n🏗️ **Architecture**: Multi-format file processing with PostgreSQL persistence and Apache Tika integration\n\n**Core Document Capabilities:**\n- Multi-format file upload (PDF, DOCX, TXT, MD, HTML, RTF)\n- Apache Tika text extraction with intelligent parsing\n- Document chunking for RAG optimization\n- Comprehensive metadata management\n- Advanced search and filtering capabilities\n\n**Production Features:**\n- Complete tenant isolation and security\n- Asynchronous processing pipelines\n- File size and type validation\n- Storage analytics and quotas\n- Full audit logging\n\n**Processing Pipeline:**\n1. File upload validation and security scanning\n2. Apache Tika content extraction\n3. Intelligent text chunking for RAG\n4. Metadata extraction and indexing\n5. Asynchronous embedding generation\n\n**Environment Variables:**\n- `DOCUMENT_SERVICE_URL`: http://localhost:8082\n- `AUTH_TOKEN`: JWT authentication token\n- `TENANT_ID`: Tenant identifier for multi-tenancy\n- `DOCUMENT_ID`: Document identifier for operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "byo-rag-document-service"
+	},
+	"item": [
+		{
+			"name": "📤 Document Upload",
+			"description": "File upload and initial processing operations",
+			"item": [
+				{
+					"name": "Upload Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									"",
+									"pm.test(\"Response contains document ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('DOCUMENT_ID', jsonData.id);",
+									"    console.log('✅ Document ID saved: ' + jsonData.id);",
+									"});",
+									"",
+									"pm.test(\"Document has correct tenant\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData.tenantId).to.eql(pm.environment.get('TENANT_ID'));",
+									"});",
+									"",
+									"pm.test(\"Document processing status\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.be.oneOf(['UPLOADED', 'PROCESSING', 'PROCESSED']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/path/to/document.pdf",
+									"description": "Document file to upload (PDF, DOCX, TXT, MD, HTML, RTF)"
+								},
+								{
+									"key": "title",
+									"value": "Machine Learning Guide",
+									"type": "text",
+									"description": "Document title (optional)"
+								},
+								{
+									"key": "description",
+									"value": "Comprehensive guide to machine learning algorithms and applications",
+									"type": "text",
+									"description": "Document description (optional)"
+								},
+								{
+									"key": "tags",
+									"value": "machine-learning,ai,algorithms,guide",
+									"type": "text",
+									"description": "Comma-separated tags (optional)"
+								},
+								{
+									"key": "category",
+									"value": "Technical Documentation",
+									"type": "text",
+									"description": "Document category (optional)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/upload",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"upload"
+							]
+						},
+						"description": "Upload a document for processing and indexing in the RAG system.\n\n**Supported Formats:**\n- PDF documents (.pdf)\n- Microsoft Word documents (.docx, .doc)\n- Plain text files (.txt)\n- Markdown files (.md)\n- HTML files (.html, .htm)\n- Rich text format (.rtf)\n\n**Form Fields:**\n- `file`: Document file (required, max 50MB)\n- `title`: Document title (optional)\n- `description`: Document description (optional)\n- `tags`: Comma-separated tags (optional)\n- `category`: Document category (optional)\n\n**Processing Pipeline:**\n1. File validation and security scanning\n2. Apache Tika content extraction\n3. Intelligent text chunking\n4. Metadata extraction and storage\n5. Asynchronous embedding generation\n\n**Response:**\n- Document ID for tracking\n- Processing status\n- Extracted metadata\n- File information"
+					},
+					"response": [
+						{
+							"name": "Successful Upload",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{AUTH_TOKEN}}"
+									},
+									{
+										"key": "X-Tenant-ID",
+										"value": "{{TENANT_ID}}"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "sample.pdf"
+										},
+										{
+											"key": "title",
+											"value": "Machine Learning Guide",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "Comprehensive guide to ML algorithms",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/upload",
+									"host": [
+										"{{DOCUMENT_SERVICE_URL}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"documents",
+										"upload"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"title\": \"Machine Learning Guide\",\n  \"description\": \"Comprehensive guide to ML algorithms\",\n  \"fileName\": \"sample.pdf\",\n  \"fileSize\": 2048576,\n  \"mimeType\": \"application/pdf\",\n  \"status\": \"PROCESSING\",\n  \"tenantId\": \"tenant-123\",\n  \"uploadedBy\": \"user-456\",\n  \"createdAt\": \"2023-08-31T10:30:00Z\",\n  \"updatedAt\": \"2023-08-31T10:30:00Z\",\n  \"tags\": [\"machine-learning\", \"ai\", \"algorithms\", \"guide\"],\n  \"category\": \"Technical Documentation\",\n  \"textChunks\": 42,\n  \"processedPages\": 156\n}"
+						}
+					]
+				},
+				{
+					"name": "Upload Multiple Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains multiple documents\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('documents');",
+									"    pm.expect(jsonData.documents).to.be.an('array');",
+									"    pm.expect(jsonData.documents.length).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/path/to/document1.pdf"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/path/to/document2.docx"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/path/to/document3.txt"
+								},
+								{
+									"key": "category",
+									"value": "Batch Upload",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "batch,multiple,upload",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/upload/batch",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"upload",
+								"batch"
+							]
+						},
+						"description": "Upload multiple documents in a single batch operation.\n\n**Form Fields:**\n- `files`: Multiple document files (required)\n- `category`: Category for all documents (optional)\n- `tags`: Common tags for all documents (optional)\n\n**Benefits:**\n- Efficient bulk processing\n- Consistent metadata application\n- Reduced API overhead\n- Batch status tracking\n\n**Response:**\n- Array of uploaded document information\n- Batch processing status\n- Individual document IDs"
+					}
+				}
+			]
+		},
+		{
+			"name": "📋 Document Management",
+			"description": "Document retrieval, updating, and management operations",
+			"item": [
+				{
+					"name": "Get Documents (Paginated)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is paginated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('totalElements');",
+									"    pm.expect(jsonData).to.have.property('totalPages');",
+									"    pm.expect(jsonData).to.have.property('size');",
+									"    pm.expect(jsonData).to.have.property('number');",
+									"});",
+									"",
+									"pm.test(\"All documents belong to tenant\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var expectedTenantId = pm.environment.get('TENANT_ID');",
+									"    jsonData.content.forEach(function(doc) {",
+									"        pm.expect(doc.tenantId).to.eql(expectedTenantId);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents?page=0&size=20&sort=createdAt,desc&status=PROCESSED&category=Technical Documentation",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "Number of items per page"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc",
+									"description": "Sort criteria (field,direction)"
+								},
+								{
+									"key": "status",
+									"value": "PROCESSED",
+									"description": "Filter by processing status"
+								},
+								{
+									"key": "category",
+									"value": "Technical Documentation",
+									"description": "Filter by category"
+								},
+								{
+									"key": "tags",
+									"value": "machine-learning",
+									"description": "Filter by tags",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "algorithm",
+									"description": "Text search in title/description",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of documents with filtering and sorting options.\n\n**Query Parameters:**\n- `page`: Page number (0-based, default: 0)\n- `size`: Items per page (default: 20, max: 100)\n- `sort`: Sort criteria (e.g., createdAt,desc, title,asc)\n- `status`: Filter by processing status (UPLOADED, PROCESSING, PROCESSED, FAILED)\n- `category`: Filter by document category\n- `tags`: Filter by tags (comma-separated)\n- `search`: Text search in title and description\n\n**Sorting Options:**\n- `createdAt`: Creation timestamp\n- `updatedAt`: Last modification\n- `title`: Document title\n- `fileSize`: File size\n- `fileName`: Original filename\n\n**Response:**\n- Paginated document list with metadata\n- Total count and page information\n- Tenant-scoped results only"
+					}
+				},
+				{
+					"name": "Get Document by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Document belongs to correct tenant\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData.tenantId).to.eql(pm.environment.get('TENANT_ID'));",
+									"});",
+									"",
+									"pm.test(\"Document has complete metadata\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('fileName');",
+									"    pm.expect(jsonData).to.have.property('fileSize');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('createdAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/{{DOCUMENT_ID}}",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{DOCUMENT_ID}}"
+							]
+						},
+						"description": "Get specific document details by ID with complete metadata.\n\n**Response Includes:**\n- Complete document metadata\n- Processing status and statistics\n- File information and properties\n- Text extraction results\n- Chunking and embedding status\n- Associated tags and categories\n- Upload and modification timestamps\n\n**Security:**\n- Document access restricted to owning tenant\n- Complete tenant isolation enforced\n- User permission validation"
+					}
+				},
+				{
+					"name": "Update Document Metadata",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Document updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('updatedAt');",
+									"});",
+									"",
+									"pm.test(\"Metadata updated correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var requestData = JSON.parse(pm.request.body.raw);",
+									"    if (requestData.title) {",
+									"        pm.expect(jsonData.title).to.eql(requestData.title);",
+									"    }",
+									"    if (requestData.description) {",
+									"        pm.expect(jsonData.description).to.eql(requestData.description);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated Machine Learning Guide\",\n  \"description\": \"Comprehensive and updated guide to machine learning algorithms and applications with latest research\",\n  \"tags\": [\"machine-learning\", \"ai\", \"algorithms\", \"updated\", \"research\"],\n  \"category\": \"Technical Documentation - Updated\"\n}"
+						},
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/{{DOCUMENT_ID}}",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{DOCUMENT_ID}}"
+							]
+						},
+						"description": "Update document metadata including title, description, tags, and category.\n\n**Updatable Fields:**\n- `title`: Document title\n- `description`: Document description\n- `tags`: Array of tags\n- `category`: Document category\n\n**Behavior:**\n- File content cannot be modified (upload new version instead)\n- Metadata changes trigger re-indexing\n- Audit trail maintained for all changes\n- Tenant isolation strictly enforced\n\n**Response:**\n- Updated document information\n- New modification timestamp\n- Processing status if re-indexing triggered"
+					}
+				},
+				{
+					"name": "Delete Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 or 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/{{DOCUMENT_ID}}?permanent=false",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{DOCUMENT_ID}}"
+							],
+							"query": [
+								{
+									"key": "permanent",
+									"value": "false",
+									"description": "Permanent deletion (default: false for soft delete)"
+								}
+							]
+						},
+						"description": "Delete a document and all associated data.\n\n**Query Parameters:**\n- `permanent`: Boolean for permanent vs soft delete (default: false)\n\n**Soft Delete (permanent=false):**\n- Document marked as DELETED but data retained\n- Can be restored within retention period\n- Maintains audit trail and compliance\n\n**Permanent Delete (permanent=true):**\n- Complete removal of document and associated data\n- File deleted from storage\n- Embeddings removed from vector database\n- Cannot be recovered\n\n**Authorization:**\n- Document owner or tenant admin required\n- Complete tenant isolation enforced"
+					}
+				}
+			]
+		},
+		{
+			"name": "📄 Document Content",
+			"description": "Document content retrieval and text chunk operations",
+			"item": [
+				{
+					"name": "Get Document Content",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains extracted text\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('extractedText');",
+									"    pm.expect(jsonData.extractedText).to.be.a('string');",
+									"    pm.expect(jsonData.extractedText.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Content includes metadata\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('documentId');",
+									"    pm.expect(jsonData).to.have.property('extractedAt');",
+									"    pm.expect(jsonData).to.have.property('textLength');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/{{DOCUMENT_ID}}/content",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{DOCUMENT_ID}}",
+								"content"
+							]
+						},
+						"description": "Get the full extracted text content of a document.\n\n**Response:**\n- Complete extracted text from Apache Tika processing\n- Text extraction metadata and statistics\n- Processing timestamps and status\n- Original file information\n\n**Use Cases:**\n- Full text search preparation\n- Content analysis and review\n- Text processing and manipulation\n- Quality assurance of extraction\n\n**Security:**\n- Tenant-scoped access control\n- Document ownership validation\n- Complete audit logging"
+					}
+				},
+				{
+					"name": "Get Document Text Chunks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains chunks array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('chunks');",
+									"    pm.expect(jsonData.chunks).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Chunks have required properties\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.chunks.length > 0) {",
+									"        var firstChunk = jsonData.chunks[0];",
+									"        pm.expect(firstChunk).to.have.property('id');",
+									"        pm.expect(firstChunk).to.have.property('text');",
+									"        pm.expect(firstChunk).to.have.property('chunkIndex');",
+									"        pm.expect(firstChunk).to.have.property('tokenCount');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/{{DOCUMENT_ID}}/chunks?includeEmbeddings=false",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{DOCUMENT_ID}}",
+								"chunks"
+							],
+							"query": [
+								{
+									"key": "includeEmbeddings",
+									"value": "false",
+									"description": "Include embedding vectors in response"
+								}
+							]
+						},
+						"description": "Get intelligently chunked text segments optimized for RAG processing.\n\n**Query Parameters:**\n- `includeEmbeddings`: Include vector embeddings in response (default: false)\n\n**Response:**\n- Array of text chunks with metadata\n- Chunk ordering and indexing information\n- Token counts and text statistics\n- Embedding status for each chunk\n- Processing timestamps\n\n**Chunk Properties:**\n- `id`: Unique chunk identifier\n- `text`: Extracted text content\n- `chunkIndex`: Sequential ordering\n- `tokenCount`: Number of tokens\n- `startPosition`: Position in original text\n- `endPosition`: End position in original text\n- `embeddingStatus`: Vector generation status\n\n**Use Cases:**\n- RAG query context preparation\n- Embedding generation validation\n- Text analysis and processing\n- Quality assurance of chunking"
+					}
+				},
+				{
+					"name": "Get Specific Text Chunk",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chunk has complete information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('text');",
+									"    pm.expect(jsonData).to.have.property('documentId');",
+									"    pm.expect(jsonData).to.have.property('chunkIndex');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/{{DOCUMENT_ID}}/chunks/{{CHUNK_ID}}",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{DOCUMENT_ID}}",
+								"chunks",
+								"{{CHUNK_ID}}"
+							]
+						},
+						"description": "Get details of a specific text chunk by ID.\n\n**Response:**\n- Complete chunk information and metadata\n- Text content and positioning\n- Token count and statistics\n- Embedding information if available\n- Processing timestamps\n\n**Use Cases:**\n- Detailed chunk analysis\n- Embedding validation\n- Context verification for RAG\n- Quality assurance testing"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Analytics & Statistics",
+			"description": "Document analytics, statistics, and usage monitoring",
+			"item": [
+				{
+					"name": "Get Document Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics include key metrics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalDocuments');",
+									"    pm.expect(jsonData).to.have.property('totalSize');",
+									"    pm.expect(jsonData).to.have.property('documentsByStatus');",
+									"    pm.expect(jsonData).to.have.property('documentsByCategory');",
+									"});",
+									"",
+									"pm.test(\"Statistics are tenant-scoped\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData.tenantId).to.eql(pm.environment.get('TENANT_ID'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/stats",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"stats"
+							]
+						},
+						"description": "Get comprehensive document statistics and analytics for the current tenant.\n\n**Response Metrics:**\n- `totalDocuments`: Total number of documents\n- `totalSize`: Combined file size in bytes\n- `avgDocumentSize`: Average document size\n- `documentsByStatus`: Count by processing status\n- `documentsByCategory`: Count by document category\n- `documentsByFileType`: Count by file type/format\n- `processingTimes`: Average processing durations\n- `storageUsage`: Storage utilization statistics\n- `recentUploads`: Upload activity trends\n\n**Use Cases:**\n- Tenant resource monitoring\n- Storage quota management\n- Performance analytics\n- Usage reporting and billing\n- System capacity planning"
+					}
+				},
+				{
+					"name": "Get Processing Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response includes processing info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('queueStatus');",
+									"    pm.expect(jsonData).to.have.property('processingQueue');",
+									"    pm.expect(jsonData).to.have.property('completedToday');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/processing-status",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"processing-status"
+							]
+						},
+						"description": "Get current document processing status and queue information.\n\n**Response Information:**\n- `queueStatus`: Current processing queue status\n- `processingQueue`: Number of documents awaiting processing\n- `activeProcessing`: Documents currently being processed\n- `completedToday`: Documents processed in last 24 hours\n- `failedProcessing`: Documents with processing errors\n- `averageProcessingTime`: Recent processing performance\n- `estimatedWaitTime`: Estimated queue wait time\n\n**Use Cases:**\n- Processing queue monitoring\n- Performance tracking\n- Error identification\n- Resource planning\n- User progress updates"
+					}
+				}
+			]
+		},
+		{
+			"name": "🔍 Search & Discovery",
+			"description": "Document search and discovery operations",
+			"item": [
+				{
+					"name": "Search Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Search results are paginated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('totalElements');",
+									"    pm.expect(jsonData).to.have.property('totalPages');",
+									"});",
+									"",
+									"pm.test(\"Search results match query\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    // Check if results contain search term (basic relevance check)",
+									"    var searchTerm = pm.request.url.query.get('q');",
+									"    if (searchTerm && jsonData.content.length > 0) {",
+									"        var found = jsonData.content.some(function(doc) {",
+									"            return doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || ",
+									"                   (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()));",
+									"        });",
+									"        pm.expect(found).to.be.true;",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/search?q=machine learning&page=0&size=10&sort=relevance,desc&category=Technical Documentation&tags=ai,algorithms",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "machine learning",
+									"description": "Search query text"
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Number of results per page"
+								},
+								{
+									"key": "sort",
+									"value": "relevance,desc",
+									"description": "Sort by relevance or other fields"
+								},
+								{
+									"key": "category",
+									"value": "Technical Documentation",
+									"description": "Filter by category"
+								},
+								{
+									"key": "tags",
+									"value": "ai,algorithms",
+									"description": "Filter by tags (comma-separated)"
+								},
+								{
+									"key": "fileType",
+									"value": "pdf",
+									"description": "Filter by file type",
+									"disabled": true
+								},
+								{
+									"key": "dateFrom",
+									"value": "2023-01-01",
+									"description": "Filter by creation date (from)",
+									"disabled": true
+								},
+								{
+									"key": "dateTo",
+									"value": "2023-12-31",
+									"description": "Filter by creation date (to)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Search documents using text queries with advanced filtering options.\n\n**Query Parameters:**\n- `q`: Search query text (required)\n- `page`: Page number (0-based, default: 0)\n- `size`: Results per page (default: 20, max: 100)\n- `sort`: Sort criteria (relevance,desc | createdAt,desc | title,asc)\n- `category`: Filter by document category\n- `tags`: Filter by tags (comma-separated)\n- `fileType`: Filter by file type (pdf, docx, txt, etc.)\n- `dateFrom`: Filter by creation date (from, ISO format)\n- `dateTo`: Filter by creation date (to, ISO format)\n\n**Search Features:**\n- Full-text search across title, description, and content\n- Fuzzy matching for typo tolerance\n- Relevance scoring and ranking\n- Boolean operators (AND, OR, NOT)\n- Phrase searching with quotes\n- Wildcard and partial matching\n\n**Response:**\n- Paginated search results\n- Relevance scores for ranking\n- Highlighted search terms\n- Complete document metadata\n- Search statistics and timing"
+					}
+				},
+				{
+					"name": "Get Popular Tags",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains tag information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tags');",
+									"    pm.expect(jsonData.tags).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Tags have usage counts\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.tags.length > 0) {",
+									"        var firstTag = jsonData.tags[0];",
+									"        pm.expect(firstTag).to.have.property('tag');",
+									"        pm.expect(firstTag).to.have.property('count');",
+									"        pm.expect(firstTag.count).to.be.a('number');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/tags?limit=50",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"tags"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of tags to return"
+								}
+							]
+						},
+						"description": "Get popular tags and their usage counts for tag cloud and filtering.\n\n**Query Parameters:**\n- `limit`: Maximum number of tags to return (default: 100)\n\n**Response:**\n- Array of tags with usage statistics\n- Tag names and document counts\n- Sorted by popularity (usage count)\n- Tenant-scoped tag information\n\n**Use Cases:**\n- Tag cloud generation\n- Auto-completion for tag input\n- Content categorization insights\n- Search filter options\n- Document organization analysis"
+					}
+				},
+				{
+					"name": "Get Categories",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains category information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('categories');",
+									"    pm.expect(jsonData.categories).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Categories have usage counts\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.categories.length > 0) {",
+									"        var firstCategory = jsonData.categories[0];",
+									"        pm.expect(firstCategory).to.have.property('category');",
+									"        pm.expect(firstCategory).to.have.property('count');",
+									"        pm.expect(firstCategory.count).to.be.a('number');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/api/v1/documents/categories",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"categories"
+							]
+						},
+						"description": "Get all document categories and their usage statistics.\n\n**Response:**\n- Array of categories with document counts\n- Sorted by usage frequency\n- Category names and statistics\n- Tenant-scoped category information\n\n**Use Cases:**\n- Category filter options\n- Document organization analysis\n- Content taxonomy management\n- Search refinement options\n- Reporting and analytics"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Health & Monitoring",
+			"description": "Service health checks and monitoring endpoints",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('UP');",
+									"});",
+									"",
+									"pm.test(\"Database connectivity check\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.components && jsonData.components.db) {",
+									"        pm.expect(jsonData.components.db.status).to.eql('UP');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/actuator/health",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check document service health status and dependencies.\n\n**Response:**\n- Overall service status (UP/DOWN)\n- Database connectivity status\n- File storage accessibility\n- Apache Tika processing engine status\n- Queue and processing pipeline health"
+					}
+				},
+				{
+					"name": "Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/actuator/info",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"info"
+							]
+						},
+						"description": "Get document service information and version details."
+					}
+				},
+				{
+					"name": "Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{DOCUMENT_SERVICE_URL}}/actuator/metrics",
+							"host": [
+								"{{DOCUMENT_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"metrics"
+							]
+						},
+						"description": "Get available performance metrics for monitoring and observability."
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{AUTH_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set service URL if not configured",
+					"if (!pm.environment.get('DOCUMENT_SERVICE_URL')) {",
+					"    pm.environment.set('DOCUMENT_SERVICE_URL', 'http://localhost:8082');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract document IDs from upload responses",
+					"if ((pm.response.code === 200 || pm.response.code === 201) && pm.request.url.toString().includes('/upload')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.id) {",
+					"        pm.environment.set('DOCUMENT_ID', jsonData.id);",
+					"        console.log('✅ Document ID saved to environment: ' + jsonData.id);",
+					"    }",
+					"    // For batch uploads, save the first document ID",
+					"    if (jsonData.documents && jsonData.documents.length > 0) {",
+					"        pm.environment.set('DOCUMENT_ID', jsonData.documents[0].id);",
+					"        console.log('✅ First batch document ID saved: ' + jsonData.documents[0].id);",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract chunk IDs from chunk responses",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/chunks')) {",
+					"    var jsonData = pm.response.json();",
+					"    // For chunk list responses",
+					"    if (jsonData.chunks && jsonData.chunks.length > 0) {",
+					"        pm.environment.set('CHUNK_ID', jsonData.chunks[0].id);",
+					"        console.log('✅ First chunk ID saved: ' + jsonData.chunks[0].id);",
+					"    }",
+					"    // For single chunk response",
+					"    if (jsonData.id && !jsonData.chunks) {",
+					"        pm.environment.set('CHUNK_ID', jsonData.id);",
+					"        console.log('✅ Chunk ID saved: ' + jsonData.id);",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "DOCUMENT_SERVICE_URL",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "AUTH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "DOCUMENT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "CHUNK_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

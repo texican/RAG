@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.enterprise.rag</groupId>
-    <artifactId>enterprise-rag</artifactId>
+    <groupId>com.byo.rag</groupId>
+    <artifactId>byo-rag</artifactId>
     <version>0.8.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Enterprise RAG System</name>
-    <description>Enterprise-grade Enterprise RAG (Retrieval Augmented Generation) system</description>
+    <name>BYO RAG System</name>
+    <description>Enterprise-grade BYO (Build Your Own) RAG (Retrieval Augmented Generation) system</description>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
