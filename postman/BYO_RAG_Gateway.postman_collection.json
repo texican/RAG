@@ -1,0 +1,1152 @@
+{
+	"info": {
+		"_postman_id": "gateway-rag-collection",
+		"name": "BYO RAG - Gateway API Collection",
+		"description": "Complete API collection for the BYO RAG System via Gateway\n\n🌐 **Gateway URL**: http://localhost:8080 (Docker deployment)\n📊 **Service Status**: All services operational in Docker environment\n🔐 **Authentication**: JWT tokens required for protected endpoints\n\n**Service Architecture:**\n- Gateway (8080) - Central API routing with authentication\n- Auth Service (8081) - User authentication and JWT management\n- Document Service (8082) - File upload and processing\n- Embedding Service (8083) - Vector operations and semantic search\n- Core RAG Service (8084) - Query processing and LLM integration\n- Admin Service (8085) - Administrative operations and tenant management\n\n**Authentication Flow:**\n1. Login via `/api/auth/login` to get JWT tokens\n2. Include `Authorization: Bearer <token>` in subsequent requests\n3. Include `X-Tenant-ID` header for tenant-specific operations\n\n**Environment Variables:**\n- `GATEWAY_URL`: http://localhost:8080\n- `AUTH_TOKEN`: Set after successful login\n- `TENANT_ID`: Set after login (from user profile)\n- `REFRESH_TOKEN`: Set after login for token refresh",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "byo-rag-system"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"description": "Authentication endpoints for user login, registration, and token management",
+			"item": [
+				{
+					"name": "User Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/login",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate user and receive JWT tokens for API access"
+					},
+					"response": [
+						{
+							"name": "Successful Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+								},
+								"url": {
+									"raw": "{{GATEWAY_URL}}/api/auth/login",
+									"host": [
+										"{{GATEWAY_URL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"accessToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\",\n  \"refreshToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\",\n  \"user\": {\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"email\": \"user@example.com\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"tenantId\": \"tenant-123\"\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "User Registration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"securePassword123\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"tenantId\": \"{{TENANT_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/register",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user in the system (public endpoint)"
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/refresh",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Get new access token using refresh token"
+					}
+				},
+				{
+					"name": "Validate Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"{{AUTH_TOKEN}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/validate",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"validate"
+							]
+						},
+						"description": "Validate JWT token for authenticity and expiration"
+					}
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"email-verification-token-here\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/auth/verify-email",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Verify user email with verification token"
+					}
+				}
+			]
+		},
+		{
+			"name": "📁 Document Management",
+			"description": "Document upload, processing, and management operations",
+			"item": [
+				{
+					"name": "Upload Document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/path/to/document.pdf"
+								},
+								{
+									"key": "title",
+									"value": "Sample Document",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "A sample document for testing",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "sample,test,pdf",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/upload",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"upload"
+							]
+						},
+						"description": "Upload a document for processing and indexing"
+					}
+				},
+				{
+					"name": "Get Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						},
+						"description": "Get paginated list of documents for current tenant"
+					}
+				},
+				{
+					"name": "Get Document by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/{{DOCUMENT_ID}}",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{DOCUMENT_ID}}"
+							]
+						},
+						"description": "Get specific document details by ID"
+					}
+				},
+				{
+					"name": "Update Document",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated Document Title\",\n  \"description\": \"Updated description\",\n  \"tags\": [\"updated\", \"modified\"]\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/{{DOCUMENT_ID}}",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{DOCUMENT_ID}}"
+							]
+						},
+						"description": "Update document metadata"
+					}
+				},
+				{
+					"name": "Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/{{DOCUMENT_ID}}",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{DOCUMENT_ID}}"
+							]
+						},
+						"description": "Delete a document and its associated data"
+					}
+				},
+				{
+					"name": "Get Document Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/documents/stats",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"stats"
+							]
+						},
+						"description": "Get document statistics for current tenant"
+					}
+				}
+			]
+		},
+		{
+			"name": "🧠 Vector Operations",
+			"description": "Embedding generation and semantic search operations",
+			"item": [
+				{
+					"name": "Generate Embeddings",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"texts\": [\n    \"This is the first text to embed\",\n    \"This is the second text to embed\"\n  ],\n  \"modelName\": \"text-embedding-3-small\",\n  \"documentId\": \"{{DOCUMENT_ID}}\",\n  \"chunkIds\": [\"chunk-1\", \"chunk-2\"]\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/generate",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"generate"
+							]
+						},
+						"description": "Generate embeddings for text chunks"
+					}
+				},
+				{
+					"name": "Generate Embeddings (Async)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"texts\": [\n    \"Large document text chunk 1\",\n    \"Large document text chunk 2\"\n  ],\n  \"modelName\": \"text-embedding-3-large\",\n  \"documentId\": \"{{DOCUMENT_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/generate/async",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"generate",
+								"async"
+							]
+						},
+						"description": "Generate embeddings asynchronously for large text sets"
+					}
+				},
+				{
+					"name": "Semantic Search",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"machine learning algorithms\",\n  \"topK\": 5,\n  \"threshold\": 0.75,\n  \"documentIds\": [],\n  \"includeMetadata\": true\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/search",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"search"
+							]
+						},
+						"description": "Perform semantic search across document embeddings"
+					}
+				},
+				{
+					"name": "Hybrid Search",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"artificial intelligence applications\",\n  \"topK\": 10,\n  \"semanticWeight\": 0.7,\n  \"keywordWeight\": 0.3,\n  \"threshold\": 0.6\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/search/hybrid",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"search",
+								"hybrid"
+							]
+						},
+						"description": "Perform hybrid search combining semantic and keyword search"
+					}
+				},
+				{
+					"name": "Get Vector Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/embeddings/stats",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"embeddings",
+								"stats"
+							]
+						},
+						"description": "Get vector storage statistics for current tenant"
+					}
+				}
+			]
+		},
+		{
+			"name": "🤖 RAG Queries",
+			"description": "Retrieval-Augmented Generation query processing",
+			"item": [
+				{
+					"name": "RAG Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"What are the key benefits of machine learning?\",\n  \"maxResults\": 5,\n  \"temperature\": 0.7,\n  \"includeContext\": true,\n  \"model\": \"gpt-3.5-turbo\",\n  \"conversationId\": null\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query"
+							]
+						},
+						"description": "Submit a RAG query for processing with document context"
+					}
+				},
+				{
+					"name": "RAG Query (Async)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"Explain the differences between supervised and unsupervised learning\",\n  \"maxResults\": 10,\n  \"temperature\": 0.5,\n  \"includeContext\": true,\n  \"model\": \"gpt-4\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query/async",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query",
+								"async"
+							]
+						},
+						"description": "Submit an asynchronous RAG query for complex processing"
+					}
+				},
+				{
+					"name": "RAG Query (Streaming)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "text/event-stream"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"What are the latest trends in artificial intelligence?\",\n  \"maxResults\": 5,\n  \"temperature\": 0.8,\n  \"includeContext\": true,\n  \"model\": \"gpt-4\",\n  \"stream\": true\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query/stream",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query",
+								"stream"
+							]
+						},
+						"description": "Submit a RAG query with streaming response (Server-Sent Events)"
+					}
+				},
+				{
+					"name": "Analyze Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"Tell me about neural networks\",\n  \"includeSuggestions\": true,\n  \"analyzeComplexity\": true\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/query/analyze",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"query",
+								"analyze"
+							]
+						},
+						"description": "Analyze query for optimization and suggestions"
+					}
+				},
+				{
+					"name": "Get RAG Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/rag/stats",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"rag",
+								"stats"
+							]
+						},
+						"description": "Get RAG processing statistics and performance metrics"
+					}
+				}
+			]
+		},
+		{
+			"name": "⚙️ Administration",
+			"description": "Administrative operations and tenant management",
+			"item": [
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@enterprise-rag.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/auth/login",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Administrative login for system management"
+					}
+				},
+				{
+					"name": "Get All Tenants",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/tenants",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"tenants"
+							]
+						},
+						"description": "Get all tenants in the system (admin only)"
+					}
+				},
+				{
+					"name": "Create Tenant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"New Enterprise Client\",\n  \"domain\": \"newclient.com\",\n  \"contactEmail\": \"admin@newclient.com\",\n  \"maxUsers\": 100,\n  \"maxStorage\": 10737418240,\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/tenants",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"tenants"
+							]
+						},
+						"description": "Create a new tenant organization"
+					}
+				},
+				{
+					"name": "Update Tenant",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Enterprise Client\",\n  \"maxUsers\": 150,\n  \"maxStorage\": 21474836480,\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/tenants/{{TENANT_ID}}",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"tenants",
+								"{{TENANT_ID}}"
+							]
+						},
+						"description": "Update tenant configuration and limits"
+					}
+				},
+				{
+					"name": "Get Tenant by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/tenants/{{TENANT_ID}}",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"tenants",
+								"{{TENANT_ID}}"
+							]
+						},
+						"description": "Get specific tenant details and statistics"
+					}
+				},
+				{
+					"name": "Deactivate Tenant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ADMIN_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/api/admin/tenants/{{TENANT_ID}}/deactivate",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"tenants",
+								"{{TENANT_ID}}",
+								"deactivate"
+							]
+						},
+						"description": "Deactivate a tenant (soft delete)"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Monitoring & Health",
+			"description": "System monitoring, health checks, and metrics",
+			"item": [
+				{
+					"name": "Gateway Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/actuator/health",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check gateway service health status"
+					}
+				},
+				{
+					"name": "Gateway Routes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/actuator/gateway/routes",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"actuator",
+								"gateway",
+								"routes"
+							]
+						},
+						"description": "View configured gateway routes"
+					}
+				},
+				{
+					"name": "Prometheus Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/actuator/prometheus",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"actuator",
+								"prometheus"
+							]
+						},
+						"description": "Get Prometheus metrics for monitoring"
+					}
+				},
+				{
+					"name": "Circuit Breakers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/actuator/circuitbreakers",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"actuator",
+								"circuitbreakers"
+							]
+						},
+						"description": "Check circuit breaker states"
+					}
+				},
+				{
+					"name": "Rate Limiters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{GATEWAY_URL}}/actuator/ratelimiters",
+							"host": [
+								"{{GATEWAY_URL}}"
+							],
+							"path": [
+								"actuator",
+								"ratelimiters"
+							]
+						},
+						"description": "Check rate limiter status"
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{AUTH_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set base URL if not configured",
+					"if (!pm.environment.get('GATEWAY_URL')) {",
+					"    pm.environment.set('GATEWAY_URL', 'http://localhost:8080');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract tokens from login responses",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/login')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.accessToken) {",
+					"        pm.environment.set('AUTH_TOKEN', jsonData.accessToken);",
+					"        console.log('✅ Access token saved to environment');",
+					"    }",
+					"    if (jsonData.refreshToken) {",
+					"        pm.environment.set('REFRESH_TOKEN', jsonData.refreshToken);",
+					"        console.log('✅ Refresh token saved to environment');",
+					"    }",
+					"    if (jsonData.user && jsonData.user.tenantId) {",
+					"        pm.environment.set('TENANT_ID', jsonData.user.tenantId);",
+					"        console.log('✅ Tenant ID saved to environment');",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract admin tokens",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/admin/auth/login')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.accessToken) {",
+					"        pm.environment.set('ADMIN_TOKEN', jsonData.accessToken);",
+					"        console.log('✅ Admin token saved to environment');",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract document IDs",
+					"if (pm.response.code === 200 && pm.request.method === 'POST' && pm.request.url.toString().includes('/documents/upload')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.id) {",
+					"        pm.environment.set('DOCUMENT_ID', jsonData.id);",
+					"        console.log('✅ Document ID saved to environment: ' + jsonData.id);",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "GATEWAY_URL",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "AUTH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "REFRESH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "ADMIN_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "DOCUMENT_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

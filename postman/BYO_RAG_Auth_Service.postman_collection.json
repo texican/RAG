@@ -1,0 +1,907 @@
+{
+	"info": {
+		"_postman_id": "auth-service-rag-collection",
+		"name": "BYO RAG - Auth Service Collection",
+		"description": "Authentication Service API Collection for the BYO RAG System\n\n🔐 **Service URL**: http://localhost:8081 (Docker deployment)\n📊 **Service Status**: Fully operational with database integration\n🏗️ **Architecture**: Complete JWT authentication with PostgreSQL backend\n\n**Authentication Features:**\n- User login with JWT token generation\n- Token refresh and validation\n- User registration with email verification\n- Multi-tenant user management\n- Role-based access control\n\n**Database Integration:**\n- PostgreSQL persistence for all user data\n- BCrypt password hashing\n- Email verification tokens\n- Complete audit logging\n\n**Security Features:**\n- JWT tokens with configurable expiration\n- Multi-tenant isolation\n- Rate limiting protection\n- Secure password requirements\n\n**Environment Variables:**\n- `AUTH_SERVICE_URL`: http://localhost:8081\n- `AUTH_TOKEN`: JWT access token\n- `REFRESH_TOKEN`: JWT refresh token\n- `TENANT_ID`: Tenant identifier for multi-tenancy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "byo-rag-auth-service"
+	},
+	"item": [
+		{
+			"name": "🔑 Authentication",
+			"description": "Core authentication operations",
+			"item": [
+				{
+					"name": "User Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('accessToken');",
+									"    pm.environment.set('AUTH_TOKEN', jsonData.accessToken);",
+									"});",
+									"",
+									"pm.test(\"Response contains refresh token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.environment.set('REFRESH_TOKEN', jsonData.refreshToken);",
+									"});",
+									"",
+									"pm.test(\"Response contains user info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    pm.expect(jsonData.user).to.have.property('email');",
+									"    pm.expect(jsonData.user).to.have.property('tenantId');",
+									"    pm.environment.set('TENANT_ID', jsonData.user.tenantId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/login",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate user credentials and receive JWT tokens for API access.\n\n**Request Body:**\n- `email`: User's email address (required)\n- `password`: User's password (required)\n\n**Response:**\n- `accessToken`: JWT token for API authentication\n- `refreshToken`: Token for refreshing access token\n- `user`: User profile information including tenant ID\n\n**Security:**\n- Passwords verified with BCrypt hashing\n- Rate limiting to prevent brute force attacks\n- Comprehensive audit logging"
+					},
+					"response": [
+						{
+							"name": "Successful Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+								},
+								"url": {
+									"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/login",
+									"host": [
+										"{{AUTH_SERVICE_URL}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"accessToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaXNzIjoiZW50ZXJwcmlzZS1yYWciLCJleHAiOjE2OTM0NjA0MDAsInRlbmFudElkIjoidGVuYW50LTEyMyIsInVzZXJJZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCJ9...\",\n  \"refreshToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaXNzIjoiZW50ZXJwcmlzZS1yYWciLCJleHAiOjE2OTQwNjUyMDAsInR5cGUiOiJyZWZyZXNoIn0...\",\n  \"user\": {\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"email\": \"user@example.com\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"tenantId\": \"tenant-123\",\n    \"emailVerified\": true,\n    \"createdAt\": \"2023-08-31T10:30:00Z\",\n    \"updatedAt\": \"2023-08-31T10:30:00Z\"\n  }\n}"
+						},
+						{
+							"name": "Invalid Credentials",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+								},
+								"url": {
+									"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/login",
+									"host": [
+										"{{AUTH_SERVICE_URL}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": \"AUTHENTICATION_FAILED\",\n  \"message\": \"Invalid email or password\",\n  \"timestamp\": \"2023-08-31T10:30:00Z\",\n  \"path\": \"/api/v1/auth/login\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Token Refresh",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains new access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('accessToken');",
+									"    pm.environment.set('AUTH_TOKEN', jsonData.accessToken);",
+									"});",
+									"",
+									"pm.test(\"Response contains new refresh token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.environment.set('REFRESH_TOKEN', jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if refresh token exists",
+									"if (!pm.environment.get('REFRESH_TOKEN')) {",
+									"    throw new Error('REFRESH_TOKEN not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/refresh",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Generate new access and refresh tokens using a valid refresh token.\n\n**Request Body:**\n- `refreshToken`: Valid refresh token from previous login\n\n**Response:**\n- `accessToken`: New JWT token for API authentication\n- `refreshToken`: New refresh token (token rotation)\n- `user`: Updated user profile information\n\n**Security:**\n- Refresh tokens are single-use (token rotation)\n- Extended expiration time compared to access tokens\n- Secure invalidation of previous tokens"
+					}
+				},
+				{
+					"name": "Token Validation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token validation result\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('valid');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token exists",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"{{AUTH_TOKEN}}\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/validate",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"validate"
+							]
+						},
+						"description": "Validate JWT token for authenticity and expiration.\n\n**Request Body:**\n- `token`: JWT token to validate\n\n**Response:**\n- `valid`: Boolean indicating token validity\n\n**Use Cases:**\n- Microservice token verification\n- Session validation\n- Authorization checks\n- Token health monitoring"
+					}
+				}
+			]
+		},
+		{
+			"name": "👥 User Management",
+			"description": "User registration and profile management",
+			"item": [
+				{
+					"name": "User Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains user info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('PENDING_VERIFICATION');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"tenantId\": \"{{TENANT_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/register",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user in the system (public endpoint).\n\n**Request Body:**\n- `email`: User's email address (required, unique)\n- `password`: Secure password (required, min 8 chars)\n- `firstName`: User's first name (required)\n- `lastName`: User's last name (required)\n- `tenantId`: Tenant organization ID (required)\n\n**Response:**\n- User profile information (password excluded)\n- Account status (PENDING_VERIFICATION initially)\n\n**Security:**\n- Email uniqueness validation\n- Password complexity requirements\n- Email verification required for activation\n- Rate limiting to prevent spam registrations"
+					}
+				},
+				{
+					"name": "Email Verification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User is verified\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('ACTIVE');",
+									"    pm.expect(jsonData).to.have.property('emailVerified');",
+									"    pm.expect(jsonData.emailVerified).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"email-verification-token-from-email\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/auth/verify-email",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Verify user email address using verification token sent via email.\n\n**Request Body:**\n- `token`: Email verification token received in email\n\n**Response:**\n- Updated user profile with ACTIVE status\n- Email verification confirmation\n\n**Token Properties:**\n- Single-use tokens (invalidated after verification)\n- 24-hour expiration window\n- Cryptographically signed and secure\n- Tied to specific user account"
+					}
+				}
+			]
+		},
+		{
+			"name": "🏢 Tenant Operations",
+			"description": "Tenant management and user operations within tenants",
+			"item": [
+				{
+					"name": "Get Users in Tenant",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token exists",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is paginated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('totalElements');",
+									"    pm.expect(jsonData).to.have.property('totalPages');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/tenants/{{TENANT_ID}}/users?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tenants",
+								"{{TENANT_ID}}",
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						},
+						"description": "Get paginated list of users within a specific tenant.\n\n**Headers:**\n- `Authorization`: Bearer token for authentication\n- `X-Tenant-ID`: Tenant identifier for isolation\n\n**Query Parameters:**\n- `page`: Page number (0-based)\n- `size`: Number of items per page\n- `sort`: Sort criteria (field,direction)\n\n**Response:**\n- Paginated list of user profiles\n- Total count and page information\n- Tenant-scoped user data only"
+					}
+				},
+				{
+					"name": "Create User in Tenant",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token exists",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"User created in correct tenant\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData.tenantId).to.eql(pm.environment.get('TENANT_ID'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"tenantuser@example.com\",\n  \"password\": \"SecurePass456!\",\n  \"firstName\": \"Michael\",\n  \"lastName\": \"Johnson\",\n  \"role\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/tenants/{{TENANT_ID}}/users",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tenants",
+								"{{TENANT_ID}}",
+								"users"
+							]
+						},
+						"description": "Create a new user within a specific tenant (admin operation).\n\n**Headers:**\n- `Authorization`: Bearer token with admin privileges\n- `X-Tenant-ID`: Target tenant for user creation\n\n**Request Body:**\n- `email`: User's email address\n- `password`: Secure password\n- `firstName`: User's first name\n- `lastName`: User's last name\n- `role`: User role (USER, ADMIN)\n\n**Authorization:**\n- Requires authenticated user with tenant admin privileges\n- User is automatically associated with the specified tenant"
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token exists",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User belongs to correct tenant\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"    pm.expect(jsonData.tenantId).to.eql(pm.environment.get('TENANT_ID'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/users/{{USER_ID}}",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"{{USER_ID}}"
+							]
+						},
+						"description": "Get specific user details by ID with tenant validation.\n\n**Headers:**\n- `Authorization`: Bearer token for authentication\n- `X-Tenant-ID`: Tenant context for access control\n\n**Security:**\n- User data only accessible within same tenant\n- Complete tenant isolation enforced\n- Password information never included in response"
+					}
+				},
+				{
+					"name": "Update User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token exists",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('updatedAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Updated First Name\",\n  \"lastName\": \"Updated Last Name\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/users/{{USER_ID}}",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"{{USER_ID}}"
+							]
+						},
+						"description": "Update user profile information.\n\n**Headers:**\n- `Authorization`: Bearer token for authentication\n- `X-Tenant-ID`: Tenant context for access control\n\n**Request Body:**\n- `firstName`: Updated first name\n- `lastName`: Updated last name\n- `role`: User role (USER, ADMIN)\n- `status`: Account status (ACTIVE, INACTIVE, SUSPENDED)\n\n**Security:**\n- Users can update their own profiles\n- Admin users can update any user in their tenant\n- Email changes require re-verification"
+					}
+				},
+				{
+					"name": "Delete User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token exists",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/api/v1/users/{{USER_ID}}",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"{{USER_ID}}"
+							]
+						},
+						"description": "Delete user account (soft delete).\n\n**Headers:**\n- `Authorization`: Bearer token with admin privileges\n- `X-Tenant-ID`: Tenant context for access control\n\n**Behavior:**\n- Soft delete: User marked as DELETED but data retained\n- All associated tokens are invalidated\n- User cannot login after deletion\n- Data retention for audit and compliance purposes\n\n**Authorization:**\n- Requires admin privileges\n- Users cannot delete themselves\n- Complete tenant isolation enforced"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Health & Monitoring",
+			"description": "Service health checks and monitoring endpoints",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/actuator/health",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check authentication service health status.\n\n**Response:**\n- Overall service status (UP/DOWN)\n- Database connectivity status\n- Dependency health checks\n- Performance indicators"
+					}
+				},
+				{
+					"name": "Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/actuator/info",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"info"
+							]
+						},
+						"description": "Get authentication service information and version details."
+					}
+				},
+				{
+					"name": "Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_SERVICE_URL}}/actuator/metrics",
+							"host": [
+								"{{AUTH_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"metrics"
+							]
+						},
+						"description": "Get available performance metrics for monitoring."
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{AUTH_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set service URL if not configured",
+					"if (!pm.environment.get('AUTH_SERVICE_URL')) {",
+					"    pm.environment.set('AUTH_SERVICE_URL', 'http://localhost:8081');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract tokens from login responses",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/login')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.accessToken) {",
+					"        pm.environment.set('AUTH_TOKEN', jsonData.accessToken);",
+					"        console.log('✅ Access token saved to environment');",
+					"    }",
+					"    if (jsonData.refreshToken) {",
+					"        pm.environment.set('REFRESH_TOKEN', jsonData.refreshToken);",
+					"        console.log('✅ Refresh token saved to environment');",
+					"    }",
+					"    if (jsonData.user && jsonData.user.tenantId) {",
+					"        pm.environment.set('TENANT_ID', jsonData.user.tenantId);",
+					"        console.log('✅ Tenant ID saved to environment');",
+					"    }",
+					"    if (jsonData.user && jsonData.user.id) {",
+					"        pm.environment.set('USER_ID', jsonData.user.id);",
+					"        console.log('✅ User ID saved to environment');",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract user IDs from user creation",
+					"if (pm.response.code === 200 || pm.response.code === 201) {",
+					"    if (pm.request.url.toString().includes('/users') || pm.request.url.toString().includes('/register')) {",
+					"        var jsonData = pm.response.json();",
+					"        if (jsonData.id) {",
+					"            pm.environment.set('USER_ID', jsonData.id);",
+					"            console.log('✅ User ID saved to environment: ' + jsonData.id);",
+					"        }",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "AUTH_SERVICE_URL",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "AUTH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "REFRESH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "USER_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

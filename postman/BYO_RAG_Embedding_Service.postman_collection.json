@@ -1,0 +1,1454 @@
+{
+	"info": {
+		"_postman_id": "embedding-service-rag-collection",
+		"name": "BYO RAG - Embedding Service Collection",
+		"description": "Vector Embedding Service API Collection for the BYO RAG System\n\n🧠 **Service URL**: http://localhost:8083 (Docker deployment)\n📊 **Service Status**: Fully operational with Redis Stack integration\n🏗️ **Architecture**: Complete vector operations with Spring AI and Redis vector storage\n\n**Core Vector Capabilities:**\n- Text-to-vector embedding generation using multiple AI models\n- Semantic similarity search with configurable thresholds\n- Hybrid search combining semantic and keyword matching\n- Batch processing for enterprise-scale workloads\n- Async processing with CompletableFuture support\n- Advanced caching and performance optimization\n\n**Supported AI Models:**\n- **OpenAI Models**: text-embedding-3-small, text-embedding-3-large, text-embedding-ada-002\n- **Sentence Transformers**: all-MiniLM-L6-v2 for local processing\n- **Custom Models**: Extensible architecture for additional providers\n\n**Vector Operations:**\n- High-dimensional embedding generation (1536 dimensions for OpenAI)\n- Cosine similarity search with distance thresholds\n- Vector storage and retrieval with Redis Stack\n- Metadata filtering and document-scoped search\n- Batch operations for performance optimization\n\n**Environment Variables:**\n- `EMBEDDING_SERVICE_URL`: http://localhost:8083\n- `AUTH_TOKEN`: JWT authentication token\n- `TENANT_ID`: Tenant identifier for multi-tenancy\n- `DOCUMENT_ID`: Document identifier for scoped operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "byo-rag-embedding-service"
+	},
+	"item": [
+		{
+			"name": "🧠 Embedding Generation",
+			"description": "Text-to-vector embedding generation operations",
+			"item": [
+				{
+					"name": "Generate Embeddings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains embeddings\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('embeddings');",
+									"    pm.expect(jsonData.embeddings).to.be.an('array');",
+									"    pm.expect(jsonData.embeddings.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Embeddings have correct structure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.embeddings.length > 0) {",
+									"        var firstEmbedding = jsonData.embeddings[0];",
+									"        pm.expect(firstEmbedding).to.have.property('vector');",
+									"        pm.expect(firstEmbedding).to.have.property('text');",
+									"        pm.expect(firstEmbedding).to.have.property('chunkId');",
+									"        pm.expect(firstEmbedding.vector).to.be.an('array');",
+									"        pm.expect(firstEmbedding.vector.length).to.be.greaterThan(0);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Processing status is success\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"texts\": [\n    \"Machine learning is a subset of artificial intelligence that focuses on algorithms that can learn from data.\",\n    \"Deep learning uses neural networks with multiple layers to model and understand complex patterns in data.\",\n    \"Natural language processing enables computers to understand, interpret, and generate human language.\"\n  ],\n  \"modelName\": \"text-embedding-3-small\",\n  \"documentId\": \"{{DOCUMENT_ID}}\",\n  \"chunkIds\": [\"chunk-1\", \"chunk-2\", \"chunk-3\"]\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/generate",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"generate"
+							]
+						},
+						"description": "Generate vector embeddings for text chunks using specified AI models.\n\n**Request Body:**\n- `tenantId`: Tenant identifier for isolation (required)\n- `texts`: Array of text strings to embed (required, max 100 per request)\n- `modelName`: AI model to use for embedding generation (default: text-embedding-3-small)\n- `documentId`: Associated document ID for organization (optional)\n- `chunkIds`: Corresponding chunk identifiers (optional)\n\n**Supported Models:**\n- `text-embedding-3-small`: Fast, cost-effective OpenAI model (1536 dimensions)\n- `text-embedding-3-large`: High-performance OpenAI model (3072 dimensions)\n- `text-embedding-ada-002`: Previous generation OpenAI model (1536 dimensions)\n- `all-MiniLM-L6-v2`: Local Sentence Transformer model (384 dimensions)\n\n**Response:**\n- Array of embedding objects with vectors and metadata\n- Processing status and timing information\n- Model information and configuration used\n- Vector dimensions and storage references\n\n**Vector Properties:**\n- High-dimensional float arrays (384-3072 dimensions)\n- Normalized vectors for cosine similarity\n- Associated metadata for filtering and organization\n- Redis storage keys for retrieval"
+					},
+					"response": [
+						{
+							"name": "Successful Embedding Generation",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{AUTH_TOKEN}}"
+									},
+									{
+										"key": "X-Tenant-ID",
+										"value": "{{TENANT_ID}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"tenantId\": \"tenant-123\",\n  \"texts\": [\n    \"Machine learning algorithms\",\n    \"Deep neural networks\"\n  ],\n  \"modelName\": \"text-embedding-3-small\"\n}"
+								},
+								"url": {
+									"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/generate",
+									"host": [
+										"{{EMBEDDING_SERVICE_URL}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"embeddings",
+										"generate"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": \"SUCCESS\",\n  \"embeddings\": [\n    {\n      \"chunkId\": \"chunk-1\",\n      \"text\": \"Machine learning algorithms\",\n      \"vector\": [0.123, -0.456, 0.789, ...],\n      \"vectorId\": \"vec_123e4567-e89b-12d3-a456-426614174000\",\n      \"dimensions\": 1536,\n      \"model\": \"text-embedding-3-small\"\n    },\n    {\n      \"chunkId\": \"chunk-2\",\n      \"text\": \"Deep neural networks\",\n      \"vector\": [-0.321, 0.654, -0.987, ...],\n      \"vectorId\": \"vec_789a0123-b45c-67d8-e90f-123456789abc\",\n      \"dimensions\": 1536,\n      \"model\": \"text-embedding-3-small\"\n    }\n  ],\n  \"processedCount\": 2,\n  \"modelName\": \"text-embedding-3-small\",\n  \"tenantId\": \"tenant-123\",\n  \"processingTimeMs\": 245,\n  \"createdAt\": \"2023-08-31T10:30:00Z\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Generate Embeddings (Async)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 202\", function () {",
+									"    pm.response.to.have.status(202);",
+									"});",
+									"",
+									"pm.test(\"Response contains processing info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('jobId');",
+									"    pm.expect(jsonData).to.have.property('estimatedCompletionTime');",
+									"    pm.environment.set('EMBEDDING_JOB_ID', jsonData.jobId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"texts\": [\n    \"Large language models have revolutionized natural language processing by enabling few-shot learning capabilities.\",\n    \"Transfer learning allows pre-trained models to be fine-tuned for specific tasks with minimal additional training data.\",\n    \"Attention mechanisms enable models to focus on relevant parts of the input sequence when processing information.\",\n    \"Transformer architecture has become the foundation for most state-of-the-art language models in recent years.\",\n    \"Generative AI applications are transforming industries by automating content creation and decision-making processes.\"\n  ],\n  \"modelName\": \"text-embedding-3-large\",\n  \"documentId\": \"{{DOCUMENT_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/generate/async",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"generate",
+								"async"
+							]
+						},
+						"description": "Generate embeddings asynchronously for large text sets or batch processing.\n\n**Request Body:**\n- Same as synchronous generation but optimized for larger batches\n- Supports up to 1000 texts per request\n- Background processing with job tracking\n\n**Response:**\n- `status`: Processing status (QUEUED, PROCESSING, COMPLETED, FAILED)\n- `jobId`: Unique identifier for tracking the async job\n- `estimatedCompletionTime`: Estimated processing completion time\n- `queuePosition`: Current position in processing queue\n\n**Benefits:**\n- Non-blocking processing for large batches\n- Progress tracking and status monitoring\n- Optimized resource utilization\n- Reduced timeout risks for large requests\n\n**Use Cases:**\n- Bulk document processing\n- Large dataset embedding generation\n- Background batch operations\n- Enterprise-scale text processing"
+					}
+				},
+				{
+					"name": "Check Async Job Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Job status information present\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('jobId');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('progress');",
+									"});",
+									"",
+									"pm.test(\"Progress is valid percentage\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.progress).to.be.at.least(0);",
+									"    pm.expect(jsonData.progress).to.be.at.most(100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and job ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('EMBEDDING_JOB_ID')) {",
+									"    throw new Error('EMBEDDING_JOB_ID not found. Please start an async job first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/jobs/{{EMBEDDING_JOB_ID}}",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"jobs",
+								"{{EMBEDDING_JOB_ID}}"
+							]
+						},
+						"description": "Check the status and progress of an asynchronous embedding generation job.\n\n**Response:**\n- `jobId`: Job identifier\n- `status`: Current job status (QUEUED, PROCESSING, COMPLETED, FAILED)\n- `progress`: Completion percentage (0-100)\n- `processedCount`: Number of texts processed so far\n- `totalCount`: Total number of texts to process\n- `startTime`: Job start timestamp\n- `estimatedCompletion`: Estimated completion time\n- `results`: Embedding results (when status is COMPLETED)\n- `error`: Error information (when status is FAILED)\n\n**Job Statuses:**\n- `QUEUED`: Job waiting to be processed\n- `PROCESSING`: Currently generating embeddings\n- `COMPLETED`: All embeddings generated successfully\n- `FAILED`: Processing failed with errors"
+					}
+				},
+				{
+					"name": "Get Job Results",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Results contain embeddings\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('embeddings');",
+									"    pm.expect(jsonData.embeddings).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Job completed successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('COMPLETED');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and job ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('EMBEDDING_JOB_ID')) {",
+									"    throw new Error('EMBEDDING_JOB_ID not found. Please start an async job first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/jobs/{{EMBEDDING_JOB_ID}}/results",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"jobs",
+								"{{EMBEDDING_JOB_ID}}",
+								"results"
+							]
+						},
+						"description": "Retrieve the results of a completed asynchronous embedding generation job.\n\n**Response (when job is COMPLETED):**\n- Complete embedding results with vectors\n- Processing statistics and timing information\n- Model configuration used\n- Storage references for vector retrieval\n\n**Error Response (when job is FAILED):**\n- Error details and failure reasons\n- Partial results if some embeddings succeeded\n- Retry recommendations\n\n**Note:**\n- Only available when job status is COMPLETED or FAILED\n- Results are cached for 24 hours after completion\n- Large result sets may be paginated"
+					}
+				}
+			]
+		},
+		{
+			"name": "🔍 Semantic Search",
+			"description": "Vector similarity search and semantic matching operations",
+			"item": [
+				{
+					"name": "Semantic Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains search results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Search results have similarity scores\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        var firstResult = jsonData.results[0];",
+									"        pm.expect(firstResult).to.have.property('similarity');",
+									"        pm.expect(firstResult).to.have.property('text');",
+									"        pm.expect(firstResult).to.have.property('chunkId');",
+									"        pm.expect(firstResult.similarity).to.be.at.least(0);",
+									"        pm.expect(firstResult.similarity).to.be.at.most(1);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Results are sorted by similarity\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 1) {",
+									"        for (var i = 0; i < jsonData.results.length - 1; i++) {",
+									"            pm.expect(jsonData.results[i].similarity).to.be.at.least(jsonData.results[i + 1].similarity);",
+									"        }",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"machine learning algorithms for classification tasks\",\n  \"topK\": 5,\n  \"threshold\": 0.75,\n  \"documentIds\": [],\n  \"includeMetadata\": true,\n  \"modelName\": \"text-embedding-3-small\"\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/search",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"search"
+							]
+						},
+						"description": "Perform semantic similarity search across stored vector embeddings.\n\n**Request Body:**\n- `tenantId`: Tenant identifier for scoped search (required)\n- `query`: Search query text to find similar content (required)\n- `topK`: Maximum number of results to return (default: 10, max: 100)\n- `threshold`: Minimum similarity score threshold (0.0-1.0, default: 0.0)\n- `documentIds`: Limit search to specific documents (optional)\n- `includeMetadata`: Include chunk metadata in results (default: true)\n- `modelName`: Embedding model to use for query (default: text-embedding-3-small)\n\n**Response:**\n- `results`: Array of matching text chunks with similarity scores\n- `queryVector`: Generated query embedding vector\n- `searchTimeMs`: Search execution time in milliseconds\n- `totalMatches`: Total number of matches above threshold\n- `modelUsed`: Embedding model used for the search\n\n**Result Properties:**\n- `chunkId`: Unique identifier for the text chunk\n- `text`: Original text content of the chunk\n- `similarity`: Cosine similarity score (0.0-1.0, higher is more similar)\n- `documentId`: Associated document identifier\n- `metadata`: Additional chunk metadata (title, category, etc.)\n- `vectorId`: Vector storage reference\n\n**Search Features:**\n- Cosine similarity matching for semantic relevance\n- Configurable similarity thresholds for quality control\n- Document-scoped search for focused results\n- Metadata filtering and enrichment\n- Multi-tenant isolation and security"
+					},
+					"response": [
+						{
+							"name": "Successful Semantic Search",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{AUTH_TOKEN}}"
+									},
+									{
+										"key": "X-Tenant-ID",
+										"value": "{{TENANT_ID}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"tenantId\": \"tenant-123\",\n  \"query\": \"machine learning\",\n  \"topK\": 3,\n  \"threshold\": 0.7\n}"
+								},
+								"url": {
+									"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/search",
+									"host": [
+										"{{EMBEDDING_SERVICE_URL}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"embeddings",
+										"search"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"results\": [\n    {\n      \"chunkId\": \"chunk-abc123\",\n      \"text\": \"Machine learning algorithms can be categorized into supervised, unsupervised, and reinforcement learning approaches.\",\n      \"similarity\": 0.92,\n      \"documentId\": \"doc-456789\",\n      \"metadata\": {\n        \"title\": \"ML Fundamentals Guide\",\n        \"category\": \"Technical Documentation\",\n        \"chunkIndex\": 5\n      },\n      \"vectorId\": \"vec_abc123def456\"\n    },\n    {\n      \"chunkId\": \"chunk-def456\",\n      \"text\": \"Deep learning, a subset of machine learning, uses neural networks with multiple hidden layers to model complex patterns.\",\n      \"similarity\": 0.89,\n      \"documentId\": \"doc-789012\",\n      \"metadata\": {\n        \"title\": \"Deep Learning Handbook\",\n        \"category\": \"Research Paper\",\n        \"chunkIndex\": 12\n      },\n      \"vectorId\": \"vec_def456ghi789\"\n    },\n    {\n      \"chunkId\": \"chunk-ghi789\",\n      \"text\": \"Machine learning models require training data to learn patterns and make predictions on new, unseen data.\",\n      \"similarity\": 0.86,\n      \"documentId\": \"doc-345678\",\n      \"metadata\": {\n        \"title\": \"AI Training Methods\",\n        \"category\": \"Tutorial\",\n        \"chunkIndex\": 8\n      },\n      \"vectorId\": \"vec_ghi789jkl012\"\n    }\n  ],\n  \"queryVector\": [0.123, -0.456, 0.789, ...],\n  \"searchTimeMs\": 45,\n  \"totalMatches\": 12,\n  \"modelUsed\": \"text-embedding-3-small\",\n  \"tenantId\": \"tenant-123\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Hybrid Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains hybrid results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('semanticResults');",
+									"    pm.expect(jsonData).to.have.property('keywordResults');",
+									"});",
+									"",
+									"pm.test(\"Results have combined scores\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        var firstResult = jsonData.results[0];",
+									"        pm.expect(firstResult).to.have.property('combinedScore');",
+									"        pm.expect(firstResult).to.have.property('semanticScore');",
+									"        pm.expect(firstResult).to.have.property('keywordScore');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"artificial intelligence neural networks deep learning\",\n  \"topK\": 10,\n  \"semanticWeight\": 0.7,\n  \"keywordWeight\": 0.3,\n  \"threshold\": 0.6,\n  \"includeMetadata\": true\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/search/hybrid",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"search",
+								"hybrid"
+							]
+						},
+						"description": "Perform hybrid search combining semantic similarity and keyword matching.\n\n**Request Body:**\n- `tenantId`: Tenant identifier for scoped search (required)\n- `query`: Search query text (required)\n- `topK`: Maximum number of results (default: 10)\n- `semanticWeight`: Weight for semantic similarity (0.0-1.0, default: 0.7)\n- `keywordWeight`: Weight for keyword matching (0.0-1.0, default: 0.3)\n- `threshold`: Minimum combined score threshold (default: 0.5)\n- `includeMetadata`: Include metadata in results (default: true)\n\n**Hybrid Search Algorithm:**\n1. Semantic Search: Generate query embedding and find similar vectors\n2. Keyword Search: Perform text-based keyword matching\n3. Score Combination: Weighted combination of semantic and keyword scores\n4. Re-ranking: Sort results by combined relevance scores\n5. Deduplication: Remove duplicate results with score merging\n\n**Response:**\n- `results`: Combined and re-ranked search results\n- `semanticResults`: Pure semantic similarity results\n- `keywordResults`: Pure keyword matching results\n- `combinedAlgorithm`: Scoring algorithm details\n- `searchTimeMs`: Total search execution time\n\n**Benefits:**\n- Improved relevance through multiple matching strategies\n- Handles both semantic similarity and exact term matches\n- Configurable weight balance for different use cases\n- Better coverage for diverse query types\n- Enhanced recall and precision"
+					}
+				},
+				{
+					"name": "Search by Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Results are from specified document\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var expectedDocId = pm.environment.get('DOCUMENT_ID');",
+									"    if (jsonData.results.length > 0 && expectedDocId) {",
+									"        jsonData.results.forEach(function(result) {",
+									"            pm.expect(result.documentId).to.eql(expectedDocId);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"query\": \"key concepts and methods\",\n  \"topK\": 15,\n  \"threshold\": 0.65,\n  \"documentIds\": [\"{{DOCUMENT_ID}}\"],\n  \"includeMetadata\": true\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/search",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"search"
+							]
+						},
+						"description": "Perform semantic search limited to specific documents.\n\n**Use Cases:**\n- Document-specific question answering\n- Focused content exploration\n- Quality assurance of document content\n- Targeted information retrieval\n\n**Benefits:**\n- Faster search with reduced scope\n- Higher precision for document-specific queries\n- Better context preservation\n- Reduced noise from irrelevant documents"
+					}
+				},
+				{
+					"name": "Batch Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains multiple query results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"    pm.expect(jsonData.results.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Each query has results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    jsonData.results.forEach(function(queryResult) {",
+									"        pm.expect(queryResult).to.have.property('query');",
+									"        pm.expect(queryResult).to.have.property('matches');",
+									"        pm.expect(queryResult.matches).to.be.an('array');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenantId\": \"{{TENANT_ID}}\",\n  \"queries\": [\n    \"machine learning fundamentals\",\n    \"deep neural network architecture\",\n    \"natural language processing techniques\",\n    \"computer vision applications\",\n    \"reinforcement learning algorithms\"\n  ],\n  \"topK\": 5,\n  \"threshold\": 0.7,\n  \"includeMetadata\": true\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/search/batch",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"search",
+								"batch"
+							]
+						},
+						"description": "Perform multiple semantic searches in a single batch request.\n\n**Request Body:**\n- `tenantId`: Tenant identifier (required)\n- `queries`: Array of search query strings (required, max 50)\n- `topK`: Results per query (default: 10)\n- `threshold`: Similarity threshold for all queries (default: 0.0)\n- `includeMetadata`: Include metadata for all results (default: true)\n\n**Response:**\n- Array of search results, one per input query\n- Each result contains query text and matching chunks\n- Batch processing statistics and timing\n- Individual query performance metrics\n\n**Benefits:**\n- Reduced API overhead for multiple queries\n- Optimized batch processing performance\n- Consistent search parameters across queries\n- Comprehensive result aggregation\n\n**Use Cases:**\n- Multi-faceted information research\n- Comparative analysis across topics\n- Bulk content validation\n- Performance testing and benchmarking"
+					}
+				}
+			]
+		},
+		{
+			"name": "📦 Vector Management",
+			"description": "Vector storage management and maintenance operations",
+			"item": [
+				{
+					"name": "Get Vector Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics include key metrics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalVectors');",
+									"    pm.expect(jsonData).to.have.property('vectorsByModel');",
+									"    pm.expect(jsonData).to.have.property('storageUsage');",
+									"    pm.expect(jsonData).to.have.property('tenantId');",
+									"});",
+									"",
+									"pm.test(\"Statistics are tenant-scoped\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.tenantId).to.eql(pm.environment.get('TENANT_ID'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/stats",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"stats"
+							]
+						},
+						"description": "Get comprehensive vector storage statistics and analytics.\n\n**Response Metrics:**\n- `totalVectors`: Total number of stored vectors\n- `vectorsByModel`: Count breakdown by embedding model\n- `vectorsByDocument`: Count breakdown by document\n- `storageUsage`: Vector storage utilization statistics\n- `averageGenerationTime`: Processing performance metrics\n- `recentActivity`: Vector creation and usage trends\n- `cacheHitRate`: Embedding cache performance\n- `searchPerformance`: Average search response times\n\n**Model Statistics:**\n- Vector counts per embedding model\n- Dimension information for each model\n- Performance characteristics\n- Usage patterns and trends\n\n**Use Cases:**\n- Resource monitoring and capacity planning\n- Performance optimization insights\n- Usage analytics and reporting\n- Cost analysis and billing\n- System health monitoring"
+					}
+				},
+				{
+					"name": "Get Vector by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Vector has complete information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('vectorId');",
+									"    pm.expect(jsonData).to.have.property('vector');",
+									"    pm.expect(jsonData).to.have.property('text');",
+									"    pm.expect(jsonData).to.have.property('model');",
+									"    pm.expect(jsonData).to.have.property('dimensions');",
+									"});",
+									"",
+									"pm.test(\"Vector array has correct dimensions\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.vector).to.be.an('array');",
+									"    pm.expect(jsonData.vector.length).to.eql(jsonData.dimensions);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/vectors/{{VECTOR_ID}}",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"vectors",
+								"{{VECTOR_ID}}"
+							]
+						},
+						"description": "Retrieve a specific vector by its unique identifier.\n\n**Response:**\n- `vectorId`: Unique vector identifier\n- `vector`: Complete embedding vector array\n- `text`: Original text that was embedded\n- `chunkId`: Associated text chunk identifier\n- `documentId`: Source document identifier\n- `model`: Embedding model used for generation\n- `dimensions`: Vector dimensionality\n- `createdAt`: Vector generation timestamp\n- `metadata`: Additional vector metadata\n\n**Use Cases:**\n- Vector validation and quality assurance\n- Debugging embedding generation issues\n- Vector similarity analysis\n- Manual vector inspection\n- Data export and migration"
+					}
+				},
+				{
+					"name": "Delete Vector",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 or 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/vectors/{{VECTOR_ID}}",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"vectors",
+								"{{VECTOR_ID}}"
+							]
+						},
+						"description": "Delete a specific vector from storage.\n\n**Behavior:**\n- Removes vector from Redis vector storage\n- Clears associated caching entries\n- Updates vector count statistics\n- Maintains audit trail for deletion\n\n**Use Cases:**\n- Content removal and cleanup\n- Vector quality management\n- Storage optimization\n- Data privacy compliance\n\n**Note:**\n- Deletion is permanent and cannot be undone\n- Associated text chunks remain in document service\n- Search indexes are automatically updated\n- Tenant isolation strictly enforced"
+					}
+				},
+				{
+					"name": "Delete Document Vectors",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Deletion summary provided\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('deletedCount');",
+									"    pm.expect(jsonData).to.have.property('documentId');",
+									"    pm.expect(jsonData.deletedCount).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token, tenant ID, and document ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('DOCUMENT_ID')) {",
+									"    throw new Error('DOCUMENT_ID not found. Please upload a document first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/documents/{{DOCUMENT_ID}}/vectors",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"documents",
+								"{{DOCUMENT_ID}}",
+								"vectors"
+							]
+						},
+						"description": "Delete all vectors associated with a specific document.\n\n**Response:**\n- `deletedCount`: Number of vectors removed\n- `documentId`: Document identifier\n- `processingTimeMs`: Deletion execution time\n- `cleanupStatus`: Cache and index cleanup status\n\n**Use Cases:**\n- Document removal cleanup\n- Content update preparation\n- Storage space reclamation\n- Data privacy compliance\n\n**Behavior:**\n- Removes all document-associated vectors from storage\n- Clears related caching entries\n- Updates search indexes automatically\n- Maintains deletion audit trail\n- Preserves tenant isolation"
+					}
+				}
+			]
+		},
+		{
+			"name": "⚡ Performance & Cache",
+			"description": "Performance optimization and caching management operations",
+			"item": [
+				{
+					"name": "Get Cache Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Cache statistics present\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('hitRate');",
+									"    pm.expect(jsonData).to.have.property('totalRequests');",
+									"    pm.expect(jsonData).to.have.property('cacheHits');",
+									"    pm.expect(jsonData).to.have.property('cacheMisses');",
+									"});",
+									"",
+									"pm.test(\"Hit rate is valid percentage\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.hitRate).to.be.at.least(0);",
+									"    pm.expect(jsonData.hitRate).to.be.at.most(100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/cache/stats",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"cache",
+								"stats"
+							]
+						},
+						"description": "Get embedding cache performance statistics and metrics.\n\n**Response Metrics:**\n- `hitRate`: Cache hit percentage (0-100)\n- `totalRequests`: Total cache requests\n- `cacheHits`: Number of cache hits\n- `cacheMisses`: Number of cache misses\n- `averageResponseTime`: Cache response performance\n- `cacheSize`: Current cache utilization\n- `evictions`: Number of cache evictions\n- `topCachedTexts`: Most frequently cached embeddings\n\n**Performance Insights:**\n- Cache effectiveness for embedding generation\n- Performance optimization opportunities\n- Resource utilization patterns\n- Cost savings from caching\n\n**Use Cases:**\n- Performance monitoring and optimization\n- Cache tuning and configuration\n- Cost analysis and reporting\n- System capacity planning"
+					}
+				},
+				{
+					"name": "Clear Cache",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Cache cleared successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('clearedEntries');",
+									"    pm.expect(jsonData.status).to.eql('SUCCESS');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							}
+						],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/cache/clear?scope=tenant",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"cache",
+								"clear"
+							],
+							"query": [
+								{
+									"key": "scope",
+									"value": "tenant",
+									"description": "Cache clearing scope (tenant, document, global)"
+								}
+							]
+						},
+						"description": "Clear embedding cache entries with configurable scope.\n\n**Query Parameters:**\n- `scope`: Cache clearing scope\n  - `tenant`: Clear current tenant's cache entries only\n  - `document`: Clear specific document cache (requires documentId)\n  - `global`: Clear all cache entries (admin only)\n\n**Response:**\n- `status`: Operation status (SUCCESS, FAILED)\n- `clearedEntries`: Number of cache entries removed\n- `scope`: Scope of the clearing operation\n- `processingTimeMs`: Operation execution time\n\n**Use Cases:**\n- Cache invalidation after content updates\n- Performance troubleshooting\n- Memory management and optimization\n- Testing and development scenarios\n\n**Security:**\n- Tenant-scoped clearing by default\n- Admin privileges required for global clearing\n- Complete audit logging of cache operations"
+					}
+				},
+				{
+					"name": "Warm Cache",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 202\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+									"});",
+									"",
+									"pm.test(\"Warming operation info provided\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('documentsToWarm');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if auth token and tenant ID exist",
+									"if (!pm.environment.get('AUTH_TOKEN')) {",
+									"    throw new Error('AUTH_TOKEN not found. Please login first.');",
+									"}",
+									"if (!pm.environment.get('TENANT_ID')) {",
+									"    throw new Error('TENANT_ID not found. Please login first.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_TOKEN}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{TENANT_ID}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"documentIds\": [\"{{DOCUMENT_ID}}\"],\n  \"modelNames\": [\"text-embedding-3-small\"],\n  \"priority\": \"normal\"\n}"
+						},
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/api/v1/embeddings/cache/warm",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"embeddings",
+								"cache",
+								"warm"
+							]
+						},
+						"description": "Pre-warm embedding cache with frequently accessed content.\n\n**Request Body:**\n- `documentIds`: Documents to warm (optional, all if empty)\n- `modelNames`: Models to pre-generate embeddings for (optional)\n- `priority`: Warming priority (low, normal, high)\n\n**Response:**\n- `status`: Warming operation status (QUEUED, PROCESSING, COMPLETED)\n- `documentsToWarm`: Number of documents queued for warming\n- `estimatedTime`: Estimated completion time\n- `jobId`: Warming job identifier for tracking\n\n**Benefits:**\n- Improved response times for frequent queries\n- Reduced latency for new user sessions\n- Better system performance during peak usage\n- Proactive cache optimization\n\n**Use Cases:**\n- System startup optimization\n- Peak traffic preparation\n- Performance testing preparation\n- New content deployment"
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Health & Monitoring",
+			"description": "Service health checks and monitoring endpoints",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('UP');",
+									"});",
+									"",
+									"pm.test(\"Redis connectivity check\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.components && jsonData.components.redis) {",
+									"        pm.expect(jsonData.components.redis.status).to.eql('UP');",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"AI model connectivity\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.components && jsonData.components.ai) {",
+									"        pm.expect(jsonData.components.ai.status).to.eql('UP');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/actuator/health",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check embedding service health status and dependencies.\n\n**Response:**\n- Overall service status (UP/DOWN)\n- Redis vector storage connectivity\n- AI model service availability\n- Cache system status\n- Background job processing health\n- Performance indicators"
+					}
+				},
+				{
+					"name": "Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/actuator/info",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"info"
+							]
+						},
+						"description": "Get embedding service information and version details."
+					}
+				},
+				{
+					"name": "Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMBEDDING_SERVICE_URL}}/actuator/metrics",
+							"host": [
+								"{{EMBEDDING_SERVICE_URL}}"
+							],
+							"path": [
+								"actuator",
+								"metrics"
+							]
+						},
+						"description": "Get available performance metrics for monitoring and observability."
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{AUTH_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set service URL if not configured",
+					"if (!pm.environment.get('EMBEDDING_SERVICE_URL')) {",
+					"    pm.environment.set('EMBEDDING_SERVICE_URL', 'http://localhost:8083');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract job IDs from async operations",
+					"if (pm.response.code === 202 && pm.request.url.toString().includes('/async')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.jobId) {",
+					"        pm.environment.set('EMBEDDING_JOB_ID', jsonData.jobId);",
+					"        console.log('✅ Embedding job ID saved: ' + jsonData.jobId);",
+					"    }",
+					"}",
+					"",
+					"// Auto-extract vector IDs from embedding responses",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/generate')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.embeddings && jsonData.embeddings.length > 0) {",
+					"        var firstEmbedding = jsonData.embeddings[0];",
+					"        if (firstEmbedding.vectorId) {",
+					"            pm.environment.set('VECTOR_ID', firstEmbedding.vectorId);",
+					"            console.log('✅ Vector ID saved: ' + firstEmbedding.vectorId);",
+					"        }",
+					"    }",
+					"}",
+					"",
+					"// Performance logging for search operations",
+					"if (pm.response.code === 200 && pm.request.url.toString().includes('/search')) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.searchTimeMs) {",
+					"        console.log('🔍 Search completed in ' + jsonData.searchTimeMs + 'ms');",
+					"        if (jsonData.results) {",
+					"            console.log('📊 Found ' + jsonData.results.length + ' results');",
+					"        }",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "EMBEDDING_SERVICE_URL",
+			"value": "http://localhost:8083",
+			"type": "string"
+		},
+		{
+			"key": "AUTH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "TENANT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "DOCUMENT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "VECTOR_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "EMBEDDING_JOB_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
