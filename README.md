@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-blue.svg)](https://semver.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **✅ Release Candidate (1.0.0)**: All 6 microservices implemented and working in Docker. Ready for system integration testing. See [Development Status](#development-status) for details.
+> **🚧 Development Status**: 4/6 microservices running in Docker. Core service debugging in progress. Infrastructure fully operational. See [Development Status](#development-status) for details.
 
 An enterprise-grade RAG (Retrieval Augmented Generation) system built with Spring Boot 3.x, demonstrating advanced backend engineering and modern AI integration.
 
@@ -82,22 +82,24 @@ cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 ```
 
 ### 3️⃣ Verify Installation
+
+**Current Docker Service Status:**
 | Service | Health Check URL | Port | Status |
 |---------|------------------|------|--------|
-| **API Gateway** | http://localhost:8080/actuator/health | 8080 | ✅ Complete |
-| **Auth Service** | http://localhost:8081/actuator/health | 8081 | ✅ Complete |
-| **Document Service** | http://localhost:8082/actuator/health | 8082 | ✅ Complete |
-| **Embedding Service** | http://localhost:8083/actuator/health | 8083 | ✅ Complete |
-| **Core Service** | http://localhost:8084/actuator/health | 8084 | ✅ Complete |
-| **Admin Service** | http://localhost:8085/actuator/health | 8085 | ✅ Complete |
+| **Auth Service** | http://localhost:8081/actuator/health | 8081 | ✅ Healthy |
+| **Document Service** | http://localhost:8082/actuator/health | 8082 | 🔄 Running |
+| **Embedding Service** | http://localhost:8083/actuator/health | 8083 | ✅ Healthy |
+| **Admin Service** | http://localhost:8085/admin/api/actuator/health | 8085 | 🔄 Running |
+| **Core Service** | http://localhost:8084/actuator/health | 8084 | ❌ Debugging |
+| **API Gateway** | http://localhost:8080/actuator/health | 8080 | ❌ Pending |
 
 **Infrastructure Services:**
 | Service | URL | Status |
 |---------|-----|--------|
-| **PostgreSQL** | localhost:5432 | ✅ Working |
-| **Redis Stack** | localhost:6379 | ✅ Working |
-| **Apache Kafka** | localhost:9092 | ✅ Working |
-| **Ollama LLM** | localhost:11434 | ✅ Working |
+| **PostgreSQL** | localhost:5432 | ✅ Healthy |
+| **Redis Stack** | localhost:6379 | ✅ Healthy |
+| **Apache Kafka** | localhost:9092 | 🔄 Not Yet Integrated |
+| **Ollama LLM** | localhost:11434 | 🔄 Optional |
 | **Grafana** | http://localhost:3000 (admin/admin) | ✅ Working |
 | **Prometheus** | http://localhost:9090 | ✅ Working |
 
@@ -142,32 +144,32 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 
 ## 📊 Development Status
 
-### ✅ All Services Complete (6/6) - 100% Implementation
-| Service | Status | Features | Docker Status |
-|---------|--------|----------|---------------|
-| **rag-shared** | ✅ Complete | Common DTOs, entities, utilities | ✅ Working |
-| **rag-gateway** | ✅ Complete | API Gateway, JWT validation, routing | ✅ Working |
-| **rag-auth-service** | ✅ Complete | JWT auth, tenant management | ✅ Working |
-| **rag-document-service** | ✅ Complete | File processing, chunking, async processing | ✅ Working |
-| **rag-embedding-service** | ✅ Complete | Vector operations, similarity search | ✅ Working |
-| **rag-core-service** | ✅ Complete | RAG pipeline, LLM integration, streaming | ✅ Working |
-| **rag-admin-service** | ✅ Complete | Admin operations, database analytics | ✅ Working |
+### 🚧 Services Implementation Status (4/6 Running)
+| Service | Implementation | Features | Docker Status |
+|---------|---------------|----------|---------------|
+| **rag-shared** | ✅ Complete | Common DTOs, entities, utilities | ✅ Library |
+| **rag-auth-service** | ✅ Complete | JWT auth, tenant management | ✅ Healthy |
+| **rag-document-service** | ✅ Complete | File processing, chunking, async processing | 🔄 Running |
+| **rag-embedding-service** | ✅ Complete | Vector operations, similarity search | ✅ Healthy |
+| **rag-admin-service** | ✅ Complete | Admin operations, database analytics | 🔄 Redis Issues |
+| **rag-core-service** | ✅ Complete | RAG pipeline, LLM integration, streaming | ❌ Startup Failure |
+| **rag-gateway** | ✅ Complete | API Gateway, JWT validation, routing | ❌ Depends on Core |
 
 ### 🎯 Recent Major Achievements
 - ✅ **All 6 microservices implemented** with Spring Boot 3.x
-- ✅ **Docker Compose working** with all services and infrastructure
+- ✅ **Docker infrastructure stable**: PostgreSQL + Redis Stack operational
 - ✅ **Fixed Spring Boot JAR packaging** issues across all services
-- ✅ **Resolved database dependency conflicts** and connection pooling
-- ✅ **Complete authentication flow** with database-backed admin service
+- ✅ **Resolved YAML and dependency conflicts** in multiple services
+- ✅ **Core authentication working**: JWT-based auth with database integration
 - ✅ **Comprehensive Javadoc documentation** (92.4% coverage)
-- ✅ **All tests passing** with 100% success rate in key services
+- 🚧 **Docker integration**: 4/6 services running, core service debugging needed
 
-### 🔧 System Status
-- ✅ **All services running in Docker**: Complete container orchestration working
-- ✅ **Database integration**: PostgreSQL + Redis Stack + Kafka all operational
-- ✅ **Authentication working**: JWT-based auth with multi-tenant support
-- ✅ **API Gateway functional**: Centralized routing and security validation
-- ✅ **Monitoring active**: Prometheus + Grafana dashboards operational
+### 🔧 Current System Status
+- 🔄 **Partial Docker deployment**: 4/6 services operational
+- ✅ **Database integration**: PostgreSQL + Redis Stack healthy and connected
+- ✅ **Authentication service**: JWT-based auth with multi-tenant support working
+- ❌ **API Gateway**: Waiting for core service resolution
+- 🔄 **Service mesh**: Inter-service communication partially working
 - ✅ **Test coverage**: High test coverage with comprehensive integration tests
 
 ## 🏗️ Architecture Overview
