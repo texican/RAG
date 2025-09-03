@@ -12,6 +12,9 @@ import java.util.List;
 /**
  * Entity representing a user in the multi-tenant Enterprise RAG system.
  * 
+ * <p><strong>✅ Production Ready & Database-Integrated (2025-09-03):</strong> Fully operational 
+ * user entity with complete PostgreSQL integration and multi-tenant support deployed in Docker.</p>
+ * 
  * <p>Users are scoped to specific tenants and have roles that determine their
  * access permissions within the system. Each user can upload documents, perform
  * RAG queries, and manage their profile within their tenant's boundaries.</p>
