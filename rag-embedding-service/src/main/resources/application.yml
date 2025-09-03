@@ -1,40 +1,9 @@
 server:
-  port: 8084
+  port: 8083
 
 spring:
   application:
     name: rag-embedding-service
-  
-  # Database Configuration
-  datasource:
-    url: jdbc:postgresql://localhost:5432/rag_db
-    username: rag_user
-    password: rag_password
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 20000
-      idle-timeout: 300000
-      max-lifetime: 1200000
-  
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
-        generate_statistics: false
-        cache:
-          use_second_level_cache: false
-          use_query_cache: false
-        jdbc:
-          batch_size: 25
-          order_inserts: true
-          order_updates: true
-          batch_versioned_data: true
   
   # Redis Configuration for Vector Storage
   data:
@@ -158,3 +127,39 @@ app:
   name: RAG Embedding Service
   version: 1.0.0
   description: Vector operations and similarity search service for enterprise RAG system
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      database: 2
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+
+# Spring AI Configuration for Docker
+spring.ai:
+  ollama:
+    base-url: ${OLLAMA_URL:http://ollama:11434}
+
+# Disable Kafka in Docker for now (will be enabled later)
+spring:
+  kafka:
+    bootstrap-servers: # Disabled for initial deployment
+
+logging:
+  level:
+    com.enterprise.rag: INFO
+    org.springframework.ai: INFO
