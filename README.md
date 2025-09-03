@@ -205,7 +205,7 @@ graph TB
     Core --> Ollama
     Embed --> Ollama
     
-    classDef working fill:#90EE90,stroke:#333,stroke-width:2px;
+    classDef working fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#FFFFFF;
     class Gateway,Auth,Doc,Embed,Core,Admin,PG,Redis,Kafka,Ollama working;
 ```
 
