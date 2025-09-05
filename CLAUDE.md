@@ -322,6 +322,7 @@ Multi-module Maven project with complete microservices architecture:
 - `CLAUDE.md` - This file: Project instructions and current status
 - `README.md` - Project overview and setup instructions  
 - `DEPLOYMENT.md` - Production deployment documentation
+- `TESTING_BEST_PRACTICES.md` - **NEW (2025-09-05)**: Comprehensive testing guidelines, bug prevention measures, and quality assurance standards
 - `ollama-chat/README.md` - Lightweight Ollama chat frontend documentation
 
 ### 🏗️ **Current Priority Tasks & System Integration**
@@ -357,6 +358,7 @@ Multi-module Maven project with complete microservices architecture:
 - **Always update CLAUDE.md** when making significant progress
 - **When adding .md files** update this section with their intended purpose
 - **Follow TDD religiously** - this project demonstrates enterprise development skills
+- **CRITICAL: Follow TESTING_BEST_PRACTICES.md** - Mandatory guidelines to prevent bugs like the ContextAssemblyService token limiting issue (fixed 2025-09-05)
 - **Security is paramount** - multi-tenant isolation must be perfect
 - **Code quality first** - Address IDE issues systematically before new feature development
 - **Spring AI compatibility** - Keep up with Spring AI milestone releases and API changes
