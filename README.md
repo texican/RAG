@@ -472,10 +472,22 @@ docker-compose logs testcontainers
 
 ## 📚 Documentation
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide with Kubernetes configurations
-- **[DOCKER.md](DOCKER.md)** - Complete Docker setup and management guide
-- **[CLAUDE.md](CLAUDE.md)** - Detailed project status and technical context
-- **[ollama-chat/README.md](ollama-chat/README.md)** - Lightweight Ollama chat frontend
+The project documentation is organized into the following categories:
+
+### 🚀 Deployment & Infrastructure
+- **[docs/deployment/DEPLOYMENT.md](docs/deployment/DEPLOYMENT.md)** - Quick deployment guide and setup instructions
+- **[docs/deployment/DOCKER.md](docs/deployment/DOCKER.md)** - Complete Docker setup and management guide
+
+### 🛠️ Development & Testing
+- **[docs/development/CLAUDE.md](docs/development/CLAUDE.md)** - Detailed project status and technical context
+- **[docs/development/TESTING_BEST_PRACTICES.md](docs/development/TESTING_BEST_PRACTICES.md)** - Comprehensive testing guidelines and standards
+
+### 📋 Project Management
+- **[docs/project-management/PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md)** - Task backlog with story point estimation
+- **[docs/project-management/DOCKER-001-SUMMARY.md](docs/project-management/DOCKER-001-SUMMARY.md)** - Docker integration milestone completion details
+
+### 📱 Applications & Tools
+- **[ollama-chat/README.md](ollama-chat/README.md)** - Enhanced Ollama chat frontend with Docker integration ✅ **COMPLETED**
 - **Service Health Checks** - `/actuator/health` endpoints on all services
 - **Monitoring Dashboards** - Grafana at http://localhost:3000
 - **Comprehensive Javadoc** - Enterprise-grade API documentation (92.4% coverage)

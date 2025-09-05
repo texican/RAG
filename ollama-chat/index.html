@@ -368,8 +368,7 @@
             <div class="status" id="status">Ready to chat</div>
             <div class="model-selector">
                 <select id="modelSelect">
-                    <option value="llama2:7b">Llama2 7B</option>
-                    <option value="nomic-embed-text">Nomic Embed</option>
+                    <option value="">Loading models...</option>
                 </select>
             </div>
         </div>
@@ -421,10 +420,36 @@
                 // Use proxy server to avoid CORS issues
                 this.ollamaUrl = window.location.origin;
                 this.isLoading = false;
+                this.retryCount = 0;
+                this.maxRetries = 3;
+                this.connectionHealthy = false;
                 
                 this.initializeEventListeners();
-                this.checkOllamaStatus();
-                this.loadAvailableModels();
+                this.initializeChat();
+            }
+
+            async initializeChat() {
+                this.updateStatus('Initializing...');
+                
+                // Check connection and load models
+                const connected = await this.checkOllamaStatus();
+                if (connected) {
+                    await this.loadAvailableModels();
+                    this.setupPeriodicHealthCheck();
+                } else {
+                    this.showError('Cannot connect to Ollama. Please ensure it\'s running and try refreshing the page.');
+                }
+            }
+
+            setupPeriodicHealthCheck() {
+                // Check connection health every 30 seconds
+                setInterval(async () => {
+                    const healthy = await this.checkOllamaStatus(false);
+                    if (!healthy && this.connectionHealthy) {
+                        this.showError('Connection to Ollama lost. Attempting to reconnect...');
+                    }
+                    this.connectionHealthy = healthy;
+                }, 30000);
             }
 
             initializeEventListeners() {
@@ -451,57 +476,132 @@
                 });
             }
 
-            async checkOllamaStatus() {
+            async checkOllamaStatus(showStatus = true) {
                 try {
-                    const response = await fetch(`${this.ollamaUrl}/api/tags`);
+                    // Use the special status endpoint that includes connection info
+                    const response = await fetch(`${this.ollamaUrl}/api/status`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
                     if (response.ok) {
-                        this.updateStatus('Connected to Ollama');
-                        return true;
+                        const status = await response.json();
+                        if (status.connected) {
+                            if (showStatus) {
+                                const modelInfo = status.models_count > 0 ? 
+                                    ` (${status.models_count} models)` : ' (no models)';
+                                this.updateStatus(`Connected to Ollama${modelInfo}`);
+                            }
+                            this.connectionHealthy = true;
+                            return true;
+                        } else {
+                            if (showStatus) {
+                                this.updateStatus('Ollama connection error');
+                                this.showConnectionError(status.error);
+                            }
+                            this.connectionHealthy = false;
+                            return false;
+                        }
                     } else {
-                        this.updateStatus('Ollama connection error');
-                        return false;
+                        throw new Error(`HTTP ${response.status}`);
                     }
                 } catch (error) {
-                    this.updateStatus('Ollama not available - check if it\'s running');
-                    this.showError('Cannot connect to Ollama. Make sure it\'s running on localhost:11434');
+                    if (showStatus) {
+                        this.updateStatus('Ollama not available');
+                        this.showConnectionError('Cannot connect to Ollama service');
+                    }
+                    this.connectionHealthy = false;
                     return false;
                 }
             }
 
+            showConnectionError(errorMessage) {
+                const suggestions = [
+                    'Ensure the BYO RAG Docker environment is running',
+                    'Check if Ollama container is healthy: docker-compose ps ollama',
+                    'Verify Ollama is accessible: curl http://localhost:11434/api/tags',
+                    'Try restarting the Docker environment'
+                ];
+                
+                const fullMessage = `${errorMessage}\n\nTroubleshooting steps:\n${suggestions.map(s => `• ${s}`).join('\n')}`;
+                this.showError(fullMessage);
+            }
+
             async loadAvailableModels() {
+                this.modelSelect.innerHTML = '<option value="">Loading models...</option>';
+                this.modelSelect.disabled = true;
+                
                 try {
                     const response = await fetch(`${this.ollamaUrl}/api/tags`);
                     if (response.ok) {
                         const data = await response.json();
                         const models = data.models || [];
                         
-                        // Clear existing options except default ones
-                        const defaultOptions = Array.from(this.modelSelect.options);
                         this.modelSelect.innerHTML = '';
                         
                         if (models.length > 0) {
-                            models.forEach(model => {
+                            // Sort models by name for better UX
+                            models.sort((a, b) => a.name.localeCompare(b.name));
+                            
+                            models.forEach((model, index) => {
                                 const option = document.createElement('option');
                                 option.value = model.name;
-                                option.textContent = model.name;
+                                
+                                // Create descriptive text with size info if available
+                                let displayName = model.name;
+                                if (model.size) {
+                                    const sizeGB = (model.size / (1024 * 1024 * 1024)).toFixed(1);
+                                    displayName += ` (${sizeGB}GB)`;
+                                }
+                                
+                                option.textContent = displayName;
                                 this.modelSelect.appendChild(option);
+                                
+                                // Select first model by default
+                                if (index === 0) {
+                                    option.selected = true;
+                                }
                             });
+                            
+                            this.updateStatus(`${models.length} model${models.length !== 1 ? 's' : ''} available`);
                         } else {
-                            // If no models loaded, add back defaults
-                            defaultOptions.forEach(option => {
-                                this.modelSelect.appendChild(option.cloneNode(true));
-                            });
-                            this.showError('No models found. Try pulling a model: docker-compose exec ollama ollama pull llama2:7b');
+                            // No models available - show helpful message
+                            this.modelSelect.innerHTML = '<option value="">No models available</option>';
+                            this.showNoModelsError();
                         }
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                 } catch (error) {
                     console.error('Error loading models:', error);
+                    this.modelSelect.innerHTML = '<option value="">Error loading models</option>';
+                    this.showError(`Failed to load models: ${error.message}`);
+                } finally {
+                    this.modelSelect.disabled = false;
                 }
+            }
+
+            showNoModelsError() {
+                const suggestions = [
+                    'Pull a popular model: docker-compose exec ollama ollama pull llama2:7b-chat',
+                    'Or try: docker-compose exec ollama ollama pull mistral:7b',
+                    'List available models: docker-compose exec ollama ollama list',
+                    'Check model download progress: docker-compose exec ollama ollama ps'
+                ];
+                
+                const message = `No models found in Ollama.\n\nTo get started:\n${suggestions.map(s => `• ${s}`).join('\n')}`;
+                this.showError(message);
             }
 
             async sendMessage() {
                 const message = this.messageInput.value.trim();
                 if (!message || this.isLoading) return;
+
+                // Check if model is selected
+                if (!this.modelSelect.value) {
+                    this.showError('Please select a model first');
+                    return;
+                }
 
                 // Add user message to chat
                 this.addMessage('user', message);
@@ -515,8 +615,8 @@
                     // Show typing indicator
                     this.showTypingIndicator();
 
-                    // Send request to Ollama
-                    const response = await fetch(`${this.ollamaUrl}/api/chat`, {
+                    // Send request to Ollama with retry logic
+                    const response = await this.fetchWithRetry(`${this.ollamaUrl}/api/chat`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -533,7 +633,8 @@
                     this.hideTypingIndicator();
 
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `HTTP ${response.status}`);
                     }
 
                     const data = await response.json();
@@ -542,23 +643,56 @@
                     // Add AI response to chat
                     this.addMessage('assistant', aiResponse);
                     this.updateStatus('Response received');
+                    this.retryCount = 0; // Reset retry count on success
 
                 } catch (error) {
                     console.error('Error:', error);
                     this.hideTypingIndicator();
                     
-                    let errorMessage = 'Sorry, there was an error processing your request.';
-                    if (error.message.includes('Failed to fetch')) {
-                        errorMessage = 'Cannot connect to Ollama. Make sure it\'s running and accessible.';
-                    } else if (error.message.includes('404')) {
-                        errorMessage = 'Model not found. Try selecting a different model or pull the model first.';
-                    }
-                    
+                    const errorMessage = this.getErrorMessage(error);
                     this.addMessage('assistant', `❌ ${errorMessage}`);
                     this.updateStatus('Error occurred');
+                    
+                    // Check if we should suggest reconnection
+                    if (error.message.includes('fetch') || error.message.includes('Service Unavailable')) {
+                        this.checkOllamaStatus(false); // Silent health check
+                    }
                 }
 
                 this.setLoading(false);
+            }
+
+            async fetchWithRetry(url, options, maxRetries = 2) {
+                let lastError;
+                
+                for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                    try {
+                        const response = await fetch(url, options);
+                        return response;
+                    } catch (error) {
+                        lastError = error;
+                        if (attempt < maxRetries) {
+                            const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                        }
+                    }
+                }
+                
+                throw lastError;
+            }
+
+            getErrorMessage(error) {
+                if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
+                    return 'Cannot connect to Ollama. Please check your connection.';
+                } else if (error.message.includes('Model not found') || error.message.includes('404')) {
+                    return `Model "${this.modelSelect.value}" not found. Try refreshing the page or selecting a different model.`;
+                } else if (error.message.includes('Service Unavailable') || error.message.includes('503')) {
+                    return 'Ollama service is currently unavailable. It may be starting up or overloaded.';
+                } else if (error.message.includes('timeout')) {
+                    return 'Request timed out. The model may be busy or require more time.';
+                } else {
+                    return `Error: ${error.message}`;
+                }
             }
 
             addMessage(role, content) {
@@ -615,17 +749,24 @@
             showError(message) {
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'error-message';
-                errorDiv.textContent = message;
+                
+                // Handle multiline messages by preserving line breaks
+                if (message.includes('\n')) {
+                    errorDiv.innerHTML = message.replace(/\n/g, '<br>');
+                } else {
+                    errorDiv.textContent = message;
+                }
                 
                 this.chatMessages.appendChild(errorDiv);
                 this.scrollToBottom();
                 
-                // Auto-remove error after 5 seconds
+                // Auto-remove error after 10 seconds for longer messages
+                const timeout = message.length > 100 ? 10000 : 5000;
                 setTimeout(() => {
                     if (errorDiv.parentNode) {
                         errorDiv.parentNode.removeChild(errorDiv);
                     }
-                }, 5000);
+                }, timeout);
             }
 
             scrollToBottom() {
