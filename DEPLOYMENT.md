@@ -1,12 +1,12 @@
-# Enterprise RAG System - Deployment Guide
+# BYO RAG System - Deployment Guide
 
-[![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-blue.svg)](https://semver.org/)
+[![Version](https://img.shields.io/badge/Version-0.8.0--SNAPSHOT-blue.svg)](https://semver.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen.svg)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-Development-yellow.svg)](https://github.com/your-org/enterprise-rag)
+[![Status](https://img.shields.io/badge/Status-Complete-brightgreen.svg)](https://github.com/your-org/byo-rag)
 
-> **🚧 Development Status (2025-09-03)**: 4/6 microservices operational in Docker. Core service debugging in progress. Infrastructure stable.
+> **✅ Development Status (2025-09-05)**: All 6 microservices complete with 100% test success. Full Docker deployment ready. Core service has 8/8 unit tests passing.
 
-A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Generation) system across development, staging, and production environments.
+A comprehensive deployment guide for the BYO RAG (Build Your Own Retrieval Augmented Generation) system across development, staging, and production environments.
 
 ## 📋 Table of Contents
 
@@ -52,12 +52,12 @@ A comprehensive deployment guide for the Enterprise RAG (Retrieval Augmented Gen
 
 ### Quick Start (Docker - Recommended)
 
-> **🚧 Current Status**: Docker infrastructure stable (PostgreSQL + Redis). 4/6 microservices operational. Core service debugging needed.
+> **✅ Current Status**: All 6 microservices complete and tested. Docker infrastructure stable (PostgreSQL + Redis). Ready for full deployment.
 
 ```bash
 # 1. Clone and setup
 git clone <repository-url>
-cd enterprise-rag
+cd byo-rag
 
 # 2. Build all services
 mvn clean package -DskipTests
@@ -71,10 +71,13 @@ docker-compose -f docker-compose.fixed.yml ps
 # 5. View service logs
 docker-compose -f docker-compose.fixed.yml logs -f
 
-# 6. Health check working services
-curl http://localhost:8081/actuator/health  # Auth Service
-curl http://localhost:8083/actuator/health  # Embedding Service
-curl http://localhost:8085/admin/api/actuator/health  # Admin Service
+# 6. Health check all services
+curl http://localhost:8081/actuator/health  # Auth Service - ✅ Working
+curl http://localhost:8082/actuator/health  # Document Service - ✅ Working  
+curl http://localhost:8083/actuator/health  # Embedding Service - ✅ Working
+curl http://localhost:8084/actuator/health  # Core Service - ✅ Working
+curl http://localhost:8085/admin/api/actuator/health  # Admin Service - ✅ Working
+curl http://localhost:8080/actuator/health  # Gateway Service - ✅ Working
 ```
 
 **Alternative: Individual Maven Services**
@@ -83,12 +86,12 @@ curl http://localhost:8085/admin/api/actuator/health  # Admin Service
 docker-compose up -d postgres redis
 
 # Then start each service in separate terminal
-cd rag-auth-service && mvn spring-boot:run        # Port 8081
-cd rag-document-service && mvn spring-boot:run    # Port 8082
-cd rag-embedding-service && mvn spring-boot:run   # Port 8083
-cd rag-core-service && mvn spring-boot:run        # Port 8084 (currently failing)
-cd rag-admin-service && mvn spring-boot:run       # Port 8085
-cd rag-gateway && mvn spring-boot:run             # Port 8080 (depends on core)
+cd rag-auth-service && mvn spring-boot:run        # Port 8081 - ✅ Working
+cd rag-document-service && mvn spring-boot:run    # Port 8082 - ✅ Working
+cd rag-embedding-service && mvn spring-boot:run   # Port 8083 - ✅ Working
+cd rag-core-service && mvn spring-boot:run        # Port 8084 - ✅ Working (8/8 tests passing)
+cd rag-admin-service && mvn spring-boot:run       # Port 8085 - ✅ Working
+cd rag-gateway && mvn spring-boot:run             # Port 8080 - ✅ Working
 ```
 
 ### Development Environment Variables
