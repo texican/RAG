@@ -112,14 +112,14 @@ docker-compose ps
 
 **Option 1: Docker Compose (Recommended)**
 ```bash
-# Start all services with infrastructure
-./docker-start.sh
+# Start all services with infrastructure (using fixed configuration)
+docker-compose -f config/docker/docker-compose.fixed.yml up -d
 
 # Check system health
-./docker-health.sh
+./config/docker/docker-health.sh
 
 # View service logs
-docker-compose logs -f
+docker-compose -f config/docker/docker-compose.fixed.yml logs -f
 ```
 
 **Option 2: Individual Maven Services**
@@ -138,15 +138,15 @@ cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 
 ### 3️⃣ Verify Installation
 
-**Current Docker Service Status:**
+**Current Docker Service Status (DOCKER-001 Completed):**
 | Service | Health Check URL | Port | Status |
 |---------|------------------|------|--------|
+| **API Gateway** | http://localhost:8080/actuator/health | 8080 | ✅ Healthy |
 | **Auth Service** | http://localhost:8081/actuator/health | 8081 | ✅ Healthy |
-| **Document Service** | http://localhost:8082/actuator/health | 8082 | 🔄 Running |
+| **Document Service** | http://localhost:8082/actuator/health | 8082 | ✅ Healthy |
 | **Embedding Service** | http://localhost:8083/actuator/health | 8083 | ✅ Healthy |
-| **Admin Service** | http://localhost:8085/admin/api/actuator/health | 8085 | 🔄 Running |
-| **Core Service** | http://localhost:8084/actuator/health | 8084 | ❌ Debugging |
-| **API Gateway** | http://localhost:8080/actuator/health | 8080 | ❌ Pending |
+| **Core Service** | http://localhost:8084/actuator/health | 8084 | ✅ Healthy |
+| **Admin Service** | http://localhost:8085/admin/api/actuator/health | 8085 | ✅ Running |
 
 **Infrastructure Services:**
 | Service | URL | Status |

@@ -12,8 +12,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 BYO RAG System - Docker Startup${NC}"
-echo "================================================"
+echo -e "${BLUE}🚀 BYO RAG System - Docker Startup (DOCKER-001 Fixed Config)${NC}"
+echo "=================================================================="
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
@@ -41,19 +41,19 @@ echo "This may take 5-10 minutes on first run..."
 
 # Build infrastructure services first
 echo -e "${BLUE}📦 Starting Infrastructure Services${NC}"
-docker-compose up -d postgres redis zookeeper kafka ollama
+docker-compose -f docker-compose.fixed.yml up -d postgres redis
 
 # Wait for infrastructure to be healthy
 echo -e "${YELLOW}⏳ Waiting for Infrastructure Services${NC}"
 echo "Checking PostgreSQL..."
-while ! docker-compose exec -T postgres pg_isready -U rag_user -d rag_enterprise > /dev/null 2>&1; do
+while ! docker-compose -f docker-compose.fixed.yml exec -T rag-postgres pg_isready -U rag_user -d rag_enterprise > /dev/null 2>&1; do
     printf "."
     sleep 2
 done
 echo " ✅ PostgreSQL ready"
 
 echo "Checking Redis..."
-while ! docker-compose exec -T redis redis-cli -a redis_password ping > /dev/null 2>&1; do
+while ! docker-compose -f docker-compose.fixed.yml exec -T rag-redis redis-cli -a redis_password ping > /dev/null 2>&1; do
     printf "."
     sleep 2
 done
@@ -65,7 +65,7 @@ echo " ✅ Kafka ready"
 
 # Build and start microservices
 echo -e "\n${BLUE}🏗️  Building and Starting Microservices${NC}"
-docker-compose up -d --build rag-auth rag-admin rag-document rag-embedding rag-core
+docker-compose -f docker-compose.fixed.yml up -d --build rag-auth rag-admin rag-document rag-embedding rag-core
 
 # Wait for core services
 echo -e "${YELLOW}⏳ Waiting for Core Services${NC}"
@@ -73,7 +73,7 @@ sleep 30  # Give services time to start
 
 # Start gateway last (depends on other services)
 echo -e "${BLUE}🌐 Starting API Gateway${NC}"
-docker-compose up -d --build rag-gateway
+docker-compose -f docker-compose.fixed.yml up -d --build rag-gateway
 
 # Start monitoring services
 echo -e "${BLUE}📊 Starting Monitoring Services${NC}"

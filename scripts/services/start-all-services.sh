@@ -8,13 +8,13 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 echo "Starting all RAG services..."
 
-# Array of services in startup order
+# Array of services in startup order (DOCKER-001 corrected ports)
 services=(
     "rag-auth-service:8081"
     "rag-admin-service:8085"
-    "rag-embedding-service:8084"
-    "rag-document-service:8083"
-    "rag-core-service:8082"
+    "rag-document-service:8082"
+    "rag-embedding-service:8083"
+    "rag-core-service:8084"
     "rag-gateway:8080"
 )
 

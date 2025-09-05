@@ -47,7 +47,7 @@ check_port() {
 
 # Check Docker containers
 echo -e "\n${YELLOW}📦 Container Status${NC}"
-docker-compose ps
+docker-compose -f config/docker/docker-compose.fixed.yml ps
 
 echo -e "\n${YELLOW}🔍 Service Health Checks${NC}"
 
@@ -65,7 +65,7 @@ check_http_health "Auth Service" "http://localhost:8081/actuator/health"
 check_http_health "Document Service" "http://localhost:8082/actuator/health"
 check_http_health "Embedding Service" "http://localhost:8083/actuator/health"
 check_http_health "Core Service" "http://localhost:8084/actuator/health"
-check_http_health "Admin Service" "http://localhost:8085/actuator/health"
+check_http_health "Admin Service" "http://localhost:8085/admin/api/actuator/health"
 
 # Monitoring Services
 echo -e "\n${BLUE}Monitoring Services:${NC}"
@@ -78,7 +78,7 @@ echo -e "\n${YELLOW}🔬 Detailed Health Information${NC}"
 
 # Check database connectivity
 echo -e "\n${BLUE}Database Connectivity:${NC}"
-if docker-compose exec -T postgres pg_isready -U rag_user -d rag_enterprise > /dev/null 2>&1; then
+if docker-compose -f config/docker/docker-compose.fixed.yml exec -T rag-postgres pg_isready -U rag_user -d rag_enterprise > /dev/null 2>&1; then
     echo -e "✅ PostgreSQL: ${GREEN}Database accessible${NC}"
 else
     echo -e "❌ PostgreSQL: ${RED}Database not accessible${NC}"
@@ -86,7 +86,7 @@ fi
 
 # Check Redis connectivity
 echo -e "\n${BLUE}Redis Connectivity:${NC}"
-if docker-compose exec -T redis redis-cli -a redis_password ping 2>/dev/null | grep -q PONG; then
+if docker-compose -f config/docker/docker-compose.fixed.yml exec -T rag-redis redis-cli -a redis_password ping 2>/dev/null | grep -q PONG; then
     echo -e "✅ Redis: ${GREEN}Cache accessible${NC}"
 else
     echo -e "❌ Redis: ${RED}Cache not accessible${NC}"

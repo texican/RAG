@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 8084
 
 spring:
   application:
@@ -69,11 +69,23 @@ spring:
       linger-ms: 1
       buffer-memory: 33554432
 
-# Spring AI Configuration
+# Spring AI Configuration  
 spring.ai:
-  openai:
-    api-key: ${OPENAI_API_KEY:your-openai-api-key}
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
     chat:
+      enabled: ${OLLAMA_ENABLED:false}
+      options:
+        model: llama3.1:8b
+        temperature: 0.1
+        num-predict: 2000
+        top-p: 0.9
+        repeat-penalty: 1.1
+        
+  openai:
+    api-key: ${OPENAI_API_KEY:demo-key}
+    chat:
+      enabled: ${OPENAI_ENABLED:true}
       options:
         model: gpt-4o-mini
         temperature: 0.1
@@ -81,16 +93,6 @@ spring.ai:
         top-p: 0.9
         frequency-penalty: 0.0
         presence-penalty: 0.0
-  
-  ollama:
-    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-    chat:
-      options:
-        model: llama3.1:8b
-        temperature: 0.1
-        num-predict: 2000
-        top-p: 0.9
-        repeat-penalty: 1.1
 
 # RAG Configuration
 rag:
@@ -212,3 +214,22 @@ app:
   name: RAG Core Service
   version: 1.0.0
   description: RAG query engine and LLM integration service
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:rag_enterprise}
+    username: ${DB_USERNAME:rag_user}
+    password: ${DB_PASSWORD:rag_password}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      password: ${REDIS_PASSWORD:redis_password}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
