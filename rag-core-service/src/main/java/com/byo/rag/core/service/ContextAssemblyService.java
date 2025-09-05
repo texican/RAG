@@ -126,7 +126,20 @@ public class ContextAssemblyService {
             int documentTokens = estimateTokenCount(documentContext);
 
             // Check if adding this document would exceed token limit
-            if (currentTokenCount + documentTokens > maxContextTokens && documentsUsed > 0) {
+            if (currentTokenCount + documentTokens > maxContextTokens) {
+                // If we haven't added any documents yet and this first document exceeds limit,
+                // we need to truncate it to fit within the limit
+                if (documentsUsed == 0) {
+                    documentContext = truncateToTokenLimit(documentContext, maxContextTokens);
+                    documentTokens = estimateTokenCount(documentContext);
+                    
+                    contextBuilder.append(documentContext);
+                    currentTokenCount += documentTokens;
+                    documentsUsed++;
+                    
+                    logger.debug("First document truncated to fit token limit: {} tokens", documentTokens);
+                }
+                
                 logger.debug("Token limit reached. Used {}/{} documents, {} tokens", 
                            documentsUsed, relevantDocuments.size(), currentTokenCount);
                 break;
