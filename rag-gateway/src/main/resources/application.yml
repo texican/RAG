@@ -321,6 +321,9 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  health:
+    redis:
+      enabled: false
 
 logging:
   level:

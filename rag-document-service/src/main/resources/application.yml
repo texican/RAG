@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 8082
 
 spring:
   application:
@@ -90,7 +90,12 @@ spring:
       on-profile: docker
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/rag_documents
+    url: jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:rag_enterprise}
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      password: ${REDIS_PASSWORD:redis_password}
   
   kafka:
     bootstrap-servers: kafka:9092

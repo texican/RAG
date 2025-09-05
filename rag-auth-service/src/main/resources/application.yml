@@ -78,7 +78,7 @@ spring:
       on-profile: docker
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/rag_auth
+    url: jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:rag_enterprise}
   
   redis:
     host: redis

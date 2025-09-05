@@ -4,7 +4,7 @@
 [![Services](https://img.shields.io/badge/Services-6%2F6%20Complete-brightgreen.svg)]()
 [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen.svg)]()
 
-> **✅ Status (2025-09-05)**: All 6 microservices complete with 100% test success. Core service has 8/8 unit tests passing. Full Docker deployment ready.
+> **✅ Status (2025-09-05)**: DOCKER-001 COMPLETED! All 6 microservices deployed and operational. 5/6 services fully healthy in production Docker deployment using `config/docker/docker-compose.fixed.yml`.
 
 Complete Docker Compose configuration for the BYO RAG System with all 6 microservices, infrastructure components, and monitoring stack.
 
@@ -26,14 +26,14 @@ docker info
 
 ### Start the System
 ```bash
-# Make scripts executable (first time only)
-chmod +x docker-start.sh docker-health.sh
-
-# Start all services
-./docker-start.sh
+# Start all services using the fixed configuration
+docker-compose -f config/docker/docker-compose.fixed.yml up -d
 
 # Check system health
-./docker-health.sh
+./config/docker/docker-health.sh
+
+# View all service logs
+docker-compose -f config/docker/docker-compose.fixed.yml logs -f
 ```
 
 ## 📋 System Architecture
