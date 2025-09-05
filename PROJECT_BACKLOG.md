@@ -1,202 +1,383 @@
-# BYO RAG System - Independent Task Breakdown
+# BYO RAG System - Task Backlog (Story Point Anchoring Method)
+
+> **Task Sizing Philosophy:** Following industry-standard story point anchoring:
+> - **Pebbles (1-3 points)**: Small, focused tasks (1-2 days)
+> - **Rocks (5-8 points)**: Medium anchor stories (3-5 days) 
+> - **Boulders (13+ points)**: Large epics requiring breakdown
 
 ## HIGH PRIORITY TASKS (Week 1-2)
 
-### **DOCKER-001: Debug and fix Core Service startup failures in Docker environment**
+### **DOCKER-001-A: Investigate Core Service startup failures and identify root cause**
 **Epic:** Docker System Integration  
-**Story Points:** 8  
+**Story Points:** 3  
 **Dependencies:** None  
 
 **Context:**
-The rag-core-service (port 8084) is experiencing startup failures in Docker, preventing complete system operation. This service handles the main RAG query pipeline and LLM integration.
+The rag-core-service is experiencing startup failures in Docker. This focused investigation task will identify and document the root cause without attempting fixes.
 
 **Acceptance Criteria:**
-1. Investigate Docker logs for rag-core-service startup errors
-2. Fix any configuration issues preventing service startup
-3. Ensure service connects properly to PostgreSQL and Redis
-4. Validate health endpoint responds correctly (`/actuator/health`)
-5. Verify service registration and discovery works
-6. Run integration tests to confirm RAG pipeline functionality
-7. Document any configuration changes made
+1. Analyze Docker logs for rag-core-service startup errors
+2. Identify configuration issues preventing service startup
+3. Document dependency connection problems (PostgreSQL, Redis, etc.)
+4. Create detailed issue analysis report
+5. Identify specific fix requirements
 
 **Definition of Done:**
-- [ ] rag-core-service starts successfully in Docker
+- [ ] Root cause analysis completed
+- [ ] Startup failure issues documented
+- [ ] Dependency connection problems identified
+- [ ] Fix requirements documented
+- [ ] Issue analysis report created
+
+---
+
+### **DOCKER-001-B: Implement Core Service configuration fixes**
+**Epic:** Docker System Integration  
+**Story Points:** 3  
+**Dependencies:** DOCKER-001-A
+
+**Context:**
+Implement specific fixes identified in the root cause analysis to resolve Core Service startup failures.
+
+**Acceptance Criteria:**
+1. Apply configuration fixes based on analysis
+2. Fix dependency connections (PostgreSQL, Redis)
+3. Resolve any Spring Boot configuration issues
+4. Test service startup in Docker environment
+
+**Definition of Done:**
+- [ ] Configuration fixes applied
+- [ ] Service starts successfully in Docker
+- [ ] Dependency connections working
+- [ ] Startup logs show no errors
+
+---
+
+### **DOCKER-001-C: Validate Core Service integration and health checks**
+**Epic:** Docker System Integration  
+**Story Points:** 2  
+**Dependencies:** DOCKER-001-B
+
+**Context:**
+Validate that the fixed Core Service integrates properly with the rest of the system and passes all health checks.
+
+**Acceptance Criteria:**
+1. Validate health endpoint responds correctly (`/actuator/health`)
+2. Test service registration and discovery
+3. Run basic integration tests for RAG pipeline
+4. Verify Docker compose shows service as healthy
+
+**Definition of Done:**
 - [ ] Health endpoint returns 200 OK
-- [ ] Service connects to all required dependencies
-- [ ] Integration tests pass
-- [ ] Docker compose shows service as healthy
+- [ ] Service registration working
+- [ ] Basic integration tests pass
+- [ ] Docker compose shows healthy status
 
 ---
 
-### **DOCKER-002: Resolve Redis connection issues in Admin Service affecting health checks**
+### **DOCKER-002-A: Investigate Admin Service Redis connection issues**
 **Epic:** Docker System Integration  
-**Story Points:** 5  
+**Story Points:** 2  
+**Dependencies:** None
+
+**Context:**
+Investigate and document Redis connection issues in rag-admin-service that affect health check status.
+
+**Acceptance Criteria:**
+1. Analyze Redis connection configuration in admin service
+2. Identify connection pooling or timeout issues
+3. Document health check failures
+4. Create fix requirements documentation
+
+**Definition of Done:**
+- [ ] Redis connection issues analyzed
+- [ ] Health check failures documented
+- [ ] Configuration problems identified
+- [ ] Fix requirements created
+
+---
+
+### **DOCKER-002-B: Fix Admin Service Redis connectivity and health checks**
+**Epic:** Docker System Integration  
+**Story Points:** 3  
+**Dependencies:** DOCKER-002-A
+
+**Context:**
+Implement fixes for Redis connection issues to ensure admin service health checks pass consistently.
+
+**Acceptance Criteria:**
+1. Fix Redis connection pooling or timeout issues
+2. Ensure admin service health checks pass consistently
+3. Validate admin operations work correctly through API
+4. Test tenant management and JWT operations
+
+**Definition of Done:**
+- [ ] Redis connection issues resolved
+- [ ] Health checks consistently pass
+- [ ] Admin API endpoints respond correctly
+- [ ] JWT operations function properly
+
+---
+
+### **DOCKER-003-A: Set up Gateway Service Docker configuration**
+**Epic:** Docker System Integration  
+**Story Points:** 2  
 **Dependencies:** None  
 
 **Context:**
-The rag-admin-service has Redis connection issues that affect health check status, though database operations are working.
+Get the basic rag-gateway service running in Docker environment with initial configuration.
 
 **Acceptance Criteria:**
-1. Investigate Redis connection configuration in admin service
-2. Fix Redis connection pooling or timeout issues
-3. Ensure admin service health checks pass consistently
-4. Validate admin operations work correctly through API
-5. Test tenant management endpoints functionality
-6. Verify JWT token operations work properly
+1. Configure gateway service Docker settings
+2. Ensure service starts successfully in Docker
+3. Validate basic health endpoint functionality
+4. Test gateway service discovery
 
 **Definition of Done:**
-- [ ] Admin service health checks consistently pass
-- [ ] Redis connection issues resolved
-- [ ] All admin API endpoints respond correctly
-- [ ] JWT operations function properly
-- [ ] Docker health status shows as healthy
+- [ ] Gateway Docker configuration complete
+- [ ] Service starts successfully on port 8080
+- [ ] Health endpoint responds
+- [ ] Basic service discovery working
 
 ---
 
-### **DOCKER-003: Complete Gateway Service Docker integration and validate routing to all backend services**
+### **DOCKER-003-B: Implement Gateway routing to backend services**
 **Epic:** Docker System Integration  
-**Story Points:** 8  
-**Dependencies:** DOCKER-001 (Core Service must be running)  
+**Story Points:** 3  
+**Dependencies:** DOCKER-003-A, DOCKER-001-C
 
 **Context:**
-The rag-gateway service needs to be fully integrated into Docker and validate routing to all 5 backend services with proper JWT authentication.
+Configure and test routing from gateway to all 5 backend services.
 
 **Acceptance Criteria:**
-1. Get gateway service running successfully in Docker
-2. Validate routing to all 5 backend services:
+1. Configure routing to all 5 backend services:
    - `/api/auth/**` → rag-auth-service (8081)
    - `/api/documents/**` → rag-document-service (8082)
    - `/api/embeddings/**` → rag-embedding-service (8083)
    - `/api/rag/**` → rag-core-service (8084)
    - `/api/admin/**` → rag-admin-service (8085)
-3. Test JWT authentication filter works correctly
-4. Verify rate limiting and circuit breaker functionality
-5. Validate CORS configuration for web clients
-6. Test error handling and response transformation
+2. Test basic routing functionality
+3. Validate service-to-service communication
 
 **Definition of Done:**
-- [ ] Gateway service runs on port 8080
-- [ ] All 5 service routes work correctly
-- [ ] JWT authentication enforced properly
-- [ ] Rate limiting functions as expected
-- [ ] Error responses properly formatted
-- [ ] Health checks pass for gateway
+- [ ] All 5 service routes configured
+- [ ] Basic routing functionality working
+- [ ] Service-to-service communication validated
+- [ ] Route testing completed
 
 ---
 
-### **TEST-001: Implement end-to-end RAG pipeline integration tests**
-**Epic:** Testing & Validation  
-**Story Points:** 13  
-**Dependencies:** DOCKER-001, DOCKER-003  
+### **DOCKER-003-C: Configure Gateway security and resilience features**
+**Epic:** Docker System Integration  
+**Story Points:** 3  
+**Dependencies:** DOCKER-003-B
 
 **Context:**
-Create comprehensive integration tests that validate the complete RAG pipeline from document upload through query response.
+Implement JWT authentication, rate limiting, and error handling for the gateway service.
 
 **Acceptance Criteria:**
-1. Create integration test suite using TestContainers
-2. Test complete flow: document upload → chunking → embedding → storage → query → LLM response
-3. Validate multi-tenant isolation works correctly
-4. Test various document formats (PDF, TXT, DOCX)
-5. Verify streaming responses work properly
-6. Test error scenarios and edge cases
-7. Measure performance benchmarks
-8. Create test data sets for consistent testing
-
-**Test Scenarios to Cover:**
-- Document upload and processing
-- Embedding generation and storage
-- Semantic search functionality
-- Query processing and LLM integration
-- Multi-tenant data isolation
-- Authentication and authorization
-- Error handling and recovery
+1. Test JWT authentication filter works correctly
+2. Verify rate limiting and circuit breaker functionality
+3. Validate CORS configuration for web clients
+4. Test error handling and response transformation
 
 **Definition of Done:**
-- [ ] Complete integration test suite created
-- [ ] All RAG pipeline components tested
+- [ ] JWT authentication enforced properly
+- [ ] Rate limiting functions as expected
+- [ ] CORS configuration validated
+- [ ] Error responses properly formatted
+
+---
+
+### **E2E-TEST-001: Set up integration test infrastructure**
+**Epic:** Testing & Validation  
+**Story Points:** 3  
+**Dependencies:** DOCKER-003-C  
+
+**Context:**
+Set up the foundational infrastructure for end-to-end integration testing using TestContainers.
+
+**Acceptance Criteria:**
+1. Set up TestContainers infrastructure
+2. Configure test database and Redis instances
+3. Create basic test data sets
+4. Establish test environment configuration
+5. Create test helper utilities
+
+**Definition of Done:**
+- [ ] TestContainers infrastructure set up
+- [ ] Test databases configured
+- [ ] Basic test data sets created
+- [ ] Test environment working
+- [ ] Helper utilities implemented
+
+---
+
+### **E2E-TEST-002: Implement document upload and processing tests**
+**Epic:** Testing & Validation  
+**Story Points:** 3  
+**Dependencies:** E2E-TEST-001
+
+**Context:**
+Create tests for document upload, chunking, and initial processing pipeline.
+
+**Acceptance Criteria:**
+1. Test document upload functionality
+2. Validate document chunking algorithms
+3. Test various document formats (PDF, TXT, DOCX)
+4. Validate document metadata extraction
+
+**Definition of Done:**
+- [ ] Document upload tests implemented
+- [ ] Chunking validation tests created
+- [ ] Multi-format testing working
+- [ ] Metadata extraction validated
+
+---
+
+### **E2E-TEST-003: Implement embedding and storage tests**
+**Epic:** Testing & Validation  
+**Story Points:** 3  
+**Dependencies:** E2E-TEST-002
+
+**Context:**
+Create tests for embedding generation and vector storage operations.
+
+**Acceptance Criteria:**
+1. Test embedding generation from chunks
+2. Validate vector storage in Redis
+3. Test embedding retrieval and similarity search
+4. Validate data persistence
+
+**Definition of Done:**
+- [ ] Embedding generation tests implemented
+- [ ] Vector storage tests working
+- [ ] Similarity search validated
+- [ ] Data persistence verified
+
+---
+
+### **E2E-TEST-004: Implement query and response tests**
+**Epic:** Testing & Validation  
+**Story Points:** 3  
+**Dependencies:** E2E-TEST-003
+
+**Context:**
+Create tests for the complete query processing and LLM response generation.
+
+**Acceptance Criteria:**
+1. Test query processing pipeline
+2. Validate LLM integration and response generation
+3. Test streaming responses
+4. Validate response accuracy and relevance
+
+**Definition of Done:**
+- [ ] Query processing tests implemented
+- [ ] LLM integration validated
+- [ ] Streaming response tests working
+- [ ] Response quality verified
+
+---
+
+### **E2E-TEST-005: Implement multi-tenant and security tests**
+**Epic:** Testing & Validation  
+**Story Points:** 2  
+**Dependencies:** E2E-TEST-004
+
+**Context:**
+Create tests for multi-tenant isolation and authentication/authorization.
+
+**Acceptance Criteria:**
+1. Validate multi-tenant data isolation
+2. Test authentication and authorization flows
+3. Validate cross-tenant security boundaries
+4. Test error scenarios and security edge cases
+
+**Definition of Done:**
 - [ ] Multi-tenant isolation validated
-- [ ] Performance benchmarks established
-- [ ] Tests run successfully in CI/CD
-- [ ] Documentation created for test scenarios
+- [ ] Authentication flows tested
+- [ ] Security boundaries verified
+- [ ] Error scenarios covered
 
 ---
 
 ## MEDIUM PRIORITY TASKS (Week 2-3)
 
-### **QUALITY-001: Complete SpotBugs static analysis implementation and quality gate integration**
+### **QUALITY-001-A: Resolve SpotBugs Java 24 compatibility and basic setup**
 **Epic:** Code Quality & Testing  
-**Story Points:** 5  
-**Dependencies:** None (builds on existing testing improvements)  
+**Story Points:** 2  
+**Dependencies:** None  
 
 **Context:**
-Complete the SpotBugs static analysis implementation started during testing best practices work. SpotBugs will provide automated detection of bug patterns like the ContextAssemblyService token limiting issue we recently fixed, preventing similar logic errors across all 6 microservices.
-
-**Business Value:**
-- **Prevents logic bugs** similar to the ContextAssemblyService `&& documentsUsed > 0` condition that bypassed token limits
-- **Enterprise-grade quality** demonstrates senior-level development practices for portfolio project
-- **Multi-service consistency** ensures quality standards across all 6 microservices
-- **Security vulnerability detection** for JWT, database, and API code
-- **Developer productivity** through early issue detection vs runtime debugging
+Resolve the Java 24 compatibility issue with SpotBugs and get basic static analysis working.
 
 **Acceptance Criteria:**
-1. **Resolve Java 24 compatibility issue with SpotBugs 4.8.4**
-   - Research and implement Java 24 compatible SpotBugs version or configuration
-   - Alternative: Configure build to use Java 21 for SpotBugs analysis only
-2. **Create comprehensive SpotBugs filter configuration**
-   - Include filters focusing on correctness, security, and performance
-   - Exclude false positives from test classes and Spring configuration
-   - Target bug patterns that could cause issues like our recent fix:
-     - UC_USELESS_CONDITION (useless conditional logic)
-     - RCN_REDUNDANT_NULLCHECK (redundant checks masking issues)
-     - NP_NULL_ON_SOME_PATH (potential null pointer exceptions)
-3. **Integrate SpotBugs into development workflow**
-   - Configure Maven to run SpotBugs analysis during `mvn compile`
-   - Set up build to fail on high-priority issues (configurable threshold)
-   - Generate HTML reports for detailed issue analysis
-4. **Create pre-commit hook for quality gates**
-   - Implement pre-commit hook that runs SpotBugs analysis
-   - Include test validation and static analysis in pre-commit checks
-   - Document setup instructions for development team
-5. **Validate across all microservices**
-   - Run SpotBugs analysis on all 6 services
-   - Fix any high/medium priority issues discovered
-   - Create baseline report for ongoing quality tracking
-
-**Bug Pattern Categories to Target:**
-- **Correctness**: Logic errors, null pointer issues, resource leaks
-- **Security**: SQL injection, XSS, insecure randomness, crypto issues
-- **Performance**: Inefficient loops, string concatenation, collection usage
-- **Concurrency**: Race conditions, deadlocks, synchronization issues
+1. Research and implement Java 24 compatible SpotBugs version or configuration
+2. Alternative: Configure build to use Java 21 for SpotBugs analysis only
+3. Verify SpotBugs runs successfully on at least one service
+4. Generate basic HTML report
 
 **Definition of Done:**
-- [ ] SpotBugs runs successfully on Java 24 (or acceptable workaround implemented)
-- [ ] Comprehensive filter configuration created and tested
-- [ ] SpotBugs integrated into Maven build lifecycle
-- [ ] Pre-commit hook created and documented
-- [ ] HTML reports generated for all services
-- [ ] High-priority issues identified and fixed
-- [ ] Build fails appropriately on critical issues
-- [ ] Documentation updated with SpotBugs integration details
-- [ ] Quality baseline established for ongoing monitoring
+- [ ] Java 24 compatibility resolved
+- [ ] SpotBugs runs successfully
+- [ ] Basic HTML report generated
+- [ ] Configuration documented
 
-**Estimated Effort:**
-- **Java 24 compatibility resolution:** 2 hours
-- **Filter configuration and testing:** 2 hours  
-- **Pre-commit hook and documentation:** 1 hour
-- **Cross-service validation and issue fixes:** 3-5 hours
+---
 
-**Success Metrics:**
-- Zero high-priority SpotBugs issues across all services
-- Pre-commit hook prevents buggy code from being committed
-- Development workflow includes automated quality validation
-- Quality reports available for continuous improvement
+### **QUALITY-001-B: Create comprehensive SpotBugs filter configuration**
+**Epic:** Code Quality & Testing  
+**Story Points:** 2  
+**Dependencies:** QUALITY-001-A
+
+**Context:**
+Create filters focusing on correctness, security, and performance while excluding false positives.
+
+**Acceptance Criteria:**
+1. Create comprehensive filter configuration
+2. Target critical bug patterns:
+   - UC_USELESS_CONDITION (logic errors like our recent fix)
+   - RCN_REDUNDANT_NULLCHECK 
+   - NP_NULL_ON_SOME_PATH
+3. Exclude false positives from test classes
+4. Test filters on existing codebase
+
+**Definition of Done:**
+- [ ] Comprehensive filter configuration created
+- [ ] Critical bug patterns targeted
+- [ ] False positives excluded
+- [ ] Filters tested on codebase
+
+---
+
+### **QUALITY-001-C: Integrate SpotBugs into development workflow**
+**Epic:** Code Quality & Testing  
+**Story Points:** 3  
+**Dependencies:** QUALITY-001-B
+
+**Context:**
+Integrate SpotBugs into Maven build lifecycle and create pre-commit hooks.
+
+**Acceptance Criteria:**
+1. Configure Maven to run SpotBugs during build
+2. Set up build failure thresholds
+3. Create pre-commit hook for quality gates
+4. Run analysis on all 6 services and fix issues
+5. Document setup instructions
+
+**Definition of Done:**
+- [ ] SpotBugs integrated into Maven lifecycle
+- [ ] Build failure thresholds configured
+- [ ] Pre-commit hook created
+- [ ] All services analyzed and issues fixed
+- [ ] Documentation completed
 
 ---
 
 ### **AUTH-TEST-001: Enhance existing rag-auth-service test classes with enterprise standards**
 **Epic:** Code Quality & Testing  
 **Story Points:** 2  
-**Dependencies:** QUALITY-001 (SpotBugs implementation for quality validation)  
+**Dependencies:** QUALITY-001-A (SpotBugs basic implementation)  
 
 **Context:**
 Apply enterprise testing documentation and assertion standards to the 4 existing test classes in rag-auth-service. This is the foundation task that establishes the pattern for all subsequent auth service testing improvements.
@@ -812,151 +993,280 @@ Create comprehensive performance and load testing for the complete RAG system, e
 
 ---
 
-### **KAFKA-001: Implement Kafka event-driven processing for asynchronous document processing**
+### **KAFKA-001-A: Set up Kafka cluster and basic infrastructure**
 **Epic:** Event-Driven Architecture  
-**Story Points:** 13  
-**Dependencies:** DOCKER-001, DOCKER-002, DOCKER-003  
+**Story Points:** 3  
+**Dependencies:** DOCKER-003-C  
 
 **Context:**
-Implement Apache Kafka for asynchronous document processing to improve system responsiveness and scalability.
+Set up basic Kafka infrastructure in Docker environment for asynchronous processing.
 
 **Acceptance Criteria:**
 1. Set up Kafka cluster in Docker environment
-2. Create topics for document processing events:
+2. Create basic topics for document processing:
    - `document.uploaded`
    - `document.processed`
    - `embedding.generated`
    - `processing.failed`
-3. Implement event producers in document service
-4. Implement event consumers in embedding service
-5. Add retry logic and dead letter queues
-6. Implement event sourcing for audit trail
-7. Add monitoring for Kafka topics and consumers
-
-**Event Flow Design:**
-- Document Service → `document.uploaded` event
-- Embedding Service consumes → processes → publishes `embedding.generated`
-- Core Service consumes embedding events for search indexing
-- Error handling publishes to `processing.failed` topic
+3. Validate Kafka cluster health
+4. Create basic producer/consumer test
 
 **Definition of Done:**
 - [ ] Kafka cluster running in Docker
-- [ ] All event topics created and configured
-- [ ] Producers and consumers implemented
-- [ ] Async document processing working
-- [ ] Error handling and retry logic implemented
-- [ ] Monitoring dashboard shows Kafka health
+- [ ] Basic topics created and configured
+- [ ] Cluster health validated
+- [ ] Basic producer/consumer test working
 
 ---
 
-### **API-DOC-001: Generate comprehensive OpenAPI/Swagger documentation from existing Javadoc**
+### **KAFKA-001-B: Implement event producers in document service**
+**Epic:** Event-Driven Architecture  
+**Story Points:** 2  
+**Dependencies:** KAFKA-001-A
+
+**Context:**
+Implement event publishing from document service for uploaded and processed documents.
+
+**Acceptance Criteria:**
+1. Implement event producer in document service
+2. Publish `document.uploaded` events
+3. Publish `document.processed` events after chunking
+4. Add basic error handling
+
+**Definition of Done:**
+- [ ] Event producer implemented
+- [ ] Document upload events published
+- [ ] Document processed events published
+- [ ] Basic error handling added
+
+---
+
+### **KAFKA-001-C: Implement event consumers and processing workflow**
+**Epic:** Event-Driven Architecture  
+**Story Points:** 3  
+**Dependencies:** KAFKA-001-B
+
+**Context:**
+Implement event consumers for processing workflow and embedding generation.
+
+**Acceptance Criteria:**
+1. Implement consumers in embedding service
+2. Process document events and generate embeddings
+3. Publish `embedding.generated` events
+4. Add retry logic and dead letter queues
+5. Implement basic monitoring
+
+**Definition of Done:**
+- [ ] Event consumers implemented
+- [ ] Embedding generation triggered by events
+- [ ] Embedding events published
+- [ ] Retry logic and dead letter queues working
+- [ ] Basic monitoring implemented
+
+---
+
+### **API-DOC-001-A: Set up SpringDoc OpenAPI for core services**
 **Epic:** Documentation & Developer Experience  
-**Story Points:** 8  
+**Story Points:** 2  
 **Dependencies:** None  
 
 **Context:**
-Generate professional API documentation from the completed Javadoc (92.4% coverage) to create comprehensive OpenAPI/Swagger specs.
+Set up SpringDoc OpenAPI configuration for the main services to generate basic API documentation.
 
 **Acceptance Criteria:**
-1. Configure SpringDoc OpenAPI for all services
-2. Generate OpenAPI 3.0 specifications from existing Javadoc
-3. Create comprehensive API documentation portal
-4. Include authentication flows and security schemes
-5. Add example requests/responses for all endpoints
-6. Create interactive API explorer (Swagger UI)
-7. Generate client SDKs for popular languages
-8. Host documentation portal accessible via web
-
-**Services to Document:**
-- Gateway Service (main API entry point)
-- Auth Service (authentication endpoints)
-- Document Service (file upload/processing)
-- Embedding Service (vector operations)
-- Core Service (RAG query endpoints)
-- Admin Service (tenant management)
+1. Configure SpringDoc OpenAPI for Gateway, Auth, and Core services
+2. Generate basic OpenAPI 3.0 specifications
+3. Set up interactive Swagger UI
+4. Include basic authentication configuration
 
 **Definition of Done:**
-- [ ] OpenAPI specs generated for all services
-- [ ] Interactive Swagger UI deployed
-- [ ] Authentication flows documented
-- [ ] Example requests/responses included
-- [ ] Client SDKs generated
-- [ ] Documentation portal accessible online
+- [ ] SpringDoc configured for 3 main services
+- [ ] Basic OpenAPI specs generated
+- [ ] Swagger UI accessible
+- [ ] Basic authentication documented
 
 ---
 
-### **PERF-001: Implement performance optimization and load testing framework**
-**Epic:** Performance & Scalability  
-**Story Points:** 13  
-**Dependencies:** TEST-001  
+### **API-DOC-001-B: Enhance API documentation with examples and detailed schemas**
+**Epic:** Documentation & Developer Experience  
+**Story Points:** 3  
+**Dependencies:** API-DOC-001-A
 
 **Context:**
-Implement comprehensive performance testing and optimization to ensure system can handle enterprise-level load.
+Enhance API documentation with comprehensive examples and detailed request/response schemas.
 
 **Acceptance Criteria:**
-1. Set up load testing framework (JMeter or k6)
-2. Create performance test scenarios:
-   - Concurrent document uploads
-   - High-volume query processing
-   - Multi-tenant load simulation
-   - Database query optimization
-3. Implement performance monitoring and profiling
-4. Optimize database queries and indexing
-5. Configure connection pooling and caching
-6. Implement rate limiting and throttling
-7. Generate performance reports and recommendations
+1. Add example requests/responses for all endpoints
+2. Include detailed schema documentation
+3. Configure remaining services (Document, Embedding, Admin)
+4. Add comprehensive error response documentation
+
+**Definition of Done:**
+- [ ] Example requests/responses added
+- [ ] Detailed schemas documented
+- [ ] All 6 services configured
+- [ ] Error responses documented
+
+---
+
+### **API-DOC-001-C: Create documentation portal and client SDKs**
+**Epic:** Documentation & Developer Experience  
+**Story Points:** 3  
+**Dependencies:** API-DOC-001-B
+
+**Context:**
+Create a comprehensive documentation portal and generate client SDKs for popular languages.
+
+**Acceptance Criteria:**
+1. Create comprehensive API documentation portal
+2. Generate client SDKs for popular languages (Python, JavaScript, Java)
+3. Host documentation portal accessible via web
+4. Add authentication flows and security scheme documentation
+
+**Definition of Done:**
+- [ ] Documentation portal created
+- [ ] Client SDKs generated
+- [ ] Portal hosted and accessible
+- [ ] Security flows documented
+
+---
+
+### **PERF-001-A: Set up load testing framework and basic scenarios**
+**Epic:** Performance & Scalability  
+**Story Points:** 3  
+**Dependencies:** E2E-TEST-005  
+
+**Context:**
+Set up basic load testing framework and create initial performance test scenarios.
+
+**Acceptance Criteria:**
+1. Set up load testing framework (k6 or JMeter)
+2. Create basic performance test scenarios:
+   - Document upload under load
+   - Query processing performance
+   - Basic multi-tenant simulation
+3. Establish baseline performance metrics
+
+**Definition of Done:**
+- [ ] Load testing framework configured
+- [ ] Basic test scenarios created
+- [ ] Baseline metrics established
+- [ ] Initial performance report generated
+
+---
+
+### **PERF-001-B: Implement performance monitoring and database optimization**
+**Epic:** Performance & Scalability  
+**Story Points:** 3  
+**Dependencies:** PERF-001-A
+
+**Context:**
+Add performance monitoring and optimize database queries for better performance.
+
+**Acceptance Criteria:**
+1. Implement performance monitoring and profiling
+2. Optimize database queries and indexing
+3. Configure connection pooling optimization
+4. Identify performance bottlenecks
+
+**Definition of Done:**
+- [ ] Performance monitoring implemented
+- [ ] Database queries optimized
+- [ ] Connection pooling configured
+- [ ] Bottlenecks identified and documented
+
+---
+
+### **PERF-001-C: Implement caching and advanced load testing**
+**Epic:** Performance & Scalability  
+**Story Points:** 2  
+**Dependencies:** PERF-001-B
+
+**Context:**
+Implement caching strategies and conduct advanced load testing scenarios.
+
+**Acceptance Criteria:**
+1. Configure caching strategy implementation
+2. Implement rate limiting and throttling
+3. Run advanced load testing scenarios
+4. Generate comprehensive performance reports
 
 **Performance Targets:**
 - 100 concurrent users for document upload
 - 500 concurrent queries per second
 - <2 second response time for RAG queries
-- 99.9% uptime under normal load
-- Graceful degradation under peak load
 
 **Definition of Done:**
-- [ ] Load testing framework configured
-- [ ] Performance benchmarks established
-- [ ] Database queries optimized
 - [ ] Caching strategy implemented
-- [ ] Performance monitoring dashboard
-- [ ] Load testing reports generated
+- [ ] Rate limiting configured
+- [ ] Advanced load testing completed
+- [ ] Performance targets validated
 
 ---
 
-### **K8S-001: Create Kubernetes deployment configuration with Helm charts**
+### **K8S-001-A: Create basic Helm chart structure and core service deployments**
 **Epic:** Production Deployment  
-**Story Points:** 13  
-**Dependencies:** DOCKER-001, DOCKER-002, DOCKER-003  
+**Story Points:** 3  
+**Dependencies:** DOCKER-003-C  
 
 **Context:**
-Create production-ready Kubernetes deployment configurations using Helm charts for enterprise deployment.
+Create basic Helm chart structure and deploy core microservices to Kubernetes.
 
 **Acceptance Criteria:**
-1. Create Helm chart for complete BYO RAG system
-2. Configure Kubernetes deployments for all 6 services
-3. Set up service discovery and load balancing
-4. Configure persistent volumes for databases
-5. Implement horizontal pod autoscaling (HPA)
-6. Set up ingress controllers and SSL termination
-7. Configure secrets management and ConfigMaps
-8. Create namespace isolation for multi-tenancy
-
-**Kubernetes Resources:**
-- Deployments for all 6 microservices
-- Services for internal communication
-- Ingress for external access
-- ConfigMaps for configuration
-- Secrets for sensitive data
-- PersistentVolumes for data storage
-- HorizontalPodAutoscaler for scaling
+1. Create basic Helm chart structure
+2. Configure Kubernetes deployments for core services (Gateway, Auth, Core)
+3. Set up basic service discovery and load balancing
+4. Configure basic ConfigMaps and Secrets
 
 **Definition of Done:**
-- [ ] Complete Helm chart created
-- [ ] All services deploy successfully to K8s
-- [ ] Auto-scaling configured and tested
+- [ ] Helm chart structure created
+- [ ] Core services deploy to Kubernetes
+- [ ] Basic service discovery working
+- [ ] ConfigMaps and Secrets configured
+
+---
+
+### **K8S-001-B: Deploy remaining services and configure persistent storage**
+**Epic:** Production Deployment  
+**Story Points:** 3  
+**Dependencies:** K8S-001-A
+
+**Context:**
+Deploy remaining services and set up persistent storage for databases.
+
+**Acceptance Criteria:**
+1. Configure deployments for Document, Embedding, and Admin services
+2. Configure persistent volumes for PostgreSQL and Redis
+3. Set up database initialization and migration
+4. Validate all services communicate correctly
+
+**Definition of Done:**
+- [ ] All 6 services deployed
+- [ ] Persistent volumes configured
+- [ ] Database initialization working
+- [ ] Inter-service communication validated
+
+---
+
+### **K8S-001-C: Implement ingress, scaling, and production features**
+**Epic:** Production Deployment  
+**Story Points:** 2  
+**Dependencies:** K8S-001-B
+
+**Context:**
+Implement ingress controllers, horizontal pod autoscaling, and production-ready features.
+
+**Acceptance Criteria:**
+1. Set up ingress controllers and SSL termination
+2. Implement horizontal pod autoscaling (HPA)
+3. Create namespace isolation for multi-tenancy
+4. Configure multi-environment support (dev/staging/prod)
+
+**Definition of Done:**
 - [ ] Ingress and SSL termination working
-- [ ] Secrets management implemented
-- [ ] Multi-environment configurations (dev/staging/prod)
+- [ ] Horizontal pod autoscaling configured
+- [ ] Namespace isolation implemented
+- [ ] Multi-environment configurations complete
 
 ---
 
@@ -1163,9 +1473,30 @@ Implement comprehensive CI/CD pipeline for automated testing, building, and depl
 6. **Commit Properly**: Use source-control-manager agent for all git operations
 7. **Validate Completion**: Ensure all acceptance criteria are met before marking complete
 
-**Estimated Timeline:**
-- **High Priority (Week 1-2):** Core system stability and basic functionality
-- **Medium Priority (Week 2-3):** Production readiness and advanced features  
-- **Low Priority (Week 3-4+):** Enterprise enhancements and optimizations
+## Task Execution Summary
 
-Each task is designed to be completely independent and can be worked on by different Claude Code instances simultaneously.
+### **Story Point Distribution After Anchoring:**
+- **Total Tasks**: 72 tasks (vs 23 original "boulders")
+- **Pebbles (1-3 points)**: 68 tasks - Small, focused work (1-2 days each)
+- **Rocks (5-8 points)**: 4 legacy tasks - Will be broken down in future iterations
+- **Boulders (13+ points)**: 0 tasks - All large epics properly decomposed
+
+### **Benefits of Anchoring Methodology:**
+1. **Sprint Planning**: Each service area now has 4-6 related tasks forming natural sprints
+2. **Team Swarming**: Small tasks enable multiple developers to collaborate effectively  
+3. **Predictable Velocity**: 2-3 point tasks provide consistent estimation accuracy
+4. **Reduced Risk**: Small tasks minimize integration complexity and delivery risk
+5. **Faster Feedback**: Quick task completion enables rapid iteration and course correction
+
+### **Execution Timeline:**
+- **High Priority (Week 1-2):** Docker system stability and basic integration testing
+- **Medium Priority (Week 2-4):** Production readiness, testing standards, and quality gates
+- **Low Priority (Week 4-6+):** Advanced features, monitoring, and enterprise enhancements
+
+### **Task Independence:**
+All tasks are designed to be completely independent within their dependency chains, enabling:
+- **Parallel execution** by multiple Claude Code instances
+- **Flexible prioritization** based on changing business needs
+- **Risk mitigation** through independent validation of each component
+
+This anchoring approach transforms unwieldy "boulder" epics into manageable "pebble" tasks that follow industry best practices for agile story sizing and team productivity.
