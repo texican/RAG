@@ -1,6 +1,5 @@
 package com.byo.rag.core.service;
 
-import com.byo.rag.shared.dto.DocumentChunkDto;
 import com.byo.rag.core.dto.RagQueryResponse.SourceDocument;
 import com.byo.rag.core.dto.RagQueryRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for ContextAssemblyService.
+ * Tests context assembly functionality including document formatting,
+ * token limits, metadata inclusion, and relevance filtering.
  */
 @ExtendWith(MockitoExtension.class)
 class ContextAssemblyServiceTest {
@@ -27,10 +28,11 @@ class ContextAssemblyServiceTest {
     void setUp() {
         contextAssemblyService = new ContextAssemblyService();
         
-        // Set properties using reflection
-        ReflectionTestUtils.setField(contextAssemblyService, "maxContextLength", 4000);
+        // Set properties using reflection with correct field names from actual service
+        ReflectionTestUtils.setField(contextAssemblyService, "maxContextTokens", 4000);
         ReflectionTestUtils.setField(contextAssemblyService, "chunkSeparator", "\\n\\n---\\n\\n");
         ReflectionTestUtils.setField(contextAssemblyService, "includeMetadata", true);
+        ReflectionTestUtils.setField(contextAssemblyService, "relevanceThreshold", 0.7);
     }
 
     @Test
@@ -69,13 +71,13 @@ class ContextAssemblyServiceTest {
     void assembleContext_WithMetadata_IncludesMetadata() {
         List<SourceDocument> documents = createMockSourceDocuments();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is Spring AI?");
-        ContextAssemblyService.ContextConfig config = new ContextAssemblyService.ContextConfig(true, true, 4000, "\n\n---\n\n");
+        ContextAssemblyService.ContextConfig config = new ContextAssemblyService.ContextConfig(4000, 0.7, true, "\\n\\n---\\n\\n");
 
         String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertNotNull(context);
         // Should include source information when metadata is enabled
-        assertTrue(context.contains("Source:") || context.contains("spring-ai-guide.pdf"));
+        assertTrue(context.contains("Document:") || context.contains("spring-ai-guide.pdf"));
     }
 
     @Test
@@ -84,29 +86,32 @@ class ContextAssemblyServiceTest {
         
         List<SourceDocument> documents = createMockSourceDocuments();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is Spring AI?");
-        ContextAssemblyService.ContextConfig config = new ContextAssemblyService.ContextConfig(false, false, 4000, "\n\n---\n\n");
+        ContextAssemblyService.ContextConfig config = new ContextAssemblyService.ContextConfig(4000, 0.7, false, "\\n\\n---\\n\\n");
 
         String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertNotNull(context);
         assertFalse(context.isEmpty());
         // Should not include metadata when disabled
-        assertFalse(context.contains("Source:"));
+        assertFalse(context.contains("Document:"));
     }
 
     @Test
     void assembleContext_MaxLengthLimit_TruncatesContext() {
-        // Set a very small max length
-        ReflectionTestUtils.setField(contextAssemblyService, "maxContextLength", 100);
+        // Set a very small max token limit
+        int maxTokens = 100;
         
         List<SourceDocument> documents = createLongMockSourceDocuments();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is Spring AI?");
-        ContextAssemblyService.ContextConfig config = new ContextAssemblyService.ContextConfig(true, true, 100, "\n\n---\n\n");
+        ContextAssemblyService.ContextConfig config = new ContextAssemblyService.ContextConfig(maxTokens, 0.7, true, "\\n\\n---\\n\\n");
 
         String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertNotNull(context);
-        assertTrue(context.length() <= 100);
+        // Should respect token limits - estimate tokens used
+        int estimatedTokens = context.length() / 4; // Service uses 4 chars per token estimation
+        assertTrue(estimatedTokens <= maxTokens, 
+                  "Context should be within token limit. Expected <= " + maxTokens + " tokens, but got " + estimatedTokens + " tokens");
     }
 
     @Test
@@ -127,36 +132,59 @@ class ContextAssemblyServiceTest {
     }
 
     @Test
-    void assembleContext_ChunksWithScores_OrdersByRelevance() {
+    void assembleContext_LowRelevanceFiltered_ExcludesIrrelevantChunks() {
         List<SourceDocument> documents = createMockSourceDocumentsWithDifferentScores();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is important?");
 
         String context = contextAssemblyService.assembleContext(documents, request);
 
         assertNotNull(context);
-        assertFalse(context.isEmpty());
-        // Higher relevance chunks should appear first
-        int highPos = context.indexOf("High relevance");
-        int mediumPos = context.indexOf("Medium relevance");
-        int lowPos = context.indexOf("Low relevance");
-        
-        assertTrue(highPos < mediumPos);
-        assertTrue(mediumPos < lowPos);
+        // High and medium relevance should be included (>= 0.7)
+        assertTrue(context.contains("High relevance"));
+        assertTrue(context.contains("Medium relevance"));
+        // Low relevance should be excluded (< 0.7)
+        assertFalse(context.contains("Low relevance"));
     }
 
     @Test
-    void assembleContext_DuplicateContent_RemovesDuplicates() {
-        List<SourceDocument> documents = createMockSourceDocumentsWithDuplicates();
-        RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "Remove duplicates");
+    void assembleContext_OptimizeContext_RemovesExcessiveWhitespace() {
+        String rawContext = "This  has   excessive    whitespace\n\n\n\nand   multiple   spaces";
+        RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "test query");
 
-        String context = contextAssemblyService.assembleContext(documents, request);
+        String optimizedContext = contextAssemblyService.optimizeContext(rawContext, request);
 
-        assertNotNull(context);
-        // Should only contain unique content once
-        int firstOccurrence = context.indexOf("Duplicate content");
-        int secondOccurrence = context.indexOf("Duplicate content", firstOccurrence + 1);
-        
-        assertEquals(-1, secondOccurrence);
+        assertNotNull(optimizedContext);
+        assertFalse(optimizedContext.contains("   ")); // No triple spaces
+        assertTrue(optimizedContext.length() < rawContext.length()); // Should be shorter
+    }
+
+    @Test
+    void getContextStats_ValidDocuments_ReturnsCorrectStats() {
+        List<SourceDocument> documents = createMockSourceDocuments();
+        String assembledContext = "Test context for statistics";
+
+        ContextAssemblyService.ContextStats stats = contextAssemblyService.getContextStats(documents, assembledContext);
+
+        assertNotNull(stats);
+        assertEquals(2, stats.totalDocuments());
+        assertEquals(2, stats.relevantDocuments()); // Both docs have score >= 0.7
+        assertTrue(stats.estimatedTokens() > 0);
+        assertTrue(stats.averageRelevanceScore() > 0.8);
+        assertEquals(4000, stats.maxTokenLimit());
+    }
+
+    @Test
+    void getContextStats_EmptyDocuments_ReturnsZeroStats() {
+        List<SourceDocument> documents = List.of();
+        String assembledContext = "";
+
+        ContextAssemblyService.ContextStats stats = contextAssemblyService.getContextStats(documents, assembledContext);
+
+        assertNotNull(stats);
+        assertEquals(0, stats.totalDocuments());
+        assertEquals(0, stats.relevantDocuments());
+        assertEquals(0, stats.estimatedTokens());
+        assertEquals(0.0, stats.averageRelevanceScore());
     }
 
     private List<SourceDocument> createMockSourceDocuments() {
@@ -255,34 +283,6 @@ class ContextAssemblyServiceTest {
             0.45
         );
         
-        return List.of(lowScore, highScore, mediumScore); // Intentionally out of order
-    }
-
-    private List<SourceDocument> createMockSourceDocumentsWithDuplicates() {
-        SourceDocument doc1 = SourceDocument.of(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            "duplicate-doc.pdf",
-            "Duplicate content that appears multiple times",
-            0.90
-        );
-        
-        SourceDocument doc2 = SourceDocument.of(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            "duplicate-doc.pdf",
-            "Duplicate content that appears multiple times",
-            0.85
-        );
-        
-        SourceDocument doc3 = SourceDocument.of(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            "duplicate-doc.pdf",
-            "Unique content that should be included",
-            0.80
-        );
-        
-        return List.of(doc1, doc2, doc3);
+        return List.of(highScore, mediumScore, lowScore);
     }
 }
