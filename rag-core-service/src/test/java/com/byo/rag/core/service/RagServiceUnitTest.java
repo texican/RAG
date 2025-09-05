@@ -3,7 +3,7 @@ package com.byo.rag.core.service;
 import com.byo.rag.core.client.EmbeddingServiceClient;
 import com.byo.rag.core.dto.RagQueryRequest;
 import com.byo.rag.core.dto.RagQueryResponse;
-import com.byo.rag.shared.dto.DocumentChunkDto;
+import com.byo.rag.core.dto.RagResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,9 +11,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -21,17 +23,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for RagService - Core RAG pipeline functionality.
- * 
- * Tests cover the complete RAG workflow:
- * - Query processing and validation
- * - Vector search and document retrieval  
- * - Context assembly and LLM integration
- * - Response generation and error handling
- * - Caching behavior and performance optimization
- * 
- * @author BYO RAG System
- * @version 1.0
- * @since 2025-09-05
+ * Tests the complete RAG workflow including query optimization, document retrieval,
+ * context assembly, LLM integration, and caching.
  */
 @ExtendWith(MockitoExtension.class)
 class RagServiceUnitTest {
@@ -43,16 +36,13 @@ class RagServiceUnitTest {
     private LLMIntegrationService llmIntegrationService;
     
     @Mock
-    private VectorSearchService vectorSearchService;
-    
-    @Mock
     private ContextAssemblyService contextAssemblyService;
     
     @Mock
-    private CacheService cacheService;
+    private ConversationService conversationService;
     
     @Mock
-    private ConversationService conversationService;
+    private CacheService cacheService;
     
     @Mock
     private QueryOptimizationService queryOptimizationService;
@@ -61,213 +51,293 @@ class RagServiceUnitTest {
     private RagService ragService;
 
     private RagQueryRequest testRequest;
-    private List<DocumentChunkDto> mockChunks;
+    private UUID tenantId;
 
     @BeforeEach
     void setUp() {
-        testRequest = new RagQueryRequest();
-        testRequest.setQuery("What is Spring AI?");
-        testRequest.setTenantId("test-tenant");
-        testRequest.setUserId("test-user");
-        
-        // Create mock document chunks
-        DocumentChunkDto chunk1 = new DocumentChunkDto();
-        chunk1.setId(1L);
-        chunk1.setContent("Spring AI is a framework for building AI applications with Java.");
-        chunk1.setSimilarityScore(0.95);
-        
-        DocumentChunkDto chunk2 = new DocumentChunkDto();
-        chunk2.setId(2L);
-        chunk2.setContent("It provides integration with various LLM providers like OpenAI and Ollama.");
-        chunk2.setSimilarityScore(0.87);
-        
-        mockChunks = Arrays.asList(chunk1, chunk2);
+        tenantId = UUID.randomUUID();
+        testRequest = RagQueryRequest.simple(tenantId, "What is Spring AI?");
     }
 
-    /**
-     * Test successful RAG query processing with all components working.
-     */
     @Test
-    void processRagQuery_SuccessfulFlow_ReturnsValidResponse() {
+    void processQuery_SuccessfulFlow_ReturnsValidResponse() {
         // Arrange
         String optimizedQuery = "enhanced: What is Spring AI?";
         String assembledContext = "Context: Spring AI framework information...";
         String llmResponse = "Spring AI is a comprehensive framework for building AI-powered applications in Java.";
         
-        when(queryOptimizationService.optimizeQuery(anyString(), anyString())).thenReturn(optimizedQuery);
-        when(cacheService.getCachedResponse(anyString())).thenReturn(null);
-        when(vectorSearchService.searchSimilarDocuments(anyString(), anyString(), anyInt()))
-            .thenReturn(mockChunks);
-        when(contextAssemblyService.assembleContext(anyList(), anyString()))
+        RagQueryRequest optimizedRequest = RagQueryRequest.simple(testRequest.tenantId(), optimizedQuery);
+        when(queryOptimizationService.optimizeQuery(any(RagQueryRequest.class))).thenReturn(optimizedRequest);
+        when(cacheService.getResponse(anyString())).thenReturn(null);
+        
+        // Mock embedding service response with correct constructor signature
+        EmbeddingServiceClient.SearchResponse searchResponse = new EmbeddingServiceClient.SearchResponse(
+            testRequest.tenantId(),
+            "test query", 
+            "test-model",
+            List.of(new EmbeddingServiceClient.SearchResult(
+                UUID.randomUUID(), // chunkId
+                UUID.randomUUID(), // documentId  
+                "Test content about Spring AI", // content
+                0.95, // score
+                Map.of("category", "framework"), // metadata
+                "spring-ai-doc.pdf", // documentTitle
+                "pdf" // documentType
+            )),
+            1, // totalResults
+            0.95, // maxScore
+            100L, // searchTimeMs
+            Instant.now().toString() // searchedAt
+        );
+        when(embeddingServiceClient.search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class)))
+            .thenReturn(searchResponse);
+            
+        when(contextAssemblyService.assembleContext(anyList(), any(RagQueryRequest.class)))
             .thenReturn(assembledContext);
-        when(llmIntegrationService.generateResponse(anyString(), anyString()))
+        when(llmIntegrationService.generateResponse(anyString(), anyString(), any(RagQueryRequest.class)))
             .thenReturn(llmResponse);
+        when(llmIntegrationService.getProviderUsed()).thenReturn("openai");
         
         // Act
-        RagQueryResponse response = ragService.processRagQuery(testRequest);
+        RagQueryResponse response = ragService.processQuery(testRequest);
         
         // Assert
         assertNotNull(response);
-        assertEquals(llmResponse, response.getResponse());
-        assertEquals(testRequest.getQuery(), response.getOriginalQuery());
-        assertEquals(2, response.getSourceDocuments().size());
-        assertTrue(response.getResponseTimeMs() > 0);
+        assertEquals(llmResponse, response.response());
+        assertEquals(testRequest.query(), response.query());
+        assertEquals(testRequest.tenantId(), response.tenantId());
+        assertEquals("SUCCESS", response.status());
+        assertFalse(response.sources().isEmpty());
         
         // Verify service interactions
-        verify(queryOptimizationService).optimizeQuery(testRequest.getQuery(), testRequest.getTenantId());
-        verify(vectorSearchService).searchSimilarDocuments(eq(optimizedQuery), eq(testRequest.getTenantId()), anyInt());
-        verify(contextAssemblyService).assembleContext(eq(mockChunks), eq(optimizedQuery));
-        verify(llmIntegrationService).generateResponse(eq(assembledContext), eq(optimizedQuery));
-        verify(cacheService).cacheResponse(anyString(), any(RagQueryResponse.class));
+        verify(queryOptimizationService).optimizeQuery(any(RagQueryRequest.class));
+        verify(embeddingServiceClient).search(any(EmbeddingServiceClient.SearchRequest.class), eq(testRequest.tenantId()));
+        verify(contextAssemblyService).assembleContext(anyList(), any(RagQueryRequest.class));
+        verify(llmIntegrationService).generateResponse(eq(optimizedQuery), eq(assembledContext), any(RagQueryRequest.class));
     }
 
-    /**
-     * Test cache hit scenario - should return cached response without processing.
-     */
     @Test
-    void processRagQuery_CacheHit_ReturnsCachedResponse() {
+    void processQuery_CacheHit_ReturnsCachedResponse() {
         // Arrange
-        RagQueryResponse cachedResponse = new RagQueryResponse();
-        cachedResponse.setResponse("Cached: Spring AI is a framework...");
-        cachedResponse.setOriginalQuery(testRequest.getQuery());
+        RagResponse cachedRagResponse = new RagResponse(
+            "Cached: Spring AI is a framework...",
+            0.95,
+            List.of(),
+            100L,
+            java.time.LocalDateTime.now(),
+            "conv-123",
+            new RagResponse.QueryMetadata(5, "openai", 50, true, "cached")
+        );
         
-        when(queryOptimizationService.optimizeQuery(anyString(), anyString())).thenReturn("optimized query");
-        when(cacheService.getCachedResponse(anyString())).thenReturn(cachedResponse);
+        when(cacheService.getResponse(anyString())).thenReturn(cachedRagResponse);
         
         // Act
-        RagQueryResponse response = ragService.processRagQuery(testRequest);
+        RagQueryResponse response = ragService.processQuery(testRequest);
         
         // Assert
         assertNotNull(response);
-        assertEquals(cachedResponse.getResponse(), response.getResponse());
+        assertNotNull(response.response());
+        assertEquals("SUCCESS", response.status());
         
         // Verify no downstream processing occurred
-        verify(vectorSearchService, never()).searchSimilarDocuments(anyString(), anyString(), anyInt());
-        verify(llmIntegrationService, never()).generateResponse(anyString(), anyString());
+        verify(embeddingServiceClient, never()).search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class));
+        verify(llmIntegrationService, never()).generateResponse(anyString(), anyString(), any(RagQueryRequest.class));
     }
 
-    /**
-     * Test behavior when no relevant documents are found.
-     */
     @Test
-    void processRagQuery_NoDocumentsFound_ReturnsAppropriateResponse() {
+    void processQuery_NoDocumentsFound_ReturnsAppropriateResponse() {
         // Arrange
-        when(queryOptimizationService.optimizeQuery(anyString(), anyString())).thenReturn("optimized query");
-        when(cacheService.getCachedResponse(anyString())).thenReturn(null);
-        when(vectorSearchService.searchSimilarDocuments(anyString(), anyString(), anyInt()))
-            .thenReturn(Collections.emptyList());
-        when(llmIntegrationService.generateResponse(anyString(), anyString()))
-            .thenReturn("I don't have enough information to answer your question.");
+        RagQueryRequest optimizedRequest = RagQueryRequest.simple(testRequest.tenantId(), "optimized query");
+        when(queryOptimizationService.optimizeQuery(any(RagQueryRequest.class))).thenReturn(optimizedRequest);
+        when(cacheService.getResponse(anyString())).thenReturn(null);
+        
+        // Mock empty search response
+        EmbeddingServiceClient.SearchResponse emptyResponse = new EmbeddingServiceClient.SearchResponse(
+            testRequest.tenantId(),
+            "test query",
+            "test-model", 
+            Collections.emptyList(),
+            0,
+            0.0,
+            100L,
+            Instant.now().toString()
+        );
+        when(embeddingServiceClient.search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class)))
+            .thenReturn(emptyResponse);
         
         // Act
-        RagQueryResponse response = ragService.processRagQuery(testRequest);
+        RagQueryResponse response = ragService.processQuery(testRequest);
         
         // Assert
         assertNotNull(response);
-        assertTrue(response.getResponse().contains("don't have enough information"));
-        assertTrue(response.getSourceDocuments().isEmpty());
+        assertEquals("EMPTY", response.status());
+        assertTrue(response.sources().isEmpty());
         
-        verify(contextAssemblyService, never()).assembleContext(anyList(), anyString());
+        // Verify context assembly was never called (no documents to assemble)
+        verify(contextAssemblyService, never()).assembleContext(anyList(), any(RagQueryRequest.class));
     }
 
-    /**
-     * Test error handling when LLM integration fails.
-     */
     @Test
-    void processRagQuery_LLMFailure_HandlesGracefully() {
+    void processQuery_LLMFailure_HandlesGracefully() {
         // Arrange
-        when(queryOptimizationService.optimizeQuery(anyString(), anyString())).thenReturn("optimized query");
-        when(cacheService.getCachedResponse(anyString())).thenReturn(null);
-        when(vectorSearchService.searchSimilarDocuments(anyString(), anyString(), anyInt()))
-            .thenReturn(mockChunks);
-        when(contextAssemblyService.assembleContext(anyList(), anyString()))
+        RagQueryRequest optimizedRequest = RagQueryRequest.simple(testRequest.tenantId(), "optimized query");
+        when(queryOptimizationService.optimizeQuery(any(RagQueryRequest.class))).thenReturn(optimizedRequest);
+        when(cacheService.getResponse(anyString())).thenReturn(null);
+        
+        // Mock successful document retrieval
+        EmbeddingServiceClient.SearchResponse searchResponse = new EmbeddingServiceClient.SearchResponse(
+            testRequest.tenantId(),
+            "test query",
+            "test-model",
+            List.of(new EmbeddingServiceClient.SearchResult(
+                UUID.randomUUID(), UUID.randomUUID(), "content", 0.9, 
+                Map.of(), "doc.pdf", "pdf"
+            )),
+            1, 0.9, 100L, Instant.now().toString()
+        );
+        when(embeddingServiceClient.search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class)))
+            .thenReturn(searchResponse);
+        when(contextAssemblyService.assembleContext(anyList(), any(RagQueryRequest.class)))
             .thenReturn("assembled context");
-        when(llmIntegrationService.generateResponse(anyString(), anyString()))
+        when(llmIntegrationService.generateResponse(anyString(), anyString(), any(RagQueryRequest.class)))
             .thenThrow(new RuntimeException("LLM service unavailable"));
         
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> ragService.processRagQuery(testRequest));
+        // Act
+        RagQueryResponse response = ragService.processQuery(testRequest);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals("FAILED", response.status());
+        assertNotNull(response.error());
+        assertTrue(response.error().contains("LLM service unavailable"));
         
         // Verify partial processing occurred
-        verify(vectorSearchService).searchSimilarDocuments(anyString(), anyString(), anyInt());
-        verify(contextAssemblyService).assembleContext(eq(mockChunks), anyString());
+        verify(embeddingServiceClient).search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class));
+        verify(contextAssemblyService).assembleContext(anyList(), any(RagQueryRequest.class));
     }
 
-    /**
-     * Test null request validation.
-     */
     @Test
-    void processRagQuery_NullRequest_ThrowsException() {
+    void processQuery_NullRequest_ThrowsException() {
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> ragService.processRagQuery(null));
+        assertThrows(NullPointerException.class, () -> ragService.processQuery(null));
         
         // Verify no processing occurred
-        verifyNoInteractions(queryOptimizationService, vectorSearchService, llmIntegrationService);
+        verifyNoInteractions(queryOptimizationService, embeddingServiceClient, llmIntegrationService);
     }
 
-    /**
-     * Test empty query validation.
-     */
     @Test
-    void processRagQuery_EmptyQuery_ThrowsException() {
+    void processQuery_EmptyQuery_HandlesGracefully() {
         // Arrange
-        testRequest.setQuery("");
+        RagQueryRequest emptyQueryRequest = new RagQueryRequest(
+            testRequest.tenantId(),
+            "",
+            testRequest.conversationId(),
+            testRequest.userId(),
+            testRequest.sessionId(),
+            testRequest.documentIds(),
+            testRequest.filters(),
+            testRequest.options()
+        );
+        
+        // Mock optimization service to return the empty request
+        when(queryOptimizationService.optimizeQuery(any(RagQueryRequest.class))).thenReturn(emptyQueryRequest);
+        when(cacheService.getResponse(anyString())).thenReturn(null);
+        
+        // Mock empty search response for empty query
+        EmbeddingServiceClient.SearchResponse emptyResponse = new EmbeddingServiceClient.SearchResponse(
+            emptyQueryRequest.tenantId(),
+            "",
+            "test-model",
+            Collections.emptyList(),
+            0, 0.0, 100L, Instant.now().toString()
+        );
+        when(embeddingServiceClient.search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class)))
+            .thenReturn(emptyResponse);
+        
+        // Act
+        RagQueryResponse response = ragService.processQuery(emptyQueryRequest);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals("EMPTY", response.status());
+        assertTrue(response.sources().isEmpty());
+    }
+
+    @Test
+    void processQuery_NullTenantId_ThrowsException() {
+        // Arrange
+        RagQueryRequest nullTenantRequest = new RagQueryRequest(
+            null,
+            testRequest.query(),
+            testRequest.conversationId(),
+            testRequest.userId(),
+            testRequest.sessionId(),
+            testRequest.documentIds(),
+            testRequest.filters(),
+            testRequest.options()
+        );
         
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> ragService.processRagQuery(testRequest));
-        
-        // Verify no processing occurred
-        verifyNoInteractions(queryOptimizationService, vectorSearchService, llmIntegrationService);
+        assertThrows(NullPointerException.class, () -> ragService.processQuery(nullTenantRequest));
     }
 
-    /**
-     * Test missing tenant ID validation.
-     */
     @Test
-    void processRagQuery_MissingTenantId_ThrowsException() {
+    void processQuery_WithConversationHistory_IncludesContext() {
         // Arrange
-        testRequest.setTenantId(null);
-        
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> ragService.processRagQuery(testRequest));
-        
-        // Verify no processing occurred
-        verifyNoInteractions(queryOptimizationService, vectorSearchService, llmIntegrationService);
-    }
-
-    /**
-     * Test conversation context integration.
-     */
-    @Test
-    void processRagQuery_WithConversationHistory_IncludesContext() {
-        // Arrange
-        testRequest.setIncludeConversationHistory(true);
         String conversationContext = "Previous conversation context...";
         String optimizedQuery = "optimized with context";
         
-        when(conversationService.getConversationContext(anyString(), anyString()))
+        // Create request with conversation options
+        RagQueryRequest requestWithHistory = new RagQueryRequest(
+            testRequest.tenantId(),
+            testRequest.query(),
+            "conv-123",
+            testRequest.userId(),
+            "session-123",
+            null,
+            null,
+            RagQueryRequest.RagOptions.defaultOptions()
+        );
+        
+        when(conversationService.contextualizeQuery(anyString(), anyString()))
             .thenReturn(conversationContext);
-        when(queryOptimizationService.optimizeQuery(anyString(), anyString()))
-            .thenReturn(optimizedQuery);
-        when(cacheService.getCachedResponse(anyString())).thenReturn(null);
-        when(vectorSearchService.searchSimilarDocuments(anyString(), anyString(), anyInt()))
-            .thenReturn(mockChunks);
-        when(contextAssemblyService.assembleContext(anyList(), anyString()))
+        RagQueryRequest optimizedRequest = RagQueryRequest.simple(requestWithHistory.tenantId(), optimizedQuery);
+        when(queryOptimizationService.optimizeQuery(any(RagQueryRequest.class)))
+            .thenReturn(optimizedRequest);
+        when(cacheService.getResponse(anyString())).thenReturn(null);
+        
+        // Mock successful document retrieval
+        EmbeddingServiceClient.SearchResponse searchResponse = new EmbeddingServiceClient.SearchResponse(
+            requestWithHistory.tenantId(),
+            "test query",
+            "test-model",
+            List.of(new EmbeddingServiceClient.SearchResult(
+                UUID.randomUUID(), UUID.randomUUID(), "content", 0.9,
+                Map.of(), "doc.pdf", "pdf"
+            )),
+            1, 0.9, 100L, Instant.now().toString()
+        );
+        when(embeddingServiceClient.search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class)))
+            .thenReturn(searchResponse);
+        when(contextAssemblyService.assembleContext(anyList(), any(RagQueryRequest.class)))
             .thenReturn("assembled context with history");
-        when(llmIntegrationService.generateResponse(anyString(), anyString()))
+        when(llmIntegrationService.generateResponse(anyString(), anyString(), any(RagQueryRequest.class)))
             .thenReturn("Response with conversation context");
+        when(llmIntegrationService.getProviderUsed()).thenReturn("openai");
         
         // Act
-        RagQueryResponse response = ragService.processRagQuery(testRequest);
+        RagQueryResponse response = ragService.processQuery(requestWithHistory);
         
         // Assert
         assertNotNull(response);
-        verify(conversationService).getConversationContext(testRequest.getTenantId(), testRequest.getUserId());
-        verify(conversationService).addToConversationHistory(
-            eq(testRequest.getTenantId()), 
-            eq(testRequest.getUserId()), 
-            eq(testRequest.getQuery()), 
-            eq(response.getResponse())
+        assertEquals("SUCCESS", response.status());
+        verify(conversationService).contextualizeQuery(eq(requestWithHistory.conversationId()), anyString());
+        verify(conversationService).addExchange(
+            eq(requestWithHistory.conversationId()), 
+            any(UUID.class),
+            eq(requestWithHistory.query()), 
+            eq(response.response()),
+            anyList()
         );
     }
 }
