@@ -123,6 +123,76 @@ Create comprehensive integration tests that validate the complete RAG pipeline f
 
 ## MEDIUM PRIORITY TASKS (Week 2-3)
 
+### **QUALITY-001: Complete SpotBugs static analysis implementation and quality gate integration**
+**Epic:** Code Quality & Testing  
+**Story Points:** 5  
+**Dependencies:** None (builds on existing testing improvements)  
+
+**Context:**
+Complete the SpotBugs static analysis implementation started during testing best practices work. SpotBugs will provide automated detection of bug patterns like the ContextAssemblyService token limiting issue we recently fixed, preventing similar logic errors across all 6 microservices.
+
+**Business Value:**
+- **Prevents logic bugs** similar to the ContextAssemblyService `&& documentsUsed > 0` condition that bypassed token limits
+- **Enterprise-grade quality** demonstrates senior-level development practices for portfolio project
+- **Multi-service consistency** ensures quality standards across all 6 microservices
+- **Security vulnerability detection** for JWT, database, and API code
+- **Developer productivity** through early issue detection vs runtime debugging
+
+**Acceptance Criteria:**
+1. **Resolve Java 24 compatibility issue with SpotBugs 4.8.4**
+   - Research and implement Java 24 compatible SpotBugs version or configuration
+   - Alternative: Configure build to use Java 21 for SpotBugs analysis only
+2. **Create comprehensive SpotBugs filter configuration**
+   - Include filters focusing on correctness, security, and performance
+   - Exclude false positives from test classes and Spring configuration
+   - Target bug patterns that could cause issues like our recent fix:
+     - UC_USELESS_CONDITION (useless conditional logic)
+     - RCN_REDUNDANT_NULLCHECK (redundant checks masking issues)
+     - NP_NULL_ON_SOME_PATH (potential null pointer exceptions)
+3. **Integrate SpotBugs into development workflow**
+   - Configure Maven to run SpotBugs analysis during `mvn compile`
+   - Set up build to fail on high-priority issues (configurable threshold)
+   - Generate HTML reports for detailed issue analysis
+4. **Create pre-commit hook for quality gates**
+   - Implement pre-commit hook that runs SpotBugs analysis
+   - Include test validation and static analysis in pre-commit checks
+   - Document setup instructions for development team
+5. **Validate across all microservices**
+   - Run SpotBugs analysis on all 6 services
+   - Fix any high/medium priority issues discovered
+   - Create baseline report for ongoing quality tracking
+
+**Bug Pattern Categories to Target:**
+- **Correctness**: Logic errors, null pointer issues, resource leaks
+- **Security**: SQL injection, XSS, insecure randomness, crypto issues
+- **Performance**: Inefficient loops, string concatenation, collection usage
+- **Concurrency**: Race conditions, deadlocks, synchronization issues
+
+**Definition of Done:**
+- [ ] SpotBugs runs successfully on Java 24 (or acceptable workaround implemented)
+- [ ] Comprehensive filter configuration created and tested
+- [ ] SpotBugs integrated into Maven build lifecycle
+- [ ] Pre-commit hook created and documented
+- [ ] HTML reports generated for all services
+- [ ] High-priority issues identified and fixed
+- [ ] Build fails appropriately on critical issues
+- [ ] Documentation updated with SpotBugs integration details
+- [ ] Quality baseline established for ongoing monitoring
+
+**Estimated Effort:**
+- **Java 24 compatibility resolution:** 2 hours
+- **Filter configuration and testing:** 2 hours  
+- **Pre-commit hook and documentation:** 1 hour
+- **Cross-service validation and issue fixes:** 3-5 hours
+
+**Success Metrics:**
+- Zero high-priority SpotBugs issues across all services
+- Pre-commit hook prevents buggy code from being committed
+- Development workflow includes automated quality validation
+- Quality reports available for continuous improvement
+
+---
+
 ### **KAFKA-001: Implement Kafka event-driven processing for asynchronous document processing**
 **Epic:** Event-Driven Architecture  
 **Story Points:** 13  
