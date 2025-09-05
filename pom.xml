@@ -44,6 +44,9 @@
         <springdoc.version>2.5.0</springdoc.version>
         <jjwt.version>0.12.6</jjwt.version>
         <logstash-logback.version>7.4</logstash-logback.version>
+        
+        <!-- Code quality tools -->
+        <spotbugs.version>4.8.4</spotbugs.version>
     </properties>
 
     <modules>
@@ -252,6 +255,25 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+            </plugin>
+            
+            <!-- SpotBugs static analysis plugin -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Medium</threshold>
+                    <failOnError>false</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
