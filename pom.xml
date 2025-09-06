@@ -54,6 +54,7 @@
         <module>rag-core-service</module>
         <module>rag-admin-service</module>
         <module>rag-gateway</module>
+        <module>rag-integration-tests</module>
     </modules>
 
     <dependencyManagement>

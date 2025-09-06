@@ -1,0 +1,76 @@
+# Integration Test Configuration
+# This configuration is used when running integration tests with TestContainers
+
+spring:
+  profiles:
+    active: integration-test
+  
+  # Database configuration (overridden by TestContainers)
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  # Redis configuration (overridden by TestContainers)
+  data:
+    redis:
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 5
+          max-idle: 5
+          min-idle: 1
+  
+  # AI configuration (disabled for testing)
+  ai:
+    openai:
+      api-key: test-key
+      base-url: http://localhost:11434
+      chat:
+        enabled: false
+      embedding:
+        enabled: false
+
+# Server configuration
+server:
+  port: 0  # Random port for testing
+
+# Logging configuration
+logging:
+  level:
+    com.byo.rag: DEBUG
+    org.springframework.test: INFO
+    org.testcontainers: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management endpoints for testing
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Test-specific configurations
+test:
+  containers:
+    reuse: true  # Enable container reuse for faster test execution
+  data:
+    cleanup: true  # Clean up test data after each test
