@@ -24,7 +24,7 @@
 - 🚀 **Production Ready**: Containerized microservices with monitoring and observability
 - 🧪 **Test Coverage**: Comprehensive unit tests with 100% success rate for core services
 
-> **✅ Current Status**: Complete BYO RAG system with all 6 microservices implemented and tested. Docker deployment ready. [View detailed status](#development-status)
+> **✅ Current Status**: Complete BYO RAG system with all 6 microservices implemented and tested. Docker deployment ready. [View detailed status](#-development-status)
 
 ## 📚 Table of Contents
 
