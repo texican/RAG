@@ -1,14 +1,128 @@
 # BYO RAG System - Task Backlog (Story Point Anchoring Method)
 
-> **📊 Project Status (2025-09-05)**: **DOCKER DEPLOYMENT COMPLETE** 🎉
+> **📊 Project Status (2025-09-08)**: **TESTING AUDIT COMPLETE** 🎯
 > - **All 6 microservices operational** in Docker with full system integration
-> - **Development infrastructure ready** for advanced feature development
-> - **Next focus**: End-to-end testing, integration validation, and production readiness
+> - **Testing gaps identified** across all modules with comprehensive audit
+> - **10 backlog stories generated** for testing coverage improvements (76 story points)
+> - **Next focus**: Implement prioritized testing improvements and production readiness
 
 > **Task Sizing Philosophy:** Following industry-standard story point anchoring:
 > - **Pebbles (1-3 points)**: Small, focused tasks (1-2 days)
 > - **Rocks (5-8 points)**: Medium anchor stories (3-5 days) 
 > - **Boulders (13+ points)**: Large epics requiring breakdown
+
+## 🔥 CRITICAL PRIORITY (Testing Audit Results - Week 1)
+
+### **📊 Testing Coverage Audit Complete (2025-09-08)**
+**Current State:** 27% test coverage (40 test files / 149 source files)  
+**Target State:** >80% test coverage with comprehensive testing infrastructure
+
+**Key Findings:**
+- ✅ **Strong Areas**: Core RAG service (100% unit test success), Admin service (58/58 tests passing)
+- ⚠️ **Critical Gaps**: Auth service (no unit tests), Document service (missing service layer tests), Gateway (minimal security tests)
+- 🚫 **Missing Types**: No performance testing, limited integration tests, no contract testing
+
+**Generated Testing Backlog Stories (76 Story Points Total):**
+
+### **AUTH-TEST-001: Complete Auth Service Unit Tests** ⭐ **CRITICAL**
+**Epic:** Testing & Quality  
+**Story Points:** 8  
+**Priority:** High (Security-critical service)  
+**Dependencies:** None
+
+**Context:**
+Auth service has only integration tests but lacks comprehensive unit tests for core service classes. This is a security-critical gap requiring immediate attention.
+
+**Acceptance Criteria:**
+- Unit tests for `AuthService.java` with mocking dependencies
+- Unit tests for `TenantService.java` and `UserService.java` 
+- Unit tests for `JwtService.java` with token validation scenarios
+- Controller unit tests for `AuthController`, `TenantController`, `UserController`
+- Test coverage for authentication flows, JWT validation, user registration
+- Error handling tests for invalid credentials, expired tokens
+
+**Definition of Done:**
+- [ ] AuthService unit tests implemented with comprehensive mocking
+- [ ] JWT validation scenarios thoroughly tested
+- [ ] Controller layer tests covering all endpoints
+- [ ] Security edge cases and error handling validated
+
+---
+
+### **DOCUMENT-TEST-002: Document Service Core Functionality Tests** ⭐ **CRITICAL**
+**Epic:** Testing & Quality  
+**Story Points:** 13  
+**Priority:** High (Core functionality)  
+**Dependencies:** None
+
+**Context:**
+Document service has only API endpoint validation tests but lacks service layer and repository tests for core document processing functionality.
+
+**Acceptance Criteria:**
+- Unit tests for `DocumentService.java` covering document CRUD operations
+- Unit tests for `FileStorageService.java` with file upload/download scenarios
+- Unit tests for `TextExtractionService.java` with different file formats (PDF, DOCX, TXT)
+- Unit tests for `DocumentChunkService.java` covering text chunking algorithms
+- Unit tests for `DocumentProcessingKafkaService.java` with Kafka message handling
+- Repository tests for `DocumentRepository.java` and `DocumentChunkRepository.java`
+- Integration tests for complete document processing pipeline
+
+**Definition of Done:**
+- [ ] Service layer unit tests with comprehensive scenarios
+- [ ] File processing tests covering all supported formats
+- [ ] Repository tests with database integration
+- [ ] Complete document processing pipeline integration tests
+
+---
+
+### **GATEWAY-TEST-005: Gateway Security and Routing Tests** ⭐ **CRITICAL**
+**Epic:** Testing & Quality  
+**Story Points:** 8  
+**Priority:** High (Security gateway)  
+**Dependencies:** None
+
+**Context:**
+Gateway has only basic integration test but lacks security-focused tests for JWT validation, routing, and tenant isolation.
+
+**Acceptance Criteria:**
+- Unit tests for `JwtValidationService.java` with different token scenarios
+- Unit tests for `JwtAuthenticationFilter.java` covering authentication flows
+- Integration tests for gateway routing to all downstream services
+- Security tests for JWT validation, tenant isolation, CORS handling
+- Load balancing and failover tests for service routing
+- Error handling tests for invalid routes and service unavailability
+
+**Definition of Done:**
+- [ ] JWT validation and security tests comprehensive
+- [ ] Routing tests for all downstream services
+- [ ] Security boundary validation implemented
+- [ ] Error handling and failover scenarios tested
+
+---
+
+### **INTEGRATION-TEST-008: End-to-End Workflow Tests** ⭐ **HIGH IMPACT**
+**Epic:** Testing & Quality  
+**Story Points:** 13  
+**Priority:** High (System validation)  
+**Dependencies:** AUTH-TEST-001, DOCUMENT-TEST-002, GATEWAY-TEST-005
+
+**Context:**
+Integration tests exist for document processing but missing complete system workflow tests from authentication to RAG query response.
+
+**Acceptance Criteria:**
+- Complete tenant onboarding workflow test
+- Document upload to RAG query end-to-end test  
+- Multi-tenant data isolation tests
+- Authentication and authorization integration tests
+- Cross-service communication tests via gateway
+- Performance and load testing for concurrent users
+- Failure recovery and error propagation tests
+
+**Definition of Done:**
+- [ ] Complete RAG workflow tested end-to-end
+- [ ] Multi-tenant isolation validated across all services
+- [ ] Authentication and authorization flows integrated
+- [ ] Performance benchmarks established
 
 ## HIGH PRIORITY TASKS (Week 1-2)
 
@@ -132,6 +246,156 @@ Create tests for multi-tenant isolation and authentication/authorization.
 - [ ] Authentication flows tested
 - [ ] Security boundaries verified
 - [ ] Error scenarios covered
+
+---
+
+## MEDIUM PRIORITY TASKS (Testing Infrastructure - Week 2-3)
+
+### **EMBEDDING-TEST-003: Embedding Service Advanced Scenarios**
+**Epic:** Testing & Quality  
+**Story Points:** 8  
+**Priority:** Medium (Advanced functionality)  
+**Dependencies:** DOCUMENT-TEST-002
+
+**Context:**
+Embedding service has basic tests but missing advanced scenarios and comprehensive service layer coverage.
+
+**Acceptance Criteria:**
+- Unit tests for `VectorStorageService.java` with Redis operations
+- Unit tests for `SimilaritySearchService.java` covering different search algorithms
+- Unit tests for `EmbeddingCacheService.java` with cache hit/miss scenarios
+- Unit tests for `BatchEmbeddingService.java` and `EmbeddingKafkaService.java`
+- Controller tests for `EmbeddingController.java` with different request scenarios
+- Performance tests for embedding generation and similarity search
+- Error handling tests for model failures and storage issues
+
+**Definition of Done:**
+- [ ] Advanced vector operation tests implemented
+- [ ] Service layer coverage completed
+- [ ] Performance benchmarks established
+- [ ] Error handling scenarios validated
+
+---
+
+### **CORE-TEST-004: Core Service Integration and Component Tests**
+**Epic:** Testing & Quality  
+**Story Points:** 5  
+**Priority:** Medium (Enhancement)  
+**Dependencies:** EMBEDDING-TEST-003
+
+**Context:**
+Core service has good unit tests but missing integration tests and component-specific coverage.
+
+**Acceptance Criteria:**
+- Unit tests for `CacheService.java`, `QueryOptimizationService.java`, `VectorSearchService.java`
+- Unit tests for `ConversationService.java` and `LLMIntegrationService.java` 
+- Integration tests for complete RAG pipeline end-to-end
+- Client tests for `EmbeddingServiceClient.java` with service interactions
+- Error handling tests for service failures and timeout scenarios
+- Performance tests for query processing times
+
+**Definition of Done:**
+- [ ] Component-specific tests implemented
+- [ ] Integration tests for RAG pipeline completed
+- [ ] Client interaction tests validated
+- [ ] Performance metrics established
+
+---
+
+### **ADMIN-TEST-006: Admin Service User Management Tests**
+**Epic:** Testing & Quality  
+**Story Points:** 3  
+**Priority:** Medium (Completion)  
+**Dependencies:** CORE-TEST-004
+
+**Context:**
+Admin service has excellent tenant tests but missing comprehensive user management test coverage.
+
+**Acceptance Criteria:**
+- Unit tests for `UserService.java` and `UserServiceImpl.java`
+- Unit tests for `AdminAuthController.java` covering admin authentication
+- Repository tests for admin-specific user queries
+- Integration tests for admin operations workflow
+- Authorization tests for admin-only operations
+
+**Definition of Done:**
+- [ ] User management tests comprehensive
+- [ ] Admin authentication flows tested
+- [ ] Repository integration validated
+- [ ] Authorization scenarios covered
+
+---
+
+### **SHARED-TEST-007: Shared Module Utility and Entity Tests**
+**Epic:** Testing & Quality  
+**Story Points:** 5  
+**Priority:** Medium (Foundation)  
+**Dependencies:** ADMIN-TEST-006
+
+**Context:**
+Shared module has infrastructure tests but missing utility and entity validation coverage.
+
+**Acceptance Criteria:**
+- Unit tests for `TextChunker.java` with different chunking strategies  
+- Unit tests for `SecurityUtils.java` and `JsonUtils.java`
+- Entity validation tests for `User.java`, `Tenant.java`, `Document.java`, `DocumentChunk.java`
+- Exception handling tests for custom exceptions
+- DTO validation tests with bean validation annotations
+
+**Definition of Done:**
+- [ ] Utility class tests implemented
+- [ ] Entity validation comprehensive
+- [ ] Exception handling validated
+- [ ] DTO validation scenarios tested
+
+---
+
+### **PERFORMANCE-TEST-009: Performance and Load Testing**
+**Epic:** Testing & Quality  
+**Story Points:** 8  
+**Priority:** Medium (Infrastructure)  
+**Dependencies:** SHARED-TEST-007
+
+**Context:**
+No performance or load testing infrastructure exists for system validation under load.
+
+**Acceptance Criteria:**
+- Performance benchmarks for document processing pipeline
+- Load testing for concurrent RAG queries
+- Memory usage tests for embedding storage
+- Database performance tests under load
+- API response time benchmarks for all services
+- Resource utilization monitoring during tests
+
+**Definition of Done:**
+- [ ] Performance testing infrastructure established
+- [ ] Load testing scenarios implemented
+- [ ] Memory and resource monitoring validated
+- [ ] Performance benchmarks documented
+
+---
+
+### **CONTRACT-TEST-010: Service Contract Testing**  
+**Epic:** Testing & Quality  
+**Story Points:** 5  
+**Priority:** Low (Advanced)
+**Dependencies:** PERFORMANCE-TEST-009
+
+**Context:**
+No contract testing exists between microservices for API compatibility validation.
+
+**Acceptance Criteria:**
+- Pact contract tests between core service and embedding service
+- Contract tests between gateway and all downstream services
+- API schema validation tests for all REST endpoints
+- Message schema validation for Kafka events
+- Backward compatibility tests for API versioning
+
+**Definition of Done:**
+- [ ] Contract testing framework established
+- [ ] Service contract tests implemented
+- [ ] API schema validation automated
+- [ ] Backward compatibility validated
 
 ---
 
