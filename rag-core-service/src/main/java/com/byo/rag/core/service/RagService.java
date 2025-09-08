@@ -89,6 +89,14 @@ public class RagService {
      * Process RAG query and return complete response.
      */
     public RagQueryResponse processQuery(RagQueryRequest request) {
+        // Validate required parameters
+        if (request == null) {
+            throw new NullPointerException("RagQueryRequest cannot be null");
+        }
+        if (request.tenantId() == null) {
+            throw new NullPointerException("Tenant ID cannot be null");
+        }
+        
         long startTime = System.currentTimeMillis();
         
         try {
@@ -108,9 +116,9 @@ public class RagService {
             
             // Step 3: Retrieve conversation context if needed
             String contextualizedQuery = optimizedRequest.query();
-            if (optimizedRequest.conversationId() != null) {
+            if (request.conversationId() != null) {
                 contextualizedQuery = conversationService.contextualizeQuery(
-                    optimizedRequest.conversationId(), optimizedRequest.query());
+                    request.conversationId(), optimizedRequest.query());
             }
             
             // Step 4: Retrieve relevant documents using semantic search
@@ -144,11 +152,11 @@ public class RagService {
             long generationTime = System.currentTimeMillis() - generationStartTime;
             
             // Step 7: Update conversation history
-            if (optimizedRequest.conversationId() != null && optimizedRequest.userId() != null) {
+            if (request.conversationId() != null && request.userId() != null) {
                 conversationService.addExchange(
-                    optimizedRequest.conversationId(),
-                    UUID.fromString(optimizedRequest.userId()),
-                    optimizedRequest.query(),
+                    request.conversationId(),
+                    UUID.fromString(request.userId()),
+                    request.query(),
                     generatedResponse,
                     retrievedDocuments
                 );

@@ -5,6 +5,7 @@ import com.byo.rag.core.dto.RagQueryRequest;
 import com.byo.rag.core.dto.RagQueryResponse;
 import com.byo.rag.core.dto.RagResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -59,7 +60,22 @@ class RagServiceUnitTest {
         testRequest = RagQueryRequest.simple(tenantId, "What is Spring AI?");
     }
 
+    /**
+     * Validates the complete RAG processing pipeline with successful flow.
+     * 
+     * This test ensures that:
+     * 1. Query optimization service enhances the user query
+     * 2. Cache check is performed and returns null (cache miss)
+     * 3. Embedding service successfully retrieves similar documents
+     * 4. Context assembly service creates coherent context from documents
+     * 5. LLM integration service generates appropriate response
+     * 6. Response is cached for future requests
+     * 7. Final RagQueryResponse contains all expected components
+     * 
+     * Tests the primary happy path through the entire RAG pipeline.
+     */
     @Test
+    @DisplayName("should complete full RAG pipeline and return valid response")
     void processQuery_SuccessfulFlow_ReturnsValidResponse() {
         // Arrange
         String optimizedQuery = "enhanced: What is Spring AI?";
@@ -292,7 +308,7 @@ class RagServiceUnitTest {
             testRequest.tenantId(),
             testRequest.query(),
             "conv-123",
-            testRequest.userId(),
+            UUID.randomUUID().toString(), // Provide a valid userId
             "session-123",
             null,
             null,
