@@ -80,11 +80,29 @@ public class QueryOptimizationService {
     @Value("${query.optimization.remove-stopwords:false}")
     private boolean removeStopwords;
 
-    // Common stop words (could be externalized)
-    private static final Set<String> STOP_WORDS = Set.of(
+    // Comprehensive English stop words set for better query analysis
+    private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
+        // Articles and determiners
         "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it", 
-        "of", "on", "that", "the", "to", "was", "will", "with", "this", "these", "those"
-    );
+        "of", "on", "that", "the", "to", "was", "will", "with", "this", "these", "those",
+        // Additional common words
+        "or", "but", "if", "when", "where", "why", "how", "what", "who", "which", "whom",
+        "i", "you", "he", "she", "we", "they", "me", "him", "her", "us", "them",
+        "my", "your", "his", "their", "our", "its",
+        "am", "is", "are", "was", "were", "been", "being", "have", "has", "had", "having",
+        "do", "does", "did", "doing", "would", "should", "could", "might", "must", "shall",
+        "can", "may", "need", "ought",
+        // Prepositions and conjunctions
+        "about", "above", "across", "after", "against", "along", "among", "around", "before",
+        "behind", "below", "beneath", "beside", "between", "beyond", "during", "except",
+        "inside", "into", "near", "over", "since", "through", "throughout", "under", "until",
+        "upon", "within", "without",
+        // Common question words and connectors
+        "also", "although", "always", "because", "both", "each", "either", "else", "even",
+        "every", "however", "just", "most", "much", "never", "now", "only", "other",
+        "same", "some", "sometimes", "still", "such", "than", "then", "too", "very",
+        "well", "while"
+    ));
 
     // Common acronym expansions (could be loaded from configuration)
     private static final Map<String, String> ACRONYM_EXPANSIONS = Map.of(
@@ -216,6 +234,24 @@ public class QueryOptimizationService {
 
         if (containsTypos(query)) {
             suggestions.add("Check for potential spelling errors");
+        }
+
+        // Add general suggestions for better user experience (even for well-formed queries)
+        if (suggestions.isEmpty() && issues.isEmpty()) {
+            // For well-formed queries, provide helpful general suggestions
+            List<String> keyTerms = extractKeyTerms(query);
+            if (!keyTerms.isEmpty()) {
+                String primaryTerm = keyTerms.get(0);
+                suggestions.add("Try searching for '" + primaryTerm + " examples' for practical use cases");
+                suggestions.add("Consider adding 'best practices' to find expert guidance");
+                if (keyTerms.size() > 1) {
+                    suggestions.add("Search for related concepts like '" + keyTerms.get(1) + "'");
+                }
+            } else {
+                // Generic helpful suggestions when no key terms are extracted
+                suggestions.add("Try adding more specific technical terms");
+                suggestions.add("Consider including the technology or domain context");
+            }
         }
 
         // Complexity analysis

@@ -30,6 +30,7 @@ Before implementing any service method with conditional logic:
 - [ ] **Realistic Data**: Use production-representative test data
 - [ ] **Proper Assertions**: Validate business logic, not implementation artifacts
 - [ ] **Documentation**: Document what behavior is being validated and why
+- [ ] **✅ ALL TESTS MUST PASS**: A test class is NOT complete until all tests pass without errors or failures
 
 ### Good vs Bad Test Examples:
 
@@ -72,6 +73,7 @@ void assembleContext_MaxLengthLimit_TruncatesContext() {
 - [ ] **Configuration Overrides**: Any method accepting config parameters tested properly
 - [ ] **Error Messages**: Assertions include descriptive failure messages
 - [ ] **Thread Safety**: Service methods are thread-safe for concurrent use
+- [ ] **✅ ALL TESTS PASS**: Test suites run successfully with 0 failures and 0 errors
 
 ### Code Review Checklist Template:
 ```markdown
@@ -87,6 +89,7 @@ void assembleContext_MaxLengthLimit_TruncatesContext() {
 - [ ] Test names clearly describe expected behavior
 - [ ] Realistic test data used
 - [ ] Descriptive error messages included
+- [ ] All tests pass without failures or errors
 ```
 
 ## 4. Automated Quality Gates
@@ -321,6 +324,7 @@ public class ContextAssemblyHealthIndicator implements HealthIndicator {
 - **ALWAYS test the public contract** first, internal state validation second
 - **ALWAYS document test intent** with clear @DisplayName and method documentation
 - **ALWAYS use realistic test data** that mirrors production usage patterns
+- **🔴 NEVER submit test classes with failing tests** - fix all errors and failures before considering the task complete
 
 ## Test Categories & Naming Conventions
 
