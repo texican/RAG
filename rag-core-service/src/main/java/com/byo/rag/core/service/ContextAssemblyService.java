@@ -285,6 +285,7 @@ public class ContextAssemblyService {
      * @return comprehensive statistics about the context assembly process
      * @see ContextStats
      * @see #assembleContext(List, RagQueryRequest)
+     * @see #getContextStats(List, String, ContextConfig)
      */
     public ContextStats getContextStats(List<SourceDocument> documents, String assembledContext) {
         if (documents == null || documents.isEmpty()) {
@@ -308,6 +309,62 @@ public class ContextAssemblyService {
             estimatedTokens,
             averageRelevance,
             maxContextTokens
+        );
+    }
+
+    /**
+     * Generate comprehensive statistics using custom configuration parameters.
+     * 
+     * <p>This method provides the same detailed metrics as {@link #getContextStats(List, String)}
+     * but allows custom configuration to match the exact settings used during context assembly.
+     * This ensures statistical consistency when using {@link #assembleContext(List, RagQueryRequest, ContextConfig)}.</p>
+     * 
+     * <p>This overload addresses the API consistency issue by ensuring statistics use the same
+     * configuration parameters as the context assembly process. This is particularly important
+     * for accurate relevance filtering counts and token limit reporting.</p>
+     * 
+     * <p>Use cases:</p>
+     * <ul>
+     *   <li><strong>Configuration Matching:</strong> Get statistics that match specific assembly config</li>
+     *   <li><strong>A/B Testing:</strong> Compare statistics across different configuration parameters</li>
+     *   <li><strong>Custom Thresholds:</strong> Statistics with non-default relevance thresholds</li>
+     *   <li><strong>Testing:</strong> Predictable statistics for unit tests</li>
+     * </ul>
+     * 
+     * @param documents the original list of retrieved documents
+     * @param assembledContext the final assembled context string
+     * @param config the configuration used for context assembly
+     * @return comprehensive statistics calculated using the provided configuration
+     * @see ContextConfig
+     * @see #assembleContext(List, RagQueryRequest, ContextConfig)
+     * @since 1.1.0
+     */
+    public ContextStats getContextStats(List<SourceDocument> documents, String assembledContext, 
+                                      ContextConfig config) {
+        if (documents == null || documents.isEmpty()) {
+            return new ContextStats(0, 0, 0, 0.0, config != null ? config.maxTokens() : 0);
+        }
+
+        int totalDocuments = documents.size();
+        double thresholdToUse = config != null ? config.relevanceThreshold() : relevanceThreshold;
+        int maxTokensToUse = config != null ? config.maxTokens() : maxContextTokens;
+        
+        int relevantDocuments = (int) documents.stream()
+            .filter(doc -> doc.relevanceScore() >= thresholdToUse)
+            .count();
+        
+        int estimatedTokens = estimateTokenCount(assembledContext);
+        double averageRelevance = documents.stream()
+            .mapToDouble(SourceDocument::relevanceScore)
+            .average()
+            .orElse(0.0);
+
+        return new ContextStats(
+            totalDocuments,
+            relevantDocuments,
+            estimatedTokens,
+            averageRelevance,
+            maxTokensToUse
         );
     }
 

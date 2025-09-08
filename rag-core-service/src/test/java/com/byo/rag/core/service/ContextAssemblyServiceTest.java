@@ -9,14 +9,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+// Removed ReflectionTestUtils - violates testing best practices
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for ContextAssemblyService following enterprise testing best practices.
@@ -44,13 +43,7 @@ class ContextAssemblyServiceTest {
     @BeforeEach
     void setUp() {
         contextAssemblyService = new ContextAssemblyService();
-        
-        // Set default properties using reflection for tests that don't use ContextConfig
-        // Note: Tests should prefer ContextConfig when testing configuration overrides
-        ReflectionTestUtils.setField(contextAssemblyService, "maxContextTokens", 4000);
-        ReflectionTestUtils.setField(contextAssemblyService, "chunkSeparator", "\\n\\n---\\n\\n");
-        ReflectionTestUtils.setField(contextAssemblyService, "includeMetadata", true);
-        ReflectionTestUtils.setField(contextAssemblyService, "relevanceThreshold", 0.7);
+        // No longer using ReflectionTestUtils - all tests now use public API with ContextConfig
     }
 
     /**
@@ -66,8 +59,9 @@ class ContextAssemblyServiceTest {
     void assembleContext_ValidChunks_ReturnsContext() {
         List<SourceDocument> documents = createMockSourceDocuments();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is Spring AI?");
+        ContextAssemblyService.ContextConfig config = ContextAssemblyService.ContextConfig.defaultConfig();
 
-        String context = contextAssemblyService.assembleContext(documents, request);
+        String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertThat(context)
             .as("Context should not be null or empty")
@@ -91,8 +85,9 @@ class ContextAssemblyServiceTest {
     void assembleContext_EmptyChunks_ReturnsEmptyContext() {
         List<SourceDocument> documents = List.of();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is Spring AI?");
+        ContextAssemblyService.ContextConfig config = ContextAssemblyService.ContextConfig.defaultConfig();
 
-        String context = contextAssemblyService.assembleContext(documents, request);
+        String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertThat(context)
             .as("Empty document list should result in empty context")
@@ -111,8 +106,9 @@ class ContextAssemblyServiceTest {
     @DisplayName("Should return empty context when documents list is null")
     void assembleContext_NullChunks_ReturnsEmptyContext() {
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is Spring AI?");
+        ContextAssemblyService.ContextConfig config = ContextAssemblyService.ContextConfig.defaultConfig();
 
-        String context = contextAssemblyService.assembleContext(null, request);
+        String context = contextAssemblyService.assembleContext(null, request, config);
 
         assertThat(context)
             .as("Null document list should result in empty context")
@@ -174,6 +170,7 @@ class ContextAssemblyServiceTest {
     }
 
     @Test
+    @DisplayName("Should truncate context when content exceeds token limit")
     void assembleContext_MaxLengthLimit_TruncatesContext() {
         // Set a very small max token limit
         int maxTokens = 100;
@@ -184,11 +181,15 @@ class ContextAssemblyServiceTest {
 
         String context = contextAssemblyService.assembleContext(documents, request, config);
 
-        assertNotNull(context);
+        assertThat(context)
+            .as("Context should not be null when processing documents")
+            .isNotNull();
+            
         // Should respect token limits - estimate tokens used
         int estimatedTokens = context.length() / 4; // Service uses 4 chars per token estimation
-        assertTrue(estimatedTokens <= maxTokens, 
-                  "Context should be within token limit. Expected <= " + maxTokens + " tokens, but got " + estimatedTokens + " tokens");
+        assertThat(estimatedTokens)
+            .as("Context should respect token limit of %d tokens, but got %d tokens", maxTokens, estimatedTokens)
+            .isLessThanOrEqualTo(maxTokens);
     }
 
     /**
@@ -204,8 +205,9 @@ class ContextAssemblyServiceTest {
     void assembleContext_MultipleChunks_MaintainsOrder() {
         List<SourceDocument> documents = createOrderedMockSourceDocuments();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "Explain the process");
+        ContextAssemblyService.ContextConfig config = ContextAssemblyService.ContextConfig.defaultConfig();
 
-        String context = contextAssemblyService.assembleContext(documents, request);
+        String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertThat(context)
             .as("Context should not be null for multiple documents")
@@ -238,8 +240,9 @@ class ContextAssemblyServiceTest {
     void assembleContext_LowRelevanceFiltered_ExcludesIrrelevantChunks() {
         List<SourceDocument> documents = createMockSourceDocumentsWithDifferentScores();
         RagQueryRequest request = RagQueryRequest.simple(UUID.randomUUID(), "What is important?");
+        ContextAssemblyService.ContextConfig config = ContextAssemblyService.ContextConfig.defaultConfig();
 
-        String context = contextAssemblyService.assembleContext(documents, request);
+        String context = contextAssemblyService.assembleContext(documents, request, config);
 
         assertThat(context)
             .as("Context should not be null when filtering by relevance")
@@ -293,14 +296,16 @@ class ContextAssemblyServiceTest {
      * 1. Two valid documents with scores 0.95 and 0.87 are provided
      * 2. Both documents meet the default relevance threshold of 0.7
      * 3. Service should calculate accurate document counts, token estimates, and averages
+     * 4. Uses explicit ContextConfig to ensure predictable behavior
      */
     @Test
-    @DisplayName("Should calculate correct statistics for valid documents")
+    @DisplayName("Should calculate correct statistics for valid documents with configuration")
     void getContextStats_ValidDocuments_ReturnsCorrectStats() {
         List<SourceDocument> documents = createMockSourceDocuments();
         String assembledContext = "Test context for statistics";
+        ContextAssemblyService.ContextConfig config = ContextAssemblyService.ContextConfig.defaultConfig();
 
-        ContextAssemblyService.ContextStats stats = contextAssemblyService.getContextStats(documents, assembledContext);
+        ContextAssemblyService.ContextStats stats = contextAssemblyService.getContextStats(documents, assembledContext, config);
 
         assertThat(stats)
             .as("Context stats should not be null")
@@ -309,7 +314,7 @@ class ContextAssemblyServiceTest {
             .as("Total documents should match input count")
             .isEqualTo(2);
         assertThat(stats.relevantDocuments())
-            .as("Both documents have scores >= 0.7, so both should be relevant")
+            .as("Both documents should meet default threshold 0.7 (scores 0.95 and 0.87)")
             .isEqualTo(2);
         assertThat(stats.estimatedTokens())
             .as("Estimated tokens should be positive for non-empty context")
@@ -318,7 +323,7 @@ class ContextAssemblyServiceTest {
             .as("Average relevance should be > 0.8 for scores 0.95 and 0.87")
             .isGreaterThan(0.8);
         assertThat(stats.maxTokenLimit())
-            .as("Max token limit should match default configuration")
+            .as("Max token limit should match config default (4000)")
             .isEqualTo(4000);
     }
 
