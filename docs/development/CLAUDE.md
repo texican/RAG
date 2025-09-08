@@ -363,6 +363,41 @@ byo-rag/
 - **Spring Boot 3.x patterns**: Use latest features (records, virtual threads)
 - **Java 24 compatibility**: Ensure all code works with latest Java versions
 
+## 📋 **Project Management**
+
+### **Completed Stories Management Process** ⭐ **NEW (2025-09-08)**
+
+The project now follows a standardized completed stories management process to track progress and maintain clear documentation:
+
+#### **File Structure Organization**
+- **`docs/project-management/PROJECT_BACKLOG.md`** - Contains ONLY active/pending stories
+- **`docs/project-management/COMPLETED_STORIES.md`** - Archives all completed stories with completion metadata
+- **`docs/development/METHODOLOGY.md`** - Contains story point methodology and completed stories workflow
+- **Main `README.md`** - Contains current project status and testing coverage information
+
+#### **Story Completion Workflow**
+When a story is completed, follow this process:
+
+1. **Verify** all acceptance criteria and definition of done are satisfied
+2. **Move** the completed story from PROJECT_BACKLOG.md to COMPLETED_STORIES.md
+3. **Update** story with completion date and mark acceptance criteria as completed (✅)
+4. **Add** business impact summary to the completed story
+5. **Update** summary section in COMPLETED_STORIES.md with new totals
+6. **Remove** story entirely from the active backlog
+
+#### **Content Organization Rules**
+- **PROJECT_BACKLOG.md** contains ONLY active stories (no methodology, no project status)
+- **Project status information** belongs in README.md
+- **Methodology and best practices** belong in docs/development/METHODOLOGY.md
+- **Testing coverage details** belong in README.md under development status
+- **Completed story archive** belongs exclusively in COMPLETED_STORIES.md
+
+#### **Quality Standards**
+- All completed stories must include business impact summaries
+- Completion dates must be accurate and formatted consistently (YYYY-MM-DD)
+- Story point totals must be recalculated accurately
+- Active backlog must remain focused and actionable
+
 ### 📋 **Important Notes for Future Sessions**
 
 #### Current Implementation Status
@@ -434,6 +469,7 @@ Multi-module Maven project with complete microservices architecture:
 - `CLAUDE.md` - This file: Project instructions and current status
 - `README.md` - Project overview and setup instructions  
 - `DEPLOYMENT.md` - Production deployment documentation
+- `METHODOLOGY.md` - **UPDATED (2025-09-08)**: Development methodology and completed stories management process
 - `TESTING_BEST_PRACTICES.md` - **NEW (2025-09-05)**: Comprehensive testing guidelines, bug prevention measures, and quality assurance standards
 - `ollama-chat/README.md` - **UPDATED (2025-09-05)**: Enhanced Ollama chat frontend with Docker integration, smart model management, and comprehensive error handling
 
@@ -471,6 +507,7 @@ Multi-module Maven project with complete microservices architecture:
 - **When adding .md files** update this section with their intended purpose
 - **Follow TDD religiously** - this project demonstrates enterprise development skills
 - **CRITICAL: Follow TESTING_BEST_PRACTICES.md** - Mandatory guidelines to prevent bugs like the ContextAssemblyService token limiting issue (fixed 2025-09-05)
+- **NEW: Follow completed stories management process** - Use METHODOLOGY.md workflow for moving completed stories and maintaining clean documentation
 - **Security is paramount** - multi-tenant isolation must be perfect
 - **Code quality first** - Address IDE issues systematically before new feature development
 - **Spring AI compatibility** - Keep up with Spring AI milestone releases and API changes

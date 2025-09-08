@@ -323,15 +323,24 @@ public class LLMIntegrationService {
      */
     public boolean isProviderAvailable(String provider) {
         try {
-            // Simple health check by attempting a minimal call
-            String testPrompt = "Hello";
+            // Quick health check with minimal resource usage
+            // Use a very short test prompt to minimize API usage
+            String testPrompt = "Test";
             
             ChatResponse response = chatClient.prompt()
                 .user(testPrompt)
                 .call()
                 .chatResponse();
                 
-            return response != null && response.getResult() != null;
+            boolean available = response != null && 
+                               response.getResult() != null && 
+                               response.getResult().getOutput() != null;
+                               
+            if (available) {
+                logger.debug("Provider {} is available", provider);
+            }
+            
+            return available;
             
         } catch (Exception e) {
             logger.warn("Provider {} is not available: {}", provider, e.getMessage());
@@ -361,12 +370,18 @@ public class LLMIntegrationService {
      * @see #getProviderUsed()
      */
     public Map<String, Object> getProviderStatus() {
+        // Check provider availability with improved detection
+        boolean defaultAvailable = isProviderAvailable(defaultProvider);
+        boolean fallbackAvailable = isProviderAvailable(fallbackProvider);
+        
         return Map.of(
             "defaultProvider", defaultProvider,
             "fallbackProvider", fallbackProvider,
             "lastUsedProvider", lastUsedProvider.get(),
-            "defaultAvailable", isProviderAvailable(defaultProvider),
-            "fallbackAvailable", isProviderAvailable(fallbackProvider)
+            "defaultAvailable", defaultAvailable,
+            "fallbackAvailable", fallbackAvailable,
+            "anyProviderAvailable", defaultAvailable || fallbackAvailable,
+            "statusCheckedAt", java.time.Instant.now().toString()
         );
     }
 

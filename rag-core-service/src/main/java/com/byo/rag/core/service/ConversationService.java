@@ -227,6 +227,7 @@ public class ConversationService {
      * 
      * @param conversationId unique identifier for the conversation to retrieve
      * @return complete conversation object with all exchanges, or null if not found
+     * @throws RagException if retrieval fails due to storage errors
      * @see Conversation
      * @see #getConversationSummary(String)
      * @see #addExchange(String, UUID, String, String, List)
@@ -250,7 +251,7 @@ public class ConversationService {
 
         } catch (Exception e) {
             logger.error("Failed to retrieve conversation: {}", conversationId, e);
-            return null;
+            throw new RagException("Failed to retrieve conversation: " + conversationId, e);
         }
     }
 
@@ -266,14 +267,15 @@ public class ConversationService {
      *   <li><strong>Complete Removal:</strong> Deletes all exchanges, metadata, and conversation data</li>
      *   <li><strong>Immediate Effect:</strong> Conversation is no longer accessible after successful deletion</li>
      *   <li><strong>Privacy Compliance:</strong> Supports GDPR and data retention policies</li>
-     *   <li><strong>Error Handling:</strong> Graceful handling of deletion failures</li>
+     *   <li><strong>Error Handling:</strong> Consistent exception handling for storage errors</li>
      * </ul>
      * 
      * <p>This operation cannot be undone. Ensure appropriate authorization
      * and confirmation before calling this method.</p>
      * 
      * @param conversationId unique identifier of the conversation to delete
-     * @return true if the conversation was successfully deleted, false if it didn't exist or deletion failed
+     * @return true if the conversation was successfully deleted, false if it didn't exist
+     * @throws RagException if deletion fails due to storage errors
      * @see #getConversation(String)
      * @see #cleanupExpiredConversations()
      */
@@ -291,7 +293,7 @@ public class ConversationService {
 
         } catch (Exception e) {
             logger.error("Failed to delete conversation: {}", conversationId, e);
-            return false;
+            throw new RagException("Failed to delete conversation: " + conversationId, e);
         }
     }
 

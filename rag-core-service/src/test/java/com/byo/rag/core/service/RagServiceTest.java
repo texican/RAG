@@ -23,12 +23,25 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for RagService - Core RAG pipeline functionality.
+ * Comprehensive unit tests for RagService - Core RAG pipeline functionality.
+ * 
  * Tests the complete RAG workflow including query optimization, document retrieval,
- * context assembly, LLM integration, and caching.
+ * context assembly, LLM integration, caching, async processing, and statistics.
+ * 
+ * Follows enterprise testing standards from TESTING_BEST_PRACTICES.md:
+ * - Uses public API exclusively (no reflection)
+ * - Clear test intent with @DisplayName annotations
+ * - Realistic test data mimicking production usage
+ * - Descriptive assertions with business context
+ * - Comprehensive edge case and error handling validation
+ * 
+ * @see com.byo.rag.core.service.RagService
+ * @author BYO RAG Development Team
+ * @version 1.0
+ * @since 2025-09-09
  */
 @ExtendWith(MockitoExtension.class)
-class RagServiceUnitTest {
+class RagServiceTest {
 
     @Mock
     private EmbeddingServiceClient embeddingServiceClient;
@@ -74,8 +87,23 @@ class RagServiceUnitTest {
      * 
      * Tests the primary happy path through the entire RAG pipeline.
      */
+    /**
+     * Validates the complete RAG processing pipeline with successful flow.
+     * 
+     * This test ensures that:
+     * 1. Query optimization service enhances the user query
+     * 2. Cache check is performed and returns null (cache miss)
+     * 3. Embedding service successfully retrieves similar documents
+     * 4. Context assembly service creates coherent context from documents
+     * 5. LLM integration service generates appropriate response
+     * 6. Response is cached for future requests
+     * 7. Final RagQueryResponse contains all expected components
+     * 
+     * Tests the primary happy path through the entire RAG pipeline following
+     * TESTING_BEST_PRACTICES.md guidelines for business logic validation.
+     */
     @Test
-    @DisplayName("should complete full RAG pipeline and return valid response")
+    @DisplayName("Should complete full RAG pipeline and return valid response")
     void processQuery_SuccessfulFlow_ReturnsValidResponse() {
         // Arrange
         String optimizedQuery = "enhanced: What is Spring AI?";
@@ -132,7 +160,18 @@ class RagServiceUnitTest {
         verify(llmIntegrationService).generateResponse(eq(optimizedQuery), eq(assembledContext), any(RagQueryRequest.class));
     }
 
+    /**
+     * Validates cache hit behavior in RAG pipeline.
+     * 
+     * Ensures that when a cached response exists:
+     * 1. No downstream services are called (efficiency)
+     * 2. Cached response is returned immediately
+     * 3. Response maintains proper format and status
+     * 
+     * This test validates caching optimization for performance.
+     */
     @Test
+    @DisplayName("Should return cached response when cache hit occurs")
     void processQuery_CacheHit_ReturnsCachedResponse() {
         // Arrange
         RagResponse cachedRagResponse = new RagResponse(
@@ -160,7 +199,18 @@ class RagServiceUnitTest {
         verify(llmIntegrationService, never()).generateResponse(anyString(), anyString(), any(RagQueryRequest.class));
     }
 
+    /**
+     * Validates handling when no relevant documents are found.
+     * 
+     * Tests that when embedding service returns empty results:
+     * 1. Status is set to "EMPTY" appropriately
+     * 2. Sources list is empty as expected
+     * 3. Context assembly is never called (no documents to assemble)
+     * 
+     * This validates graceful handling of queries with no relevant content.
+     */
     @Test
+    @DisplayName("Should handle empty search results gracefully")
     void processQuery_NoDocumentsFound_ReturnsAppropriateResponse() {
         // Arrange
         RagQueryRequest optimizedRequest = RagQueryRequest.simple(testRequest.tenantId(), "optimized query");
@@ -193,7 +243,19 @@ class RagServiceUnitTest {
         verify(contextAssemblyService, never()).assembleContext(anyList(), any(RagQueryRequest.class));
     }
 
+    /**
+     * Validates error handling when LLM service fails.
+     * 
+     * Tests that when LLM integration throws exceptions:
+     * 1. Error is caught and handled gracefully
+     * 2. Response status is set to "FAILED"
+     * 3. Error message is included in response
+     * 4. Partial processing results are maintained
+     * 
+     * This ensures system resilience when external services fail.
+     */
     @Test
+    @DisplayName("Should handle LLM service failures gracefully")
     void processQuery_LLMFailure_HandlesGracefully() {
         // Arrange
         RagQueryRequest optimizedRequest = RagQueryRequest.simple(testRequest.tenantId(), "optimized query");
@@ -232,7 +294,18 @@ class RagServiceUnitTest {
         verify(contextAssemblyService).assembleContext(anyList(), any(RagQueryRequest.class));
     }
 
+    /**
+     * Validates input validation for null requests.
+     * 
+     * Ensures that:
+     * 1. Null request throws appropriate exception
+     * 2. No processing occurs with invalid input
+     * 3. System maintains defensive programming standards
+     * 
+     * This validates proper input validation and defensive coding.
+     */
     @Test
+    @DisplayName("Should throw exception for null request")
     void processQuery_NullRequest_ThrowsException() {
         // Act & Assert
         assertThrows(NullPointerException.class, () -> ragService.processQuery(null));
@@ -241,7 +314,18 @@ class RagServiceUnitTest {
         verifyNoInteractions(queryOptimizationService, embeddingServiceClient, llmIntegrationService);
     }
 
+    /**
+     * Validates handling of empty query strings.
+     * 
+     * Tests that empty queries are processed appropriately:
+     * 1. Query optimization still occurs
+     * 2. Empty search results are handled
+     * 3. Status reflects no content found
+     * 
+     * This ensures robustness with edge case inputs.
+     */
     @Test
+    @DisplayName("Should handle empty query strings gracefully")
     void processQuery_EmptyQuery_HandlesGracefully() {
         // Arrange
         RagQueryRequest emptyQueryRequest = new RagQueryRequest(
@@ -279,7 +363,18 @@ class RagServiceUnitTest {
         assertTrue(response.sources().isEmpty());
     }
 
+    /**
+     * Validates tenant isolation requirements.
+     * 
+     * Ensures that:
+     * 1. Null tenant ID is rejected immediately
+     * 2. Multi-tenant security is maintained
+     * 3. Proper validation occurs before processing
+     * 
+     * This validates critical multi-tenant security requirements.
+     */
     @Test
+    @DisplayName("Should reject null tenant ID for security")
     void processQuery_NullTenantId_ThrowsException() {
         // Arrange
         RagQueryRequest nullTenantRequest = new RagQueryRequest(
@@ -297,7 +392,76 @@ class RagServiceUnitTest {
         assertThrows(NullPointerException.class, () -> ragService.processQuery(nullTenantRequest));
     }
 
+    /**
+     * Validates asynchronous query processing capability.
+     * 
+     * Tests that:
+     * 1. Async method returns non-null CompletableFuture
+     * 2. Future can be completed successfully
+     * 3. Result contains expected response format
+     * 
+     * This validates async processing capabilities for high-throughput scenarios.
+     */
     @Test
+    @DisplayName("Should process queries asynchronously via CompletableFuture")
+    void processQueryAsync_ReturnsCompletableFuture() {
+        // Arrange
+        when(queryOptimizationService.optimizeQuery(any())).thenReturn(testRequest);
+        when(cacheService.getResponse(anyString())).thenReturn(null);
+        
+        EmbeddingServiceClient.SearchResponse emptyResponse = new EmbeddingServiceClient.SearchResponse(
+            testRequest.tenantId(), "query", "model", Collections.emptyList(), 
+            0, 0.0, 100L, Instant.now().toString()
+        );
+        when(embeddingServiceClient.search(any(EmbeddingServiceClient.SearchRequest.class), any(UUID.class))).thenReturn(emptyResponse);
+        
+        // Act & Assert
+        assertDoesNotThrow(() -> {
+            var future = ragService.processQueryAsync(testRequest);
+            assertNotNull(future);
+            var result = future.join(); // This will complete synchronously in test
+            assertNotNull(result);
+        });
+    }
+
+    /**
+     * Validates statistics retrieval functionality.
+     * 
+     * Tests that:
+     * 1. Statistics are returned for valid tenant
+     * 2. Default values are appropriate (zeros)
+     * 3. All metrics are properly initialized
+     * 
+     * This validates monitoring and analytics capabilities.
+     */
+    @Test
+    @DisplayName("Should return initialized statistics for tenant")
+    void getStats_ReturnsDefaultStats() {
+        // Act
+        RagService.RagStats stats = ragService.getStats(tenantId.toString());
+        
+        // Assert
+        assertNotNull(stats);
+        assertEquals(0L, stats.totalQueries());
+        assertEquals(0L, stats.successfulQueries());
+        assertEquals(0L, stats.cachedQueries());
+        assertEquals(0.0, stats.averageResponseTimeMs());
+        assertEquals(0.0, stats.averageRelevanceScore());
+    }
+
+    /**
+     * Validates conversation context integration.
+     * 
+     * Tests that when conversation ID is provided:
+     * 1. Conversation context is retrieved and used
+     * 2. Query optimization includes conversation history
+     * 3. Response is added to conversation history
+     * 4. Context assembly includes conversational context
+     * 
+     * This validates conversational AI capabilities and context continuity.
+     */
+    @Test
+    @DisplayName("Should integrate conversation history for contextual responses")
     void processQuery_WithConversationHistory_IncludesContext() {
         // Arrange
         String conversationContext = "Previous conversation context...";
