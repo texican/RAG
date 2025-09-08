@@ -1,0 +1,42 @@
+# Test configuration for VectorSearchService tests
+spring:
+    
+  # H2 in-memory database for tests
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: test
+    password: test
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+    
+  # Embedded Redis for tests
+  data:
+    redis:
+      host: localhost
+      port: 6370  # Different port to avoid conflicts
+      
+  # Disable Kafka for tests
+  kafka:
+    bootstrap-servers: localhost:9093
+    
+# Disable AI providers for tests
+spring.ai:
+  openai:
+    api-key: test-key
+    chat:
+      enabled: false
+  ollama:
+    chat:
+      enabled: false
+
+# Test-specific logging
+logging:
+  level:
+    com.byo.rag: DEBUG
+    org.springframework: WARN
+    org.testcontainers: INFO

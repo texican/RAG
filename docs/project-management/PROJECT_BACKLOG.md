@@ -1,10 +1,11 @@
 # BYO RAG System - Task Backlog (Story Point Anchoring Method)
 
-> **📊 Project Status (2025-09-08)**: **TESTING AUDIT COMPLETE** 🎯
+> **📊 Project Status (2025-09-08)**: **TESTING AUDIT & TODO ANALYSIS COMPLETE** 🎯
 > - **All 6 microservices operational** in Docker with full system integration
 > - **Testing gaps identified** across all modules with comprehensive audit
-> - **10 backlog stories generated** for testing coverage improvements (76 story points)
-> - **Next focus**: Implement prioritized testing improvements and production readiness
+> - **14 TODO-based backlog stories generated** for infrastructure improvements (94 story points)
+> - **10 testing backlog stories generated** for coverage improvements (76 story points)
+> - **Next focus**: Critical infrastructure fixes (vector search, error handling) and testing improvements
 
 > **Task Sizing Philosophy:** Following industry-standard story point anchoring:
 > - **Pebbles (1-3 points)**: Small, focused tasks (1-2 days)
@@ -23,6 +24,110 @@
 - 🚫 **Missing Types**: No performance testing, limited integration tests, no contract testing
 
 **Generated Testing Backlog Stories (76 Story Points Total):**
+
+### **VECTOR-001: Implement Production Vector Search Infrastructure** ⭐ **CRITICAL**
+**Epic:** Core Search Infrastructure  
+**Story Points:** 13  
+**Priority:** High (Core functionality)  
+**Dependencies:** None
+
+**Context:**
+Core vector search functionality is currently mocked and needs proper implementation with Redis Stack or dedicated vector database for production-grade similarity search.
+
+**Location:** `rag-core-service/src/main/java/com/byo/rag/core/service/VectorSearchService.java:57,66,71`
+
+**Acceptance Criteria:**
+- Replace mock `performVectorSearch()` with actual Redis Stack RediSearch implementation
+- Implement `indexDocumentVectors()` for proper vector indexing 
+- Add `isVectorSearchAvailable()` health check with Redis connectivity validation
+- Configure vector similarity search with cosine similarity scoring
+- Add performance benchmarks for vector operations
+
+**Definition of Done:**
+- [ ] Redis Stack RediSearch integration implemented
+- [ ] Vector indexing functionality working
+- [ ] Health checks for vector search availability
+- [ ] Performance benchmarks established for search operations
+
+---
+
+### **ERROR-001: Implement Kafka Error Handling and Retry Logic** ⭐ **CRITICAL**
+**Epic:** System Reliability  
+**Story Points:** 8  
+**Priority:** High (System reliability)  
+**Dependencies:** None
+
+**Context:**
+Embedding service Kafka consumers lack proper error handling, which could lead to lost document processing requests and system instability.
+
+**Location:** `rag-embedding-service/src/main/java/com/byo/rag/embedding/service/EmbeddingKafkaService.java:71`
+
+**Acceptance Criteria:**
+- Implement retry mechanism with exponential backoff for failed embedding operations
+- Add failure notification system to alert administrators of persistent failures
+- Create dead letter queue for messages that consistently fail processing
+- Add comprehensive logging for failure scenarios with context
+- Implement circuit breaker pattern for downstream service failures
+
+**Definition of Done:**
+- [ ] Retry logic with exponential backoff implemented
+- [ ] Dead letter queue configured for persistent failures
+- [ ] Failure notification system operational  
+- [ ] Circuit breaker pattern implemented
+
+---
+
+### **DOCID-001: Implement Document ID Management System** ⭐ **HIGH IMPACT**
+**Epic:** Data Integrity  
+**Story Points:** 5  
+**Priority:** High (Data integrity)  
+**Dependencies:** None
+
+**Context:**
+Vector storage service uses random UUIDs instead of actual document IDs, breaking the relationship between embeddings and source documents.
+
+**Location:** `rag-embedding-service/src/main/java/com/byo/rag/embedding/service/VectorStorageService.java:139`
+
+**Acceptance Criteria:**
+- Replace `UUID.randomUUID()` with actual document ID retrieval from document context
+- Ensure proper document-embedding relationship integrity in database
+- Add validation to verify document existence before creating embeddings
+- Implement document ID tracking across the entire embedding pipeline
+- Add referential integrity constraints between documents and embeddings
+
+**Definition of Done:**
+- [ ] Actual document IDs retrieved and used for embeddings
+- [ ] Document-embedding relationship integrity validated
+- [ ] Document existence validation implemented
+- [ ] Referential integrity constraints added
+
+---
+
+### **HEALTH-001: Implement Comprehensive Health Check Infrastructure** ⭐ **CRITICAL**  
+**Epic:** System Monitoring  
+**Story Points:** 8  
+**Priority:** High (Operations)  
+**Dependencies:** None
+
+**Context:**
+RAG controller health endpoints use hardcoded `true` values instead of actual service health checks, preventing proper system monitoring.
+
+**Location:** `rag-core-service/src/main/java/com/byo/rag/core/controller/RagController.java:404,406`
+
+**Acceptance Criteria:**
+- Implement actual embedding service health check with HTTP connectivity test
+- Add Redis health check with connection pooling status validation
+- Create comprehensive health check for all external dependencies
+- Implement health check aggregation with detailed status reporting
+- Add health check caching to prevent overwhelming downstream services
+
+**Definition of Done:**
+- [ ] Actual embedding service health check implemented
+- [ ] Redis connectivity health check working
+- [ ] Comprehensive dependency health checks added
+- [ ] Health check aggregation and reporting functional
+
+---
 
 ### **AUTH-TEST-001: Complete Auth Service Unit Tests** ⭐ **CRITICAL**
 **Epic:** Testing & Quality  
@@ -125,6 +230,32 @@ Integration tests exist for document processing but missing complete system work
 - [ ] Performance benchmarks established
 
 ## HIGH PRIORITY TASKS (Week 1-2)
+
+### **SEARCH-001: Implement Hybrid Search with Keyword Fusion**
+**Epic:** Search Enhancement  
+**Story Points:** 13  
+**Priority:** High (User experience)  
+**Dependencies:** VECTOR-001
+
+**Context:**
+Similarity search service lacks hybrid search capabilities, limiting search effectiveness to pure vector similarity without keyword matching.
+
+**Location:** `rag-embedding-service/src/main/java/com/byo/rag/embedding/service/SimilaritySearchService.java:107`
+
+**Acceptance Criteria:**
+- Implement keyword search functionality using full-text search
+- Create result fusion algorithm combining vector and keyword scores
+- Add configurable weighting between vector and keyword search results
+- Implement query preprocessing for optimal search performance
+- Add search analytics to track hybrid vs. pure vector performance
+
+**Definition of Done:**
+- [ ] Keyword search functionality implemented
+- [ ] Result fusion algorithm working with configurable weights
+- [ ] Query preprocessing optimized
+- [ ] Search analytics tracking implemented
+
+---
 
 ### **✅ DOCKER-001: Docker System Integration - COMPLETED (2025-09-05)**
 **Epic:** Docker System Integration  
@@ -250,6 +381,84 @@ Create tests for multi-tenant isolation and authentication/authorization.
 ---
 
 ## MEDIUM PRIORITY TASKS (Testing Infrastructure - Week 2-3)
+
+### **SIMILARITY-001: Document-to-Document Similarity Search**
+**Epic:** Search Enhancement  
+**Story Points:** 8  
+**Priority:** Medium (Feature enhancement)  
+**Dependencies:** SEARCH-001
+
+**Context:**
+Missing document similarity search functionality prevents users from finding related documents based on content similarity.
+
+**Location:** `rag-embedding-service/src/main/java/com/byo/rag/embedding/service/SimilaritySearchService.java:136`
+
+**Acceptance Criteria:**
+- Implement document-to-document similarity algorithm using vector comparisons
+- Add similarity threshold configuration for filtering results
+- Create API endpoint for document similarity requests
+- Implement batch similarity processing for multiple documents
+- Add similarity caching for frequently compared documents
+
+**Definition of Done:**
+- [ ] Document similarity algorithm implemented
+- [ ] Configurable similarity thresholds working
+- [ ] API endpoints for document similarity functional
+- [ ] Batch processing and caching implemented
+
+---
+
+### **MODEL-001: Dynamic Embedding Model Registry**
+**Epic:** Configuration Management  
+**Story Points:** 13  
+**Priority:** Medium (Flexibility)  
+**Dependencies:** None
+
+**Context:**
+Embedding controller returns hardcoded available models instead of dynamically discovering registered models.
+
+**Location:** `rag-embedding-service/src/main/java/com/byo/rag/embedding/controller/EmbeddingController.java:371`
+
+**Acceptance Criteria:**
+- Create model registry service with database persistence
+- Implement dynamic model discovery and availability checking  
+- Add model configuration management (parameters, capabilities)
+- Create administrative interface for model management
+- Implement model performance monitoring and selection
+
+**Definition of Done:**
+- [ ] Model registry service implemented with persistence
+- [ ] Dynamic model discovery working
+- [ ] Model configuration management functional
+- [ ] Administrative interface operational
+
+---
+
+### **CACHE-001: Pattern-Based Cache Invalidation System**
+**Epic:** Performance Optimization  
+**Story Points:** 8  
+**Priority:** Medium (Performance)  
+**Dependencies:** None
+
+**Context:**
+Cache service lacks pattern-based invalidation, making it difficult to efficiently clear related cache entries.
+
+**Location:** `rag-core-service/src/main/java/com/byo/rag/core/service/CacheService.java:163,166`
+
+**Acceptance Criteria:**
+- Implement pattern matching for cache key invalidation (wildcards, regex)
+- Add bulk invalidation functionality for efficiency
+- Create cache management API with pattern-based operations
+- Add cache analytics and monitoring for invalidation patterns
+- Implement cache warming strategies for frequently accessed data
+
+**Definition of Done:**
+- [ ] Pattern matching for cache keys implemented
+- [ ] Bulk invalidation functionality working
+- [ ] Cache management API operational
+- [ ] Analytics and monitoring for cache patterns functional
+
+---
 
 ### **EMBEDDING-TEST-003: Embedding Service Advanced Scenarios**
 **Epic:** Testing & Quality  
@@ -1676,6 +1885,162 @@ Implement comprehensive monitoring and observability using Prometheus and Grafan
 
 ## LOW PRIORITY TASKS (Week 3-4+)
 
+### **RECOMMEND-001: Search Recommendations System**
+**Epic:** User Experience  
+**Story Points:** 21  
+**Priority:** Medium (Advanced feature)  
+**Dependencies:** SIMILARITY-001
+
+**Context:**
+No recommendation system exists to help users discover relevant content based on search patterns and document relationships.
+
+**Location:** `rag-embedding-service/src/main/java/com/byo/rag/embedding/service/SimilaritySearchService.java:160`
+
+**Acceptance Criteria:**
+- Implement recommendation algorithm based on user search history
+- Add content-based recommendations using document similarity
+- Create collaborative filtering for cross-tenant recommendations (privacy-preserved)
+- Implement real-time recommendation updates
+- Add recommendation quality metrics and A/B testing framework
+
+**Definition of Done:**
+- [ ] Search history-based recommendations implemented
+- [ ] Content-based recommendation engine working
+- [ ] Real-time recommendation updates functional
+- [ ] Quality metrics and A/B testing framework operational
+
+---
+
+### **ANALYTICS-001: Comprehensive RAG Statistics System**
+**Epic:** Business Intelligence  
+**Story Points:** 13  
+**Priority:** Medium (Analytics)  
+**Dependencies:** None
+
+**Context:**
+RAG service lacks comprehensive statistics gathering, preventing performance analysis and usage monitoring.
+
+**Location:** `rag-core-service/src/main/java/com/byo/rag/core/service/RagService.java:240`
+
+**Acceptance Criteria:**
+- Implement query performance metrics (response time, accuracy scores)
+- Add usage pattern analytics (popular queries, document access patterns)
+- Create response quality tracking with user feedback integration
+- Implement cost analysis per tenant and per query
+- Add predictive analytics for capacity planning
+
+**Definition of Done:**
+- [ ] Query performance metrics implemented
+- [ ] Usage pattern analytics working
+- [ ] Response quality tracking functional
+- [ ] Cost analysis and predictive analytics operational
+
+---
+
+### **TENANT-001: Enhanced Tenant Management**
+**Epic:** Multi-Tenancy  
+**Story Points:** 5  
+**Priority:** Low (Enhancement)  
+**Dependencies:** None
+
+**Context:**
+Admin service returns hardcoded document count instead of actual tenant usage statistics.
+
+**Location:** `rag-admin-service/src/main/java/com/byo/rag/admin/service/TenantServiceImpl.java:451`
+
+**Acceptance Criteria:**
+- Implement real-time document count retrieval from document repository
+- Add comprehensive tenant usage analytics (storage, queries, performance)
+- Create tenant usage dashboards and reporting
+- Implement tenant quota management and enforcement
+- Add tenant cost allocation and billing integration
+
+**Definition of Done:**
+- [ ] Real-time document counting implemented
+- [ ] Comprehensive usage analytics working
+- [ ] Usage dashboards and reporting functional
+- [ ] Quota management and cost allocation operational
+
+---
+
+### **PROMPT-001: Tenant-Specific Prompt Management**
+**Epic:** Multi-Tenancy  
+**Story Points:** 13  
+**Priority:** Low (Advanced feature)  
+**Dependencies:** None
+
+**Context:**
+LLM integration service lacks tenant-specific prompt storage and retrieval capabilities.
+
+**Location:** `rag-core-service/src/main/java/com/byo/rag/core/service/LLMIntegrationService.java:445`
+
+**Acceptance Criteria:**
+- Create tenant-specific prompt storage system with versioning
+- Implement prompt template management with inheritance
+- Add prompt performance analytics per tenant
+- Create prompt testing and validation framework
+- Implement prompt rollback and audit trail functionality
+
+**Definition of Done:**
+- [ ] Tenant prompt storage system implemented
+- [ ] Template management with versioning working
+- [ ] Performance analytics and testing framework functional
+- [ ] Audit trail and rollback capabilities operational
+
+---
+
+### **TRACKING-001: Embedding Model Usage Tracking**
+**Epic:** Analytics  
+**Story Points:** 5  
+**Priority:** Low (Analytics)  
+**Dependencies:** MODEL-001
+
+**Context:**
+RAG service uses hardcoded "default" embedding model name instead of tracking actual models used.
+
+**Location:** `rag-core-service/src/main/java/com/byo/rag/core/service/RagService.java:167`
+
+**Acceptance Criteria:**
+- Track actual embedding model used for each document and query
+- Implement model usage statistics and reporting
+- Add model performance comparison analytics
+- Create model cost tracking and optimization recommendations
+- Implement model A/B testing for quality improvement
+
+**Definition of Done:**
+- [ ] Actual embedding model tracking implemented
+- [ ] Usage statistics and reporting working
+- [ ] Performance comparison analytics functional
+- [ ] Cost tracking and A/B testing operational
+
+---
+
+### **TEST-001: Infrastructure Test Documentation Cleanup**
+**Epic:** Code Quality  
+**Story Points:** 3  
+**Priority:** Low (Technical debt)  
+**Dependencies:** None
+
+**Context:**
+Infrastructure validation tests contain unclear configuration requirements that need documentation or refactoring.
+
+**Location:** `rag-shared/src/test/java/com/byo/rag/shared/InfrastructureValidationTest.java:41,60,81,91`
+
+**Acceptance Criteria:**
+- Document the purpose of specific configuration lines in test setup
+- Refactor unnecessary configuration if identified
+- Add comprehensive test documentation and comments
+- Create test setup best practices documentation
+- Ensure test reliability and maintainability
+
+**Definition of Done:**
+- [ ] Configuration lines documented with clear purpose
+- [ ] Unnecessary configuration removed if applicable
+- [ ] Comprehensive test documentation added
+- [ ] Test reliability and maintainability ensured
+
+---
+
 ### **SECURITY-001: Implement enhanced RBAC and comprehensive audit logging**
 **Epic:** Security Enhancement  
 **Story Points:** 13  
@@ -1843,11 +2208,17 @@ Implement comprehensive CI/CD pipeline for automated testing, building, and depl
 ## Task Execution Summary
 
 ### **Story Point Distribution After Anchoring:**
-- **Total Tasks**: 78 tasks (includes 6 ollama-chat stories: **1 completed** + 5 remaining enhancements)
-- **Pebbles (1-3 points)**: 74 tasks - Small, focused work (1-2 days each)  
-- **Rocks (5-8 points)**: 4 legacy tasks - Will be broken down in future iterations
-- **Boulders (13+ points)**: 0 tasks - All large epics properly decomposed
+- **Total Tasks**: 92 tasks (includes 6 ollama-chat stories + 14 TODO-based stories)
+- **Pebbles (1-3 points)**: 76 tasks - Small, focused work (1-2 days each)  
+- **Rocks (5-8 points)**: 9 tasks - Medium anchor stories (3-5 days each)
+- **Boulders (13+ points)**: 7 tasks - Large epics requiring careful breakdown
 - **✅ COMPLETED**: OLLAMA-CHAT-000 (2 points) - Enhanced chat frontend with Docker integration
+
+### **TODO-Based Story Integration (94 Additional Story Points):**
+- **🔥 Critical Priority**: 4 stories (34 points) - Infrastructure gaps requiring immediate attention
+- **📈 High Priority**: 1 story (13 points) - Advanced search functionality
+- **⚖️ Medium Priority**: 3 stories (29 points) - Configuration and performance improvements  
+- **📋 Low Priority**: 6 stories (59 points) - Feature enhancements and technical debt
 
 ### **Benefits of Anchoring Methodology:**
 1. **Sprint Planning**: Each service area now has 4-6 related tasks forming natural sprints
