@@ -85,6 +85,44 @@ kafka:
     embedding-generation: embedding-generation
     embedding-complete: embedding-complete
     vector-search: vector-search
+    dead-letter-queue: embedding-dlq
+    failure-alerts: failure-alerts
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      embeddingService:
+        register-health-indicator: true
+        event-consumer-buffer-size: 10
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 5
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 20
+        sliding-window-type: COUNT_BASED
+      kafka:
+        register-health-indicator: true
+        event-consumer-buffer-size: 10
+        failure-rate-threshold: 60
+        minimum-number-of-calls: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 2
+        sliding-window-size: 10
+        sliding-window-type: COUNT_BASED
+  retry:
+    instances:
+      embeddingGeneration:
+        max-attempts: 3
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.lang.RuntimeException
+          - org.springframework.ai.retry.TransientAiException
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
 
 # Monitoring Configuration
 management:

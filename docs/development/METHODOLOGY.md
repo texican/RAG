@@ -46,6 +46,8 @@ The project maintains a clear separation between active and completed work throu
 
 ### Completed Stories Workflow
 
+⚠️ **CRITICAL**: Before making any backlog changes, follow the comprehensive safety procedures in [`BACKLOG_MANAGEMENT_PROCESS.md`](../project-management/BACKLOG_MANAGEMENT_PROCESS.md) to prevent story loss.
+
 When a story is marked as completed, follow this standardized process:
 
 #### 1. Story Completion Verification
