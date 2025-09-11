@@ -10,14 +10,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -89,8 +88,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.createTenant(validCreateRequest);
 
         // Then
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(mockTenantResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant creation should return HTTP 201 Created for valid request data")
+            .isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain the created tenant data")
+            .isEqualTo(mockTenantResponse);
         verify(tenantService).createTenant(validCreateRequest);
     }
 
@@ -105,8 +108,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.getTenant(tenantId);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockTenantResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant retrieval should return HTTP 200 OK for existing tenant")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain the retrieved tenant data")
+            .isEqualTo(mockTenantResponse);
         verify(tenantService).getTenantById(tenantId);
     }
 
@@ -133,8 +140,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.updateTenant(tenantId, validUpdateRequest);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(updatedResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant update should return HTTP 200 OK for valid update data")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain the updated tenant data")
+            .isEqualTo(updatedResponse);
         verify(tenantService).updateTenant(tenantId, validUpdateRequest);
     }
 
@@ -148,8 +159,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantListResponse> response = controller.getAllTenants(0, 10, "createdAt,desc");
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockListResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant listing should return HTTP 200 OK with default pagination")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain paginated tenant list")
+            .isEqualTo(mockListResponse);
         verify(tenantService).getAllTenants(any(PageRequest.class));
     }
 
@@ -166,8 +181,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantListResponse> response = controller.getAllTenants(page, size, sort);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockListResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant listing should return HTTP 200 OK with custom pagination")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain paginated tenant list with custom parameters")
+            .isEqualTo(mockListResponse);
         verify(tenantService).getAllTenants(any(PageRequest.class));
     }
 
@@ -194,8 +213,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.suspendTenant(tenantId, validSuspendRequest);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(suspendedResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant suspension should return HTTP 200 OK for valid suspension request")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain suspended tenant data with SUSPENDED status")
+            .isEqualTo(suspendedResponse);
         verify(tenantService).suspendTenant(tenantId, validSuspendRequest);
     }
 
@@ -222,8 +245,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.reactivateTenant(tenantId);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(reactivatedResponse, response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant reactivation should return HTTP 200 OK for valid reactivation")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain reactivated tenant data with ACTIVE status")
+            .isEqualTo(reactivatedResponse);
         verify(tenantService).reactivateTenant(tenantId);
     }
 
@@ -238,8 +265,12 @@ class TenantManagementControllerTest {
         ResponseEntity<Void> response = controller.deleteTenant(tenantId);
 
         // Then
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        assertNull(response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Tenant deletion should return HTTP 204 No Content for successful deletion")
+            .isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(response.getBody())
+            .describedAs("Response body should be null for successful deletion")
+            .isNull();
         verify(tenantService).deleteTenant(tenantId);
     }
 
@@ -253,8 +284,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.createTenant(validCreateRequest);
 
         // Then
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNull(response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Create should return HTTP 201 Created even with null service response")
+            .isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody())
+            .describedAs("Response body should be null when service returns null")
+            .isNull();
         verify(tenantService).createTenant(validCreateRequest);
     }
 
@@ -269,8 +304,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.getTenant(tenantId);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNull(response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Get should return HTTP 200 OK even with null service response")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should be null when service returns null")
+            .isNull();
         verify(tenantService).getTenantById(tenantId);
     }
 
@@ -285,8 +324,12 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantResponse> response = controller.updateTenant(tenantId, validUpdateRequest);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNull(response.getBody());
+        assertThat(response.getStatusCode())
+            .describedAs("Update should return HTTP 200 OK even with null service response")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should be null when service returns null")
+            .isNull();
         verify(tenantService).updateTenant(tenantId, validUpdateRequest);
     }
 
@@ -307,8 +350,18 @@ class TenantManagementControllerTest {
         ResponseEntity<TenantListResponse> response = controller.getAllTenants(0, 10, "createdAt,desc");
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(emptyResponse, response.getBody());
-        assertTrue(response.getBody().tenants().isEmpty());
+        assertThat(response.getStatusCode())
+            .describedAs("Empty list should return HTTP 200 OK with empty results")
+            .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .describedAs("Response body should contain empty list response")
+            .isEqualTo(emptyResponse);
+        TenantListResponse responseBody = response.getBody();
+        assertThat(responseBody)
+            .describedAs("Response body should not be null even for empty list")
+            .isNotNull();
+        assertThat(responseBody.tenants())
+            .describedAs("Tenant list should be empty when no tenants exist")
+            .isEmpty();
     }
 }

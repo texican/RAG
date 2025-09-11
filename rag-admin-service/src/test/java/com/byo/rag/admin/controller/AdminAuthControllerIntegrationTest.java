@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestSecurityConfig.class})
+@Import({TestSecurityConfig.class, TestDataConfig.class})
 @DisplayName("AdminAuthController Integration Tests")
 class AdminAuthControllerIntegrationTest {
 
@@ -49,14 +49,14 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validUsername, validPassword);
 
-        mockMvc.perform(post("/admin/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.username").value(validUsername))
                 .andExpect(jsonPath("$.roles").isArray())
-                .andExpect(jsonPath("$.roles[0]").value("SUPER_ADMIN"))
+                .andExpect(jsonPath("$.roles[0]").value("ADMIN"))
                 .andExpect(jsonPath("$.expiresIn").isNumber());
     }
 
@@ -70,7 +70,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validUsername);
 
-        mockMvc.perform(post("/admin/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isUnauthorized())
@@ -87,7 +87,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validPassword);
 
-        mockMvc.perform(post("/admin/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isBadRequest())
@@ -104,7 +104,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validUsername);
 
-        mockMvc.perform(post("/admin/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isBadRequest())
@@ -123,7 +123,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validUsername, validPassword);
 
-        String loginResponse = mockMvc.perform(post("/admin/api/auth/login")
+        String loginResponse = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isOk())
@@ -139,7 +139,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(token);
 
-        mockMvc.perform(post("/admin/api/auth/refresh")
+        mockMvc.perform(post("/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(refreshRequest))
                 .andExpect(status().isOk())
@@ -159,7 +159,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(invalidToken);
 
-        mockMvc.perform(post("/admin/api/auth/refresh")
+        mockMvc.perform(post("/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(refreshRequest))
                 .andExpect(status().isUnauthorized())
@@ -178,7 +178,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validUsername, validPassword);
 
-        String loginResponse = mockMvc.perform(post("/admin/api/auth/login")
+        String loginResponse = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isOk())
@@ -188,7 +188,7 @@ class AdminAuthControllerIntegrationTest {
 
         String token = objectMapper.readTree(loginResponse).get("token").asText();
 
-        mockMvc.perform(post("/admin/api/auth/logout")
+        mockMvc.perform(post("/auth/logout")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Logged out successfully"));
@@ -197,7 +197,7 @@ class AdminAuthControllerIntegrationTest {
     @Test
     @DisplayName("Should validate admin user exists")
     void shouldValidateAdminUserExists() throws Exception {
-        mockMvc.perform(get("/admin/api/auth/validate")
+        mockMvc.perform(get("/auth/validate")
                         .param("username", validUsername))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.exists").value(true))
@@ -209,7 +209,7 @@ class AdminAuthControllerIntegrationTest {
     void shouldReturnFalseForNonExistentAdminUser() throws Exception {
         String nonExistentUser = "nonexistent@enterprise.com";
 
-        mockMvc.perform(get("/admin/api/auth/validate")
+        mockMvc.perform(get("/auth/validate")
                         .param("username", nonExistentUser))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.exists").value(false))
@@ -227,7 +227,7 @@ class AdminAuthControllerIntegrationTest {
             }
             """.formatted(validUsername, validPassword);
 
-        String loginResponse = mockMvc.perform(post("/admin/api/auth/login")
+        String loginResponse = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginRequest))
                 .andExpect(status().isOk())
@@ -237,18 +237,18 @@ class AdminAuthControllerIntegrationTest {
 
         String token = objectMapper.readTree(loginResponse).get("token").asText();
 
-        mockMvc.perform(get("/admin/api/auth/me")
+        mockMvc.perform(get("/auth/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value(validUsername))
                 .andExpect(jsonPath("$.roles").isArray())
-                .andExpect(jsonPath("$.roles[0]").value("SUPER_ADMIN"));
+                .andExpect(jsonPath("$.roles[0]").value("ADMIN"));
     }
 
     @Test
     @DisplayName("Should return 401 for unauthenticated user info request")
     void shouldReturn401ForUnauthenticatedUserInfoRequest() throws Exception {
-        mockMvc.perform(get("/admin/api/auth/me"))
+        mockMvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
 }
