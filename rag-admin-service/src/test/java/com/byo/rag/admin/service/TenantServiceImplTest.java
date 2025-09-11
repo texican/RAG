@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -81,13 +81,27 @@ class TenantServiceImplTest {
         TenantResponse response = tenantService.createTenant(request);
 
         // Then
-        assertNotNull(response);
-        assertEquals(sampleTenantId.toString(), response.tenantId());
-        assertEquals(request.name(), response.name());
-        assertEquals(request.adminEmail(), response.adminEmail());
-        assertEquals(request.description(), response.description());
-        assertEquals("ACTIVE", response.status());
-        assertTrue(response.isActive());
+        assertThat(response)
+            .describedAs("Tenant creation response should not be null")
+            .isNotNull();
+        assertThat(response.tenantId())
+            .describedAs("Response should contain the generated tenant ID")
+            .isEqualTo(sampleTenantId.toString());
+        assertThat(response.name())
+            .describedAs("Response should contain the requested tenant name")
+            .isEqualTo(request.name());
+        assertThat(response.adminEmail())
+            .describedAs("Response should contain the admin email address")
+            .isEqualTo(request.adminEmail());
+        assertThat(response.description())
+            .describedAs("Response should contain the tenant description")
+            .isEqualTo(request.description());
+        assertThat(response.status())
+            .describedAs("New tenant should have ACTIVE status")
+            .isEqualTo("ACTIVE");
+        assertThat(response.isActive())
+            .describedAs("New tenant should be marked as active")
+            .isTrue();
 
         verify(tenantRepository).existsByName(request.name());
         verify(tenantRepository).existsBySlug(anyString());
@@ -108,11 +122,10 @@ class TenantServiceImplTest {
         when(tenantRepository.existsByName(request.name())).thenReturn(true);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> tenantService.createTenant(request)
-        );
-        assertEquals("Tenant with name 'Existing Tenant' already exists", exception.getMessage());
+        assertThatThrownBy(() -> tenantService.createTenant(request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Tenant with name 'Existing Tenant' already exists")
+            .describedAs("Should throw IllegalArgumentException for duplicate tenant names");
 
         verify(tenantRepository).existsByName(request.name());
         verify(tenantRepository, never()).save(any(Tenant.class));
@@ -132,11 +145,10 @@ class TenantServiceImplTest {
         when(userRepository.existsByEmail(request.adminEmail())).thenReturn(true);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> tenantService.createTenant(request)
-        );
-        assertEquals("User with email 'existing@admin.com' already exists", exception.getMessage());
+        assertThatThrownBy(() -> tenantService.createTenant(request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("User with email 'existing@admin.com' already exists")
+            .describedAs("Should throw IllegalArgumentException for duplicate admin emails");
 
         verify(userRepository).existsByEmail(request.adminEmail());
         verify(tenantRepository, never()).save(any(Tenant.class));
@@ -155,10 +167,18 @@ class TenantServiceImplTest {
         TenantResponse response = tenantService.getTenantById(tenantId);
 
         // Then
-        assertNotNull(response);
-        assertEquals(tenantId, response.tenantId());
-        assertEquals(sampleTenant.getName(), response.name());
-        assertEquals(sampleAdminUser.getEmail(), response.adminEmail());
+        assertThat(response)
+            .describedAs("Tenant retrieval response should not be null")
+            .isNotNull();
+        assertThat(response.tenantId())
+            .describedAs("Response should contain the requested tenant ID")
+            .isEqualTo(tenantId);
+        assertThat(response.name())
+            .describedAs("Response should contain the tenant name")
+            .isEqualTo(sampleTenant.getName());
+        assertThat(response.adminEmail())
+            .describedAs("Response should contain the admin user email")
+            .isEqualTo(sampleAdminUser.getEmail());
 
         verify(tenantRepository).findById(sampleTenantId);
         verify(userRepository).findTenantAdministrators(sampleTenantId);
@@ -172,11 +192,10 @@ class TenantServiceImplTest {
         when(tenantRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
         // When & Then
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> tenantService.getTenantById(tenantId)
-        );
-        assertTrue(exception.getMessage().contains("Tenant not found"));
+        assertThatThrownBy(() -> tenantService.getTenantById(tenantId))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Tenant not found")
+            .describedAs("Should throw RuntimeException for non-existent tenant IDs");
 
         verify(tenantRepository).findById(any(UUID.class));
     }
@@ -202,8 +221,12 @@ class TenantServiceImplTest {
         TenantResponse response = tenantService.updateTenant(tenantId, request);
 
         // Then
-        assertNotNull(response);
-        assertEquals(tenantId, response.tenantId());
+        assertThat(response)
+            .describedAs("Tenant update response should not be null")
+            .isNotNull();
+        assertThat(response.tenantId())
+            .describedAs("Response should contain the updated tenant ID")
+            .isEqualTo(tenantId);
 
         verify(tenantRepository).findById(sampleTenantId);
         verify(tenantRepository).existsByName(request.name());
@@ -226,8 +249,12 @@ class TenantServiceImplTest {
         TenantResponse response = tenantService.suspendTenant(tenantId, request);
 
         // Then
-        assertNotNull(response);
-        assertEquals(tenantId, response.tenantId());
+        assertThat(response)
+            .describedAs("Tenant suspension response should not be null")
+            .isNotNull();
+        assertThat(response.tenantId())
+            .describedAs("Response should contain the suspended tenant ID")
+            .isEqualTo(tenantId);
 
         verify(tenantRepository).findById(sampleTenantId);
         verify(tenantRepository).save(argThat(tenant -> 
@@ -250,8 +277,12 @@ class TenantServiceImplTest {
         TenantResponse response = tenantService.reactivateTenant(tenantId);
 
         // Then
-        assertNotNull(response);
-        assertEquals(tenantId, response.tenantId());
+        assertThat(response)
+            .describedAs("Tenant reactivation response should not be null")
+            .isNotNull();
+        assertThat(response.tenantId())
+            .describedAs("Response should contain the reactivated tenant ID")
+            .isEqualTo(tenantId);
 
         verify(tenantRepository).findById(sampleTenantId);
         verify(tenantRepository).save(argThat(tenant -> 
@@ -274,12 +305,24 @@ class TenantServiceImplTest {
         TenantListResponse response = tenantService.getAllTenants(pageRequest);
 
         // Then
-        assertNotNull(response);
-        assertEquals(1, response.totalCount());
-        assertEquals(0, response.page());
-        assertEquals(10, response.size());
-        assertEquals(1, response.totalPages());
-        assertEquals(1, response.tenants().size());
+        assertThat(response)
+            .describedAs("Tenant list response should not be null")
+            .isNotNull();
+        assertThat(response.totalCount())
+            .describedAs("Response should contain correct total count")
+            .isEqualTo(1);
+        assertThat(response.page())
+            .describedAs("Response should contain correct page number")
+            .isEqualTo(0);
+        assertThat(response.size())
+            .describedAs("Response should contain correct page size")
+            .isEqualTo(10);
+        assertThat(response.totalPages())
+            .describedAs("Response should contain correct total pages")
+            .isEqualTo(1);
+        assertThat(response.tenants())
+            .describedAs("Response should contain tenant list with expected size")
+            .hasSize(1);
 
         verify(tenantRepository).findAll(pageRequest);
     }
@@ -292,8 +335,10 @@ class TenantServiceImplTest {
         when(tenantRepository.findById(sampleTenantId)).thenReturn(Optional.of(sampleTenant));
         when(userRepository.countByTenantId(sampleTenantId)).thenReturn(0L); // No users
 
-        // When
-        assertDoesNotThrow(() -> tenantService.deleteTenant(tenantId));
+        // When & Then
+        assertThatCode(() -> tenantService.deleteTenant(tenantId))
+            .describedAs("Tenant deletion should not throw exception when no users exist")
+            .doesNotThrowAnyException();
 
         // Then
         verify(tenantRepository).findById(sampleTenantId);
@@ -310,11 +355,10 @@ class TenantServiceImplTest {
         when(userRepository.countByTenantId(sampleTenantId)).thenReturn(1L); // Has users
 
         // When & Then
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> tenantService.deleteTenant(tenantId)
-        );
-        assertTrue(exception.getMessage().contains("Cannot delete tenant with existing users"));
+        assertThatThrownBy(() -> tenantService.deleteTenant(tenantId))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Cannot delete tenant with existing users")
+            .describedAs("Should throw IllegalStateException when tenant has existing users");
 
         verify(tenantRepository).findById(sampleTenantId);
         verify(userRepository).countByTenantId(sampleTenantId);
@@ -328,11 +372,10 @@ class TenantServiceImplTest {
         String invalidTenantId = "invalid-uuid";
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> tenantService.getTenantById(invalidTenantId)
-        );
-        assertTrue(exception.getMessage().contains("Invalid tenant ID format"));
+        assertThatThrownBy(() -> tenantService.getTenantById(invalidTenantId))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid tenant ID format")
+            .describedAs("Should throw IllegalArgumentException for malformed UUID strings");
     }
 
     private Tenant createSampleTenant() {
