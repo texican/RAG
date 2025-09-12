@@ -1,5 +1,6 @@
 package com.byo.rag.gateway.security;
 
+import com.byo.rag.gateway.config.TestSecurityConfig;
 import com.byo.rag.gateway.service.AdvancedRateLimitingService;
 import com.byo.rag.gateway.service.JwtValidationService;
 import com.byo.rag.gateway.service.RequestValidationService;
@@ -33,8 +34,14 @@ import org.springframework.test.web.reactive.server.WebTestClient;
  * @version 1.0
  * @since 1.0
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    classes = {
+        com.byo.rag.gateway.GatewayApplication.class,
+        TestSecurityConfig.class
+    }
+)
+@ActiveProfiles("test")  
 public class SecurityIntegrationTest {
 
     private WebTestClient webTestClient;

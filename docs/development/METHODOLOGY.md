@@ -48,6 +48,10 @@ The project maintains a clear separation between active and completed work throu
 
 ⚠️ **CRITICAL**: Before making any backlog changes, follow the comprehensive safety procedures in [`BACKLOG_MANAGEMENT_PROCESS.md`](../project-management/BACKLOG_MANAGEMENT_PROCESS.md) to prevent story loss.
 
+🤖 **FOR AI ASSISTANTS**: When any story is marked complete, ALWAYS reference this checklist and ask for confirmation before proceeding. Never add completed stories to PROJECT_BACKLOG.md under any circumstances.
+
+🛠️ **TEST VERIFICATION TOOL**: Use `scripts/tests/story-completion-test-check.sh <service-name>` to verify all tests pass before marking stories complete. This script is MANDATORY for any story affecting code.
+
 When a story is marked as completed, follow this standardized process:
 
 #### 1. Story Completion Verification
@@ -77,6 +81,34 @@ When a story is marked as completed, follow this standardized process:
 - **Methodology and best practices** belong in `docs/development/METHODOLOGY.md`
 - **Testing coverage details** belong in `README.md` under development status
 - **Completed story archive** belongs exclusively in `COMPLETED_STORIES.md`
+
+### ⚠️ CRITICAL: Story Completion Checklist
+
+**BEFORE marking any story as completed, verify:**
+
+🔴 **MANDATORY TEST VERIFICATION (MUST BE FIRST):**
+- [ ] **ALL TESTS PASSING**: Run `mvn test` for affected modules and verify 0 failures
+- [ ] **COMPILATION SUCCESS**: Run `mvn compile` and verify no errors
+- [ ] **TEST RESULTS DOCUMENTED**: Record actual test counts (X/Y tests passing)
+- [ ] **NO FAILING TESTS EXCEPTION**: If ANY test fails, story CANNOT be marked complete
+
+✅ **File Structure Rules:**
+- [ ] PROJECT_BACKLOG.md contains ONLY active/pending stories
+- [ ] COMPLETED_STORIES.md contains ALL completed stories
+- [ ] NO "Recently Completed" sections in PROJECT_BACKLOG.md
+- [ ] NO completed stories mixed with active stories
+
+✅ **Story Migration Steps:**
+- [ ] Story removed entirely from PROJECT_BACKLOG.md
+- [ ] Story added to COMPLETED_STORIES.md with completion date
+- [ ] All acceptance criteria marked with ✅
+- [ ] Business impact summary added
+- [ ] COMPLETED_STORIES.md summary updated with new totals
+
+✅ **Documentation Updates:**
+- [ ] Total story points recalculated correctly
+- [ ] Completion date range updated
+- [ ] CLAUDE.md updated with achievement details
 
 ### Story Completion Template
 
