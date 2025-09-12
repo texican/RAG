@@ -615,7 +615,17 @@ Multi-module Maven project with complete microservices architecture:
 - **Follow TDD religiously** - this project demonstrates enterprise development skills
 - **CRITICAL: Follow TESTING_BEST_PRACTICES.md** - Mandatory guidelines to prevent bugs like the ContextAssemblyService token limiting issue (fixed 2025-09-05)
 - **CRITICAL: Follow ERROR_HANDLING_GUIDELINES.md** - Mandatory defensive programming and error handling standards based on service improvements (implemented 2025-09-10)
-- **NEW: Follow completed stories management process** - Use METHODOLOGY.md workflow for moving completed stories and maintaining clean documentation
+- **MANDATORY: Test verification before story completion** - When ANY story is marked complete:
+  1. 🔴 **FIRST**: Run `mvn test` and verify 0 failures - NO EXCEPTIONS
+  2. 🔴 **SECOND**: Run `mvn compile` and verify no errors
+  3. 🔴 **THIRD**: Document actual test results (X/Y passing)
+  4. ❌ **NEVER mark complete with failing tests** - This violates fundamental development standards
+- **MANDATORY: Follow completed stories workflow** - When ANY story is completed:
+  1. ❌ NEVER add completed stories to PROJECT_BACKLOG.md (not even in "Recently Completed" sections)
+  2. ✅ ALWAYS move completed stories directly to COMPLETED_STORIES.md with full details
+  3. ✅ Update COMPLETED_STORIES.md summary with new totals
+  4. ✅ Keep PROJECT_BACKLOG.md focused ONLY on active stories
+  5. 📖 Reference: Follow METHODOLOGY.md "Completed Stories Workflow" exactly
 - **Security is paramount** - multi-tenant isolation must be perfect
 - **Code quality first** - Address IDE issues systematically before new feature development
 - **Spring AI compatibility** - Keep up with Spring AI milestone releases and API changes

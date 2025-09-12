@@ -3,6 +3,7 @@ package com.byo.rag.gateway.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -94,11 +95,11 @@ public class EnhancedSecurityConfig {
                 // Content Security Policy  
                 .contentSecurityPolicy(csp -> csp.policyDirectives(contentSecurityPolicy))
                 
-                // Frame options to prevent clickjacking
-                .frameOptions(frame -> frame.deny())
+                // Frame options to prevent clickjacking (using deprecated API as alternative not available)
+                .frameOptions(Customizer.withDefaults())
                 
                 // Prevent content type sniffing
-                .contentTypeOptions()
+                .contentTypeOptions(Customizer.withDefaults())
                 
                 // Referrer policy
                 .referrerPolicy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
