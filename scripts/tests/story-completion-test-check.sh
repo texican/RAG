@@ -112,3 +112,7 @@ fi
 echo
 echo "✅ VERIFICATION COMPLETE - STORY CAN BE MARKED COMPLETE"
 echo "📝 Remember to update story documentation with test results!"
+echo
+echo "🚨 CRITICAL REMINDER: This story has PASSED all tests and can be marked complete."
+echo "🚨 If ANY test had failed, the story MUST remain 'IN PROGRESS' - NO EXCEPTIONS."
+echo "🚨 Marking stories complete with failing tests is a critical process violation."

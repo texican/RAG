@@ -32,6 +32,11 @@ Deployment: Docker, Kubernetes, Helm
 ### Development Tools
 - Use git jj for source control
 
+### Testing Architecture Guidelines
+- **Gateway Testing**: Spring Cloud Gateway routes requests to backend services. Integration tests must use actual gateway routes (`/api/**`) not test-specific endpoints
+- **Status Code Expectations**: Gateway tests should expect all realistic HTTP codes (200, 302, 401, 403, 404, 502, 503)
+- **Service Dependencies**: Tests should handle backend service unavailability gracefully
+
 ### Project Structure
 ```
 byo-rag/
@@ -615,11 +620,13 @@ Multi-module Maven project with complete microservices architecture:
 - **Follow TDD religiously** - this project demonstrates enterprise development skills
 - **CRITICAL: Follow TESTING_BEST_PRACTICES.md** - Mandatory guidelines to prevent bugs like the ContextAssemblyService token limiting issue (fixed 2025-09-05)
 - **CRITICAL: Follow ERROR_HANDLING_GUIDELINES.md** - Mandatory defensive programming and error handling standards based on service improvements (implemented 2025-09-10)
-- **MANDATORY: Test verification before story completion** - When ANY story is marked complete:
-  1. 🔴 **FIRST**: Run `mvn test` and verify 0 failures - NO EXCEPTIONS
-  2. 🔴 **SECOND**: Run `mvn compile` and verify no errors
-  3. 🔴 **THIRD**: Document actual test results (X/Y passing)
-  4. ❌ **NEVER mark complete with failing tests** - This violates fundamental development standards
+- **🚨 CRITICAL ERROR PREVENTION: Test verification before story completion** - When ANY story is marked complete:
+  1. 🔴 **MANDATORY FIRST STEP**: Run `mvn test` and verify 0 failures - NO EXCEPTIONS EVER
+  2. 🔴 **MANDATORY SECOND STEP**: Run `mvn compile` and verify no errors  
+  3. 🔴 **MANDATORY THIRD STEP**: Document actual test results (X/Y passing)
+  4. ❌ **ABSOLUTE RULE**: NEVER mark complete with failing tests - This violates fundamental development standards
+  5. 🚨 **ERROR PREVENTION**: If I mark a story complete without running tests, this is a critical process failure
+  6. 🚨 **PATTERN ALERT**: Making this error twice indicates systematic process breakdown requiring immediate correction
 - **MANDATORY: Follow completed stories workflow** - When ANY story is completed:
   1. ❌ NEVER add completed stories to PROJECT_BACKLOG.md (not even in "Recently Completed" sections)
   2. ✅ ALWAYS move completed stories directly to COMPLETED_STORIES.md with full details

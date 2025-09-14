@@ -48,7 +48,6 @@ public class TestGatewayConfig {
      * @return simplified route locator
      */
     @Bean
-    @Primary
     public RouteLocator testRouteLocator(RouteLocatorBuilder builder, JwtAuthenticationFilter jwtAuthenticationFilter) {
         return builder.routes()
             // Auth Service Route (simplified for testing)
