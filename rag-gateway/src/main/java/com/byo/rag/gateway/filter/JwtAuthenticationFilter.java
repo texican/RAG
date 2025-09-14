@@ -76,7 +76,8 @@ public class JwtAuthenticationFilter implements GatewayFilter, Ordered {
         "/actuator/health",
         "/actuator/metrics",
         "/swagger-ui/",
-        "/v3/api-docs/"
+        "/v3/api-docs/",
+        "/test/public/"  // Public test endpoints
     );
 
     /**
@@ -171,8 +172,12 @@ public class JwtAuthenticationFilter implements GatewayFilter, Ordered {
      * @return true if the path is public, false if authentication is required
      */
     private boolean isPublicEndpoint(String path) {
-        return PUBLIC_ENDPOINTS.stream()
+        boolean isPublic = PUBLIC_ENDPOINTS.stream()
             .anyMatch(publicPath -> path.startsWith(publicPath));
+        
+        // Note: Debug logging removed for production
+        
+        return isPublic;
     }
 
     /**

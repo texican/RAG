@@ -47,7 +47,7 @@ public class TestSecurityConfig {
         return mockTemplate;
     }
 
-    // JWT validation service will use the actual service with test properties
+    // JwtValidationService will use the test secret from application properties
 
     /**
      * Provides mock AdvancedRateLimitingService for testing.
