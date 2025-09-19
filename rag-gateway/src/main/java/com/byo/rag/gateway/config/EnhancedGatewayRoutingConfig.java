@@ -112,7 +112,7 @@ public class EnhancedGatewayRoutingConfig {
                     .addRequestHeader("X-Gateway-Route", "auth-service")
                     .addRequestHeader("X-Request-Start", String.valueOf(System.currentTimeMillis()))
                     .circuitBreaker(config -> config
-                        .setName("auth-circuit-breaker")
+                        .setName("auth-service")
                         .setFallbackUri("forward:/fallback/auth")
                         .setRouteId("enhanced-auth-service")
                     )
@@ -139,7 +139,7 @@ public class EnhancedGatewayRoutingConfig {
                     .addRequestHeader("X-Gateway-Route", "document-service")
                     .addRequestHeader("X-Request-Start", String.valueOf(System.currentTimeMillis()))
                     .circuitBreaker(config -> config
-                        .setName("document-circuit-breaker")
+                        .setName("document-service")
                         .setFallbackUri("forward:/fallback/documents")
                         .setRouteId("enhanced-document-service")
                     )
@@ -166,7 +166,7 @@ public class EnhancedGatewayRoutingConfig {
                     .addRequestHeader("X-Gateway-Route", "embedding-service")
                     .addRequestHeader("X-Request-Start", String.valueOf(System.currentTimeMillis()))
                     .circuitBreaker(config -> config
-                        .setName("embedding-circuit-breaker")
+                        .setName("embedding-service")
                         .setFallbackUri("forward:/fallback/embeddings")
                         .setRouteId("enhanced-embedding-service")
                     )
@@ -193,7 +193,7 @@ public class EnhancedGatewayRoutingConfig {
                     .addRequestHeader("X-Gateway-Route", "core-service")
                     .addRequestHeader("X-Request-Start", String.valueOf(System.currentTimeMillis()))
                     .circuitBreaker(config -> config
-                        .setName("core-circuit-breaker")
+                        .setName("core-service")
                         .setFallbackUri("forward:/fallback/rag")
                         .setRouteId("enhanced-core-service")
                     )
@@ -220,7 +220,7 @@ public class EnhancedGatewayRoutingConfig {
                     .addRequestHeader("X-Gateway-Route", "admin-service")
                     .addRequestHeader("X-Request-Start", String.valueOf(System.currentTimeMillis()))
                     .circuitBreaker(config -> config
-                        .setName("admin-circuit-breaker")
+                        .setName("admin-service")
                         .setFallbackUri("forward:/fallback/admin")
                         .setRouteId("enhanced-admin-service")
                     )
