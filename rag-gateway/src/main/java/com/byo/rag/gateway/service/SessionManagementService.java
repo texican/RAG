@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Profile;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -54,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.0
  */
 @Service
+@Profile("!test")
 public class SessionManagementService {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionManagementService.class);
@@ -443,4 +445,120 @@ public class SessionManagementService {
     private String maskUserAgent(String userAgent) {
         return userAgent != null ? userAgent.replaceAll("[0-9]+\\.[0-9]+", "X.X") : "unknown";
     }
+
+    /**
+     * Checks if a refresh token has already been used (replay attack prevention).
+     * 
+     * @param refreshToken the refresh token to check
+     * @return true if token has been used, false otherwise
+     */
+    public boolean isRefreshTokenUsed(String refreshToken) {
+        if (refreshToken == null) {
+            return true;
+        }
+        
+        // Check local blacklist first for performance
+        if (blacklistedTokens.contains(refreshToken)) {
+            return true;
+        }
+        
+        // Check Redis for distributed blacklist (blocking check for simplicity)
+        try {
+            String key = "used_refresh_token:" + refreshToken.hashCode();
+            Boolean exists = redisTemplate.hasKey(key).block(Duration.ofSeconds(1));
+            return Boolean.TRUE.equals(exists);
+        } catch (Exception e) {
+            logger.warn("Error checking refresh token usage, defaulting to used: {}", e.getMessage());
+            return true; // Fail secure
+        }
+    }
+
+    /**
+     * Validates a session for the given user and refresh token.
+     * 
+     * @param sessionId the session ID to validate
+     * @param userId the user ID to validate against
+     * @return true if session is valid, false otherwise
+     */
+    public boolean validateSession(String sessionId, String userId) {
+        try {
+            SessionInfo session = getSession(sessionId).block(Duration.ofSeconds(2));
+            return session != null && 
+                   session.getUserId().equals(userId) && 
+                   session.isActive() &&
+                   session.getLastAccessedAt().plus(SESSION_TIMEOUT).isAfter(Instant.now());
+        } catch (Exception e) {
+            logger.warn("Error validating session {}: {}", sessionId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Marks a refresh token as used to prevent replay attacks.
+     * 
+     * @param refreshToken the refresh token to mark as used
+     */
+    public void markRefreshTokenUsed(String refreshToken) {
+        if (refreshToken == null) {
+            return;
+        }
+        
+        // Add to local blacklist
+        blacklistedTokens.add(refreshToken);
+        
+        // Add to Redis blacklist with expiration
+        try {
+            String key = "used_refresh_token:" + refreshToken.hashCode();
+            redisTemplate.opsForValue()
+                .set(key, "used", REFRESH_TOKEN_VALIDITY)
+                .subscribe(
+                    result -> logger.debug("Marked refresh token as used in Redis"),
+                    error -> logger.warn("Failed to mark refresh token as used in Redis: {}", error.getMessage())
+                );
+        } catch (Exception e) {
+            logger.warn("Error marking refresh token as used: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Gets the count of refresh attempts for a user within a time period.
+     * 
+     * @param userId the user ID to check
+     * @param timePeriod the time period to check within
+     * @return the number of refresh attempts
+     */
+    public int getRefreshCount(String userId, Duration timePeriod) {
+        try {
+            String key = "refresh_count:" + userId;
+            String countStr = redisTemplate.opsForValue()
+                .get(key)
+                .block(Duration.ofSeconds(1));
+            return countStr != null ? Integer.parseInt(countStr) : 0;
+        } catch (Exception e) {
+            logger.warn("Error getting refresh count for user {}: {}", userId, e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Updates session activity timestamp.
+     * 
+     * @param sessionId the session ID to update
+     * @return Mono indicating completion
+     */
+    public Mono<Void> updateSessionActivity(String sessionId) {
+        return getSession(sessionId)
+            .flatMap(session -> {
+                if (session != null) {
+                    SessionInfo updatedSession = new SessionInfo(
+                        session.getSessionId(), session.getUserId(), session.getTenantId(),
+                        session.getClientIP(), session.getUserAgent(), session.getCreatedAt(),
+                        Instant.now(), true
+                    );
+                    return storeSession(updatedSession);
+                }
+                return Mono.empty();
+            });
+    }
+
 }

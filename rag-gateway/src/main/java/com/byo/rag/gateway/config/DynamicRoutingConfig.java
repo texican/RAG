@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -43,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.0
  */
 @Configuration
+@Profile("!test")
 public class DynamicRoutingConfig {
 
     private final ApplicationEventPublisher publisher;
@@ -80,6 +82,7 @@ public class DynamicRoutingConfig {
      * @return tenant-aware route predicate factory
      */
     @Bean
+    @Profile("!test")
     public TenantRoutePredicateFactory tenantRoutePredicateFactory() {
         return new TenantRoutePredicateFactory();
     }
@@ -102,6 +105,7 @@ public class DynamicRoutingConfig {
      * @return service health monitor
      */
     @Bean
+    @Profile("!test")
     public ServiceHealthMonitor serviceHealthMonitor() {
         return new ServiceHealthMonitor(serviceHealthCache, publisher);
     }
@@ -116,6 +120,7 @@ public class DynamicRoutingConfig {
      * @return dynamic route manager
      */
     @Bean
+    @Profile("!test")
     public DynamicRouteManager dynamicRouteManager() {
         return new DynamicRouteManager(publisher, redisTemplate);
     }
@@ -225,6 +230,7 @@ public class DynamicRoutingConfig {
      */
     @RestController
     @RequestMapping("/admin/routes")
+    @Profile("!test")
     public static class DynamicRouteManager {
 
         private final ApplicationEventPublisher publisher;

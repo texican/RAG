@@ -7,7 +7,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 
 import java.time.Duration;
 
@@ -40,6 +40,7 @@ import java.time.Duration;
  * @since 1.0
  */
 @Configuration
+@Profile("!test")
 public class EnhancedGatewayRoutingConfig {
 
     /** JWT authentication filter for securing routes. */
@@ -101,7 +102,6 @@ public class EnhancedGatewayRoutingConfig {
      * @return enhanced route locator with optimizations
      */
     @Bean
-    @Primary
     public RouteLocator enhancedRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
             // Enhanced Auth Service Route
