@@ -163,53 +163,55 @@ public class EnhancedJwtSecurityPipeline implements GatewayFilter, Ordered {
             String path, 
             String method) {
 
-        return jwtValidationService.validateToken(token)
-            .flatMap(claims -> {
-                String userId = claims.getSubject();
-                String tenantId = claims.get("tenantId", String.class);
-                String sessionId = claims.get("sessionId", String.class);
+        if (!jwtValidationService.validateToken(token)) {
+            return handleAuthenticationFailure(exchange, "INVALID_TOKEN", 
+                requestId, clientIp, path, "Invalid JWT token");
+        }
 
-                // Step 4: Check token blacklist
-                return sessionManagementService.isTokenBlacklisted(token)
-                    .flatMap(isBlacklisted -> {
-                        if (isBlacklisted) {
-                            return handleAuthenticationFailure(exchange, "BLACKLISTED_TOKEN",
-                                requestId, clientIp, path, "Token is blacklisted");
-                        }
+        try {
+            Claims claims = jwtValidationService.extractClaims(token);
+            String userId = claims.getSubject();
+            String tenantId = claims.get("tenantId", String.class);
+            String sessionId = claims.get("sessionId", String.class);
 
-                        // Step 5: Validate active session
-                        return sessionManagementService.validateSession(sessionId, userId)
-                            .flatMap(sessionValid -> {
-                                if (!sessionValid) {
-                                    return handleAuthenticationFailure(exchange, "INVALID_SESSION",
-                                        requestId, clientIp, path, "Session is invalid or expired");
-                                }
+            // Step 4: Check token blacklist
+            boolean isBlacklisted = sessionManagementService.isTokenBlacklisted(token);
+            if (isBlacklisted) {
+                return handleAuthenticationFailure(exchange, "BLACKLISTED_TOKEN",
+                    requestId, clientIp, path, "Token is blacklisted");
+            }
 
-                                // Step 6: Authorization check
-                                if (requiresAdminAccess(path) && !hasAdminRole(claims)) {
-                                    return handleAuthorizationFailure(exchange, "INSUFFICIENT_PRIVILEGES",
-                                        requestId, clientIp, path, userId);
-                                }
+            // Step 5: Validate active session
+            boolean sessionValid = sessionManagementService.validateSession(sessionId, userId);
+            if (!sessionValid) {
+                return handleAuthenticationFailure(exchange, "INVALID_SESSION",
+                    requestId, clientIp, path, "Session is invalid or expired");
+            }
 
-                                // Step 7: Add security context to request
-                                ServerHttpRequest enhancedRequest = addSecurityContext(
-                                    exchange.getRequest(), claims, requestId);
+            // Step 6: Authorization check
+            if (requiresAdminAccess(path) && !hasAdminRole(claims)) {
+                return handleAuthorizationFailure(exchange, "INSUFFICIENT_PRIVILEGES",
+                    requestId, clientIp, path, userId);
+            }
 
-                                // Step 8: Log successful authentication
-                                securityAuditService.logAuthenticationEvent(
-                                    requestId, "JWT_AUTH_SUCCESS", clientIp, path, "SUCCESS", userId);
+            // Step 7: Add security context to request
+            ServerHttpRequest enhancedRequest = addSecurityContext(
+                exchange.getRequest(), claims, requestId);
 
-                                // Step 9: Update session activity
-                                return sessionManagementService.updateSessionActivity(sessionId)
-                                    .then(chain.filter(exchange.mutate().request(enhancedRequest).build()));
-                            });
-                    });
-            })
-            .onErrorResume(error -> {
-                String errorType = determineErrorType(error);
-                return handleAuthenticationFailure(exchange, errorType, 
-                    requestId, clientIp, path, error.getMessage());
-            });
+            // Step 8: Log successful authentication
+            securityAuditService.logAuthenticationEvent(
+                userId, tenantId, "JWT_AUTH_SUCCESS", clientIp, 
+                exchange.getRequest().getHeaders().getFirst("User-Agent"), "Authentication successful");
+
+            // Step 9: Update session activity and continue
+            return sessionManagementService.updateSessionActivity(sessionId)
+                .then(chain.filter(exchange.mutate().request(enhancedRequest).build()));
+                
+        } catch (Exception error) {
+            String errorType = determineErrorType(error);
+            return handleAuthenticationFailure(exchange, errorType, 
+                requestId, clientIp, path, error.getMessage());
+        }
     }
 
     /**

@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Test configuration for Gateway components.
@@ -23,7 +23,7 @@ public class TestGatewayConfig {
      * @return JWT validation service for testing
      */
     @Bean
-    @Primary
+    @Profile("test")
     public JwtValidationService jwtValidationService() {
         return new JwtValidationService("testSecretKeyForTestingOnly123456789012345678901234567890");
     }
@@ -35,7 +35,7 @@ public class TestGatewayConfig {
      * @return JWT authentication filter for testing
      */
     @Bean
-    @Primary
+    @Profile("test")
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtValidationService jwtValidationService) {
         return new JwtAuthenticationFilter(jwtValidationService);
     }
@@ -47,7 +47,8 @@ public class TestGatewayConfig {
      * @param jwtAuthenticationFilter JWT authentication filter
      * @return simplified route locator
      */
-    @Bean
+    @Bean("testRouteLocator")
+    @Profile("test")
     public RouteLocator testRouteLocator(RouteLocatorBuilder builder, JwtAuthenticationFilter jwtAuthenticationFilter) {
         return builder.routes()
             // Auth Service Route (simplified for testing)

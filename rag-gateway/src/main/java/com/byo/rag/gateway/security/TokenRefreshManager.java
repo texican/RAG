@@ -140,48 +140,45 @@ public class TokenRefreshManager {
      * @return reactive response with new tokens or error
      */
     private Mono<ServerResponse> processTokenRefresh(String refreshToken, String clientIp, String requestId) {
-        return jwtValidationService.validateRefreshToken(refreshToken)
-            .flatMap(claims -> {
-                String userId = claims.getSubject();
-                String sessionId = claims.get("sessionId", String.class);
-                String tokenId = claims.get("tokenId", String.class);
+        if (!jwtValidationService.validateRefreshToken(refreshToken)) {
+            return createErrorResponse("INVALID_REFRESH_TOKEN", "Refresh token is invalid", requestId);
+        }
 
-                // Check if refresh token has been used before
-                return sessionManagementService.isRefreshTokenUsed(tokenId)
-                    .flatMap(isUsed -> {
-                        if (isUsed) {
-                            // Potential replay attack - invalidate all user sessions
-                            return handleSuspiciousRefreshActivity(userId, sessionId, clientIp, requestId);
-                        }
+        try {
+            Claims claims = jwtValidationService.extractClaims(refreshToken);
+            String userId = claims.getSubject();
+            String sessionId = claims.get("sessionId", String.class);
+            String tokenId = claims.get("tokenId", String.class);
 
-                        // Validate session is active
-                        return sessionManagementService.validateSession(sessionId, userId)
-                            .flatMap(sessionValid -> {
-                                if (!sessionValid) {
-                                    return createErrorResponse("INVALID_SESSION", 
-                                        "Session is invalid or expired", requestId);
-                                }
+            // Check if refresh token has been used before
+            boolean isUsed = sessionManagementService.isRefreshTokenUsed(tokenId);
+            if (isUsed) {
+                // Potential replay attack - invalidate all user sessions
+                return handleSuspiciousRefreshActivity(userId, sessionId, clientIp, requestId);
+            }
+
+            // Validate session is active
+            boolean sessionValid = sessionManagementService.validateSession(sessionId, userId);
+            if (!sessionValid) {
+                return createErrorResponse("INVALID_SESSION", 
+                    "Session is invalid or expired", requestId);
+            }
 
                                 // Check refresh rate limits
-                                return checkRefreshRateLimit(userId, clientIp)
-                                    .flatMap(rateLimitOk -> {
-                                        if (!rateLimitOk) {
-                                            return createErrorResponse("RATE_LIMIT_EXCEEDED", 
-                                                "Too many refresh attempts", requestId);
-                                        }
+            if (!checkRefreshRateLimit(userId, clientIp)) {
+                return createErrorResponse("RATE_LIMIT_EXCEEDED", 
+                    "Too many refresh attempts", requestId);
+            }
 
-                                        // Generate new token pair
-                                        return generateNewTokenPair(claims, sessionId, clientIp, requestId);
-                                    });
-                            });
-                    });
-            })
-            .onErrorResume(error -> {
-                String errorType = determineRefreshErrorType(error);
-                securityAuditService.logSecurityEvent(requestId, errorType, clientIp, 
-                    "Refresh token validation failed: " + error.getMessage());
-                return createErrorResponse(errorType, "Invalid refresh token", requestId);
-            });
+            // Generate new token pair
+            return generateNewTokenPair(claims, sessionId, clientIp, requestId);
+            
+        } catch (Exception error) {
+            String errorType = determineRefreshErrorType(error);
+            securityAuditService.logSecurityEvent("SYSTEM", errorType, clientIp, 
+                "Refresh token validation failed: " + error.getMessage());
+            return createErrorResponse(errorType, "Invalid refresh token", requestId);
+        }
     }
 
     /**
@@ -205,34 +202,18 @@ public class TokenRefreshManager {
 
         // Mark old refresh token as used
         String oldTokenId = originalClaims.get("tokenId", String.class);
-        return sessionManagementService.markRefreshTokenUsed(oldTokenId)
-            .then(jwtValidationService.generateTokenPair(userId, tenantId, role, sessionId))
-            .flatMap(tokenPair -> {
-                // Update session with new token information
-                return sessionManagementService.updateSessionTokens(sessionId, 
-                    tokenPair.getAccessToken(), tokenPair.getRefreshToken())
-                    .then(Mono.defer(() -> {
-                        // Log successful refresh
-                        securityAuditService.logAuthenticationEvent(requestId, 
-                            "TOKEN_REFRESH_SUCCESS", clientIp, "/auth/refresh", "SUCCESS", userId);
-
-                        // Create response
-                        TokenRefreshResponse response = new TokenRefreshResponse(
-                            tokenPair.getAccessToken(),
-                            tokenPair.getRefreshToken(),
-                            accessTokenExpirationHours * 3600, // Convert to seconds
-                            "Bearer",
-                            LocalDateTime.now().plusHours(accessTokenExpirationHours).toString()
-                        );
-
-                        return ServerResponse.ok()
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Request-ID", requestId)
-                            .header("Cache-Control", "no-store")
-                            .header("Pragma", "no-cache")
-                            .bodyValue(response);
-                    }));
-            });
+        sessionManagementService.markRefreshTokenUsed(oldTokenId);
+        
+        // Generate new token pair
+        JwtValidationService.TokenPair tokenPair = jwtValidationService.generateTokenPair(userId, 
+            originalClaims.getSubject(), tenantId, role);
+        
+        // Log successful refresh
+        securityAuditService.logAuthenticationEvent(userId, tenantId, "TOKEN_REFRESH",
+            clientIp, "system", "Token successfully refreshed");
+        
+        // Create successful response with new tokens
+        return createTokenResponse(tokenPair, requestId);
     }
 
     /**
@@ -255,7 +236,7 @@ public class TokenRefreshManager {
             clientIp, userId, "Refresh token reuse detected - potential replay attack");
 
         // Invalidate all user sessions as security measure
-        return sessionManagementService.invalidateAllUserSessions(userId)
+        return sessionManagementService.invalidateAllUserSessions(userId, "Suspicious refresh token usage")
             .then(createErrorResponse("SECURITY_VIOLATION", 
                 "Security violation detected. All sessions invalidated.", requestId));
     }
@@ -267,18 +248,16 @@ public class TokenRefreshManager {
      * @param clientIp client IP address
      * @return true if rate limit is not exceeded
      */
-    private Mono<Boolean> checkRefreshRateLimit(String userId, String clientIp) {
+    private boolean checkRefreshRateLimit(String userId, String clientIp) {
         Duration window = Duration.ofHours(1);
         
-        return sessionManagementService.getRefreshCount(userId, window)
-            .flatMap(userRefreshCount -> {
-                if (userRefreshCount >= maxRefreshAttemptsPerHour) {
-                    return Mono.just(false);
-                }
-                
-                return sessionManagementService.getRefreshCount(clientIp, window)
-                    .map(ipRefreshCount -> ipRefreshCount < maxRefreshAttemptsPerHour * 2);
-            });
+        int userRefreshCount = sessionManagementService.getRefreshCount(userId, window);
+        if (userRefreshCount >= maxRefreshAttemptsPerHour) {
+            return false;
+        }
+        
+        int ipRefreshCount = sessionManagementService.getRefreshCount(clientIp, window);
+        return ipRefreshCount < maxRefreshAttemptsPerHour * 2;
     }
 
     /**
@@ -289,6 +268,25 @@ public class TokenRefreshManager {
      * @param requestId request identifier
      * @return reactive error response
      */
+    /**
+     * Creates a successful token response with new tokens.
+     */
+    private Mono<ServerResponse> createTokenResponse(JwtValidationService.TokenPair tokenPair, String requestId) {
+        TokenRefreshResponse response = new TokenRefreshResponse(
+            tokenPair.getAccessToken(),
+            tokenPair.getRefreshToken(),
+            900, // 15 minutes in seconds
+            "Bearer"
+        );
+
+        return ServerResponse.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .header("X-Request-ID", requestId)
+            .header("Cache-Control", "no-store")
+            .header("Pragma", "no-cache")
+            .bodyValue(response);
+    }
+
     private Mono<ServerResponse> createErrorResponse(String errorCode, String errorMessage, String requestId) {
         Map<String, Object> errorResponse = Map.of(
             "error", errorCode,
@@ -312,11 +310,13 @@ public class TokenRefreshManager {
      * @return client IP address
      */
     private String getClientIpAddress(ServerRequest request) {
-        return request.headers().firstHeader("X-Forwarded-For")
-            .map(header -> header.split(",")[0].trim())
-            .orElse(request.remoteAddress()
-                .map(address -> address.getAddress().getHostAddress())
-                .orElse("unknown"));
+        String xForwardedFor = request.headers().firstHeader("X-Forwarded-For");
+        if (xForwardedFor != null) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.remoteAddress()
+            .map(address -> address.getAddress().getHostAddress())
+            .orElse("unknown");
     }
 
     /**
@@ -326,8 +326,8 @@ public class TokenRefreshManager {
      * @return request ID
      */
     private String getRequestId(ServerRequest request) {
-        return request.headers().firstHeader("X-Request-ID")
-            .orElse(java.util.UUID.randomUUID().toString().substring(0, 8));
+        String requestId = request.headers().firstHeader("X-Request-ID");
+        return requestId != null ? requestId : java.util.UUID.randomUUID().toString().substring(0, 8);
     }
 
     /**
@@ -346,5 +346,27 @@ public class TokenRefreshManager {
         } else {
             return "REFRESH_VALIDATION_ERROR";
         }
+    }
+
+    /**
+     * Token refresh response model.
+     */
+    public static class TokenRefreshResponse {
+        private final String accessToken;
+        private final String refreshToken;
+        private final int expiresIn;
+        private final String tokenType;
+
+        public TokenRefreshResponse(String accessToken, String refreshToken, int expiresIn, String tokenType) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.expiresIn = expiresIn;
+            this.tokenType = tokenType;
+        }
+
+        public String getAccessToken() { return accessToken; }
+        public String getRefreshToken() { return refreshToken; }
+        public int getExpiresIn() { return expiresIn; }
+        public String getTokenType() { return tokenType; }
     }
 }

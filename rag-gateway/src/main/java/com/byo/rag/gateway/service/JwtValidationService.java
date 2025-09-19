@@ -224,6 +224,121 @@ public class JwtValidationService {
     }
 
     /**
+     * Validates a refresh token for token refresh operations.
+     * 
+     * <p>This method specifically validates refresh tokens by checking:
+     * <ul>
+     *   <li>Token signature and structure</li>
+     *   <li>Token type claim (must be "refresh")</li>
+     *   <li>Token expiration</li>
+     *   <li>Token format and claims integrity</li>
+     * </ul>
+     * 
+     * @param refreshToken the refresh token to validate
+     * @return true if refresh token is valid, false otherwise
+     */
+    public boolean validateRefreshToken(String refreshToken) {
+        try {
+            if (refreshToken == null || refreshToken.trim().isEmpty()) {
+                return false;
+            }
+            
+            Claims claims = extractClaims(refreshToken);
+            
+            // Check if it's actually a refresh token
+            if (!"refresh".equals(claims.get("tokenType", String.class))) {
+                return false;
+            }
+            
+            // Check expiration
+            return !isTokenExpired(claims);
+            
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Generates a new token pair (access and refresh tokens) for user.
+     * 
+     * <p>This method creates both access and refresh tokens with appropriate
+     * claims and expiration times. This is typically used during token refresh
+     * operations or after successful authentication.
+     * 
+     * @param userId the user ID for the tokens
+     * @param email the user's email address
+     * @param tenantId the user's tenant ID
+     * @param role the user's role
+     * @return TokenPair containing both access and refresh tokens
+     */
+    public TokenPair generateTokenPair(String userId, String email, String tenantId, String role) {
+        Date now = new Date();
+        Date accessExpiry = new Date(now.getTime() + (15 * 60 * 1000)); // 15 minutes
+        Date refreshExpiry = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000L)); // 7 days
+        
+        // Generate access token
+        String accessToken = Jwts.builder()
+            .subject(email)
+            .claim("userId", userId)
+            .claim("tenantId", tenantId)
+            .claim("role", role)
+            .claim("tokenType", "access")
+            .issuedAt(now)
+            .expiration(accessExpiry)
+            .signWith(secretKey)
+            .compact();
+            
+        // Generate refresh token
+        String refreshToken = Jwts.builder()
+            .subject(email)
+            .claim("userId", userId)
+            .claim("tenantId", tenantId)
+            .claim("tokenType", "refresh")
+            .issuedAt(now)
+            .expiration(refreshExpiry)
+            .signWith(secretKey)
+            .compact();
+            
+        return new TokenPair(accessToken, refreshToken);
+    }
+
+    /**
+     * Token pair container for access and refresh tokens.
+     */
+    public static class TokenPair {
+        private final String accessToken;
+        private final String refreshToken;
+        
+        public TokenPair(String accessToken, String refreshToken) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+        }
+        
+        public String getAccessToken() { return accessToken; }
+        public String getRefreshToken() { return refreshToken; }
+    }
+
+    /**
+     * Validates a JWT token for general authentication purposes.
+     * 
+     * @param token the JWT token to validate
+     * @return true if token is valid, false otherwise
+     */
+    public boolean validateToken(String token) {
+        try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
+            
+            Claims claims = extractClaims(token);
+            return !isTokenExpired(claims);
+            
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Checks if a token has expired based on its expiration claim.
      * 
      * <p>This utility method compares the token's expiration timestamp

@@ -289,6 +289,106 @@ public class SecurityAuditService {
     }
 
     /**
+     * Logs general security events for system monitoring.
+     * 
+     * @param eventSource the source of the security event
+     * @param eventType the type of security event
+     * @param subject the subject of the event (IP, user, etc.)
+     * @param details additional details about the event
+     */
+    public void logSecurityEvent(String eventSource, String eventType, String subject, String details) {
+        try (var mdcCloseable = MDC.putCloseable("event.type", "SECURITY_EVENT")) {
+            MDC.put("event.source", eventSource);
+            MDC.put("event.type", eventType);
+            MDC.put("subject", maskSensitiveData(subject));
+            MDC.put("details", details);
+            MDC.put("timestamp", Instant.now().toString());
+            MDC.put("severity", "INFO");
+            
+            AUDIT_LOGGER.info("Security event - Source: {} Type: {} Subject: {} Details: {}", 
+                eventSource, eventType, maskSensitiveData(subject), details);
+        }
+    }
+
+    /**
+     * Logs authentication events with comprehensive details.
+     * 
+     * @param userId the user ID involved
+     * @param tenantId the tenant ID
+     * @param eventType the authentication event type
+     * @param clientIp the client IP address
+     * @param userAgent the user agent
+     * @param details additional event details
+     */
+    public void logAuthenticationEvent(String userId, String tenantId, String eventType, 
+                                     String clientIp, String userAgent, String details) {
+        try (var mdcCloseable = MDC.putCloseable("event.type", "AUTH_EVENT")) {
+            MDC.put("user.id", maskSensitiveData(userId));
+            MDC.put("tenant.id", maskSensitiveData(tenantId));
+            MDC.put("event.type", eventType);
+            MDC.put("client.ip", clientIp);
+            MDC.put("details", details);
+            MDC.put("timestamp", Instant.now().toString());
+            MDC.put("severity", "INFO");
+            
+            AUDIT_LOGGER.info("Authentication event - User: {} Tenant: {} Type: {} IP: {} Details: {} UserAgent: {}", 
+                maskSensitiveData(userId), maskSensitiveData(tenantId), eventType, clientIp, details, 
+                maskUserAgent(userAgent));
+        }
+    }
+
+    /**
+     * Logs security incidents for immediate attention.
+     * 
+     * @param userId the user ID involved (may be null)
+     * @param incidentType the type of security incident
+     * @param severity the severity level
+     * @param clientIp the client IP address
+     * @param details incident details
+     */
+    public void logSecurityIncident(String userId, String incidentType, String severity, 
+                                  String clientIp, String details) {
+        try (var mdcCloseable = MDC.putCloseable("event.type", "SECURITY_INCIDENT")) {
+            MDC.put("user.id", maskSensitiveData(userId));
+            MDC.put("incident.type", incidentType);
+            MDC.put("client.ip", clientIp);
+            MDC.put("details", details);
+            MDC.put("timestamp", Instant.now().toString());
+            MDC.put("severity", severity);
+            
+            if ("HIGH".equals(severity) || "CRITICAL".equals(severity)) {
+                AUDIT_LOGGER.error("Security incident - User: {} Type: {} IP: {} Severity: {} Details: {}", 
+                    maskSensitiveData(userId), incidentType, clientIp, severity, details);
+            } else {
+                AUDIT_LOGGER.warn("Security incident - User: {} Type: {} IP: {} Severity: {} Details: {}", 
+                    maskSensitiveData(userId), incidentType, clientIp, severity, details);
+            }
+        }
+    }
+
+    /**
+     * Detects suspicious activity patterns and triggers alerts.
+     * 
+     * @param clientIp the client IP to analyze
+     * @param activityContext the context of the activity
+     * @return true if suspicious activity detected, false otherwise
+     */
+    public boolean detectSuspiciousActivity(String clientIp, String activityContext) {
+        try {
+            SuspiciousActivityTracker tracker = suspiciousActivityCache.get(clientIp);
+            if (tracker != null && tracker.isSuspicious()) {
+                logSuspiciousActivity(clientIp, "PATTERN_DETECTED", "HIGH", 
+                    String.format("Suspicious activity pattern detected in context: %s", activityContext));
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            logger.error("Error detecting suspicious activity for IP: {}", clientIp, e);
+            return false;
+        }
+    }
+
+    /**
      * Inner class to track suspicious activity patterns per IP address.
      */
     private static class SuspiciousActivityTracker {

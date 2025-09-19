@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Security Headers Configuration for RAG Gateway.
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 1.1
  */
 @Configuration
+@Profile("!test")
 public class SecurityHeadersConfig {
 
     /** Security headers filter for header management. */

@@ -5,6 +5,7 @@ import com.byo.rag.gateway.service.SecurityAuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Profile;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -42,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.1
  */
 @Service
+@Profile("!test")
 public class HierarchicalRateLimitingService {
 
     /** Advanced rate limiting service for core functionality. */
