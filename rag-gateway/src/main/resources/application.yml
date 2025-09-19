@@ -7,6 +7,22 @@ server:
     connection-timeout: 5000
     idle-timeout: 300000
 
+# Gateway Performance Configuration
+gateway:
+  netty:
+    max-connections: 1000
+    acquire-timeout: 45
+    max-idle-time: 30
+    max-life-time: 300
+    read-timeout: 30
+    write-timeout: 30
+    connect-timeout: 10
+  webflux:
+    detailed-errors: false
+    buffer-size: 8192
+    enable-compression: true
+    max-response-size: 10485760
+
 spring:
   application:
     name: rag-gateway
