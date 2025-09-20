@@ -1,0 +1,844 @@
+openapi: 3.0.3
+info:
+  title: RAG Admin Service - Tenant Management API
+  description: Administrative tenant lifecycle management endpoints for Enterprise RAG system
+  version: 1.0.0
+  contact:
+    name: Enterprise RAG Team
+    email: admin@enterprise-rag.com
+
+servers:
+  - url: http://localhost:8085/admin/api
+    description: Local development server
+  - url: https://admin.rag-enterprise.com/api
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /tenants:
+    post:
+      summary: Create new tenant
+      description: |
+        Create a new tenant organization with complete multi-tenant infrastructure setup.
+        
+        **Creation Process:**
+        - Input validation for required fields and constraints
+        - Uniqueness verification for tenant slug and identifiers
+        - Database provisioning and resource allocation
+        - Initial configuration setup with defaults
+        
+        **Security Requirements:**
+        - Administrative authentication required
+        - Tenant slug must be unique system-wide
+        - All required fields must be provided and valid
+      operationId: createTenant
+      tags:
+        - Tenant Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreateRequest'
+            examples:
+              new_tenant:
+                summary: New enterprise tenant
+                value:
+                  name: Acme Corporation
+                  slug: acme-corp
+                  description: Enterprise customer with AI document processing needs
+                  maxDocuments: 5000
+                  maxStorageMb: 50000
+      responses:
+        '201':
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+              examples:
+                created_tenant:
+                  summary: Successfully created tenant
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Acme Corporation
+                    slug: acme-corp
+                    description: Enterprise customer with AI document processing needs
+                    status: ACTIVE
+                    maxDocuments: 5000
+                    maxStorageMb: 50000
+                    userCount: 0
+                    documentCount: 0
+                    createdAt: 2025-09-20T10:30:00Z
+                    updatedAt: 2025-09-20T10:30:00Z
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Validation failed
+                  value:
+                    error: Validation failed
+                    message: "name: must not be blank, slug: must match pattern ^[a-z0-9-]+$"
+                    path: /admin/api/tenants
+        '409':
+          description: Tenant slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicate_slug:
+                  summary: Slug already exists
+                  value:
+                    error: Conflict
+                    message: Tenant with slug 'acme-corp' already exists
+                    path: /admin/api/tenants
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List all tenants
+      description: |
+        Retrieve paginated list of all tenant organizations with flexible sorting.
+        
+        **Pagination Features:**
+        - Zero-indexed page navigation
+        - Configurable page sizes (default: 10)
+        - Total metadata with count and page information
+        
+        **Sorting Options:**
+        - Default: Creation date descending (newest first)
+        - Available fields: name, status, createdAt, updatedAt
+        - Direction control: asc or desc
+        
+        **Administrative Use Cases:**
+        - System-wide tenant monitoring and management
+        - Tenant discovery and navigation interfaces
+        - Bulk administrative operations preparation
+        - Reporting and analytics data gathering
+      operationId: getAllTenants
+      tags:
+        - Tenant Management
+      parameters:
+        - name: page
+          in: query
+          description: Zero-indexed page number
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 0
+        - name: size
+          in: query
+          description: Number of tenants per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 20
+        - name: sort
+          in: query
+          description: Sorting specification as "field,direction"
+          required: false
+          schema:
+            type: string
+            pattern: '^(name|status|createdAt|updatedAt)(,asc|,desc)?$'
+            default: createdAt,desc
+            example: name,asc
+      responses:
+        '200':
+          description: Paginated list of tenants
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantListResponse'
+              examples:
+                tenant_list:
+                  summary: Paginated tenant list
+                  value:
+                    content:
+                      - id: 550e8400-e29b-41d4-a716-446655440000
+                        name: Acme Corporation
+                        slug: acme-corp
+                        status: ACTIVE
+                        userCount: 25
+                        documentCount: 150
+                        createdAt: 2025-09-20T10:30:00Z
+                      - id: 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+                        name: Global Tech Inc
+                        slug: global-tech
+                        status: SUSPENDED
+                        userCount: 12
+                        documentCount: 89
+                        createdAt: 2025-09-19T14:20:00Z
+                    page:
+                      number: 0
+                      size: 10
+                      totalElements: 25
+                      totalPages: 3
+                      first: true
+                      last: false
+        '400':
+          description: Invalid pagination or sorting parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tenants/{tenantId}:
+    get:
+      summary: Get tenant details
+      description: |
+        Retrieve comprehensive information about a specific tenant organization.
+        
+        **Returned Information:**
+        - Complete tenant profile and configuration
+        - Current status and operational state
+        - Usage statistics (user count, document count)
+        - Resource limits and utilization
+        - Metadata (creation/update timestamps)
+        
+        **Administrative Use Cases:**
+        - Tenant profile management and review
+        - Usage monitoring and analytics
+        - Configuration verification and updates
+        - Support and troubleshooting operations
+      operationId: getTenant
+      tags:
+        - Tenant Management
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Unique identifier of the tenant
+          schema:
+            type: string
+            format: uuid
+            example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Tenant details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_found:
+                  summary: Tenant not found
+                  value:
+                    error: Tenant not found
+                    message: Tenant with ID '550e8400-e29b-41d4-a716-446655440000' not found
+                    path: /admin/api/tenants/550e8400-e29b-41d4-a716-446655440000
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update tenant
+      description: |
+        Update configuration and details of an existing tenant organization.
+        
+        **Update Operations:**
+        - Profile updates: name, description, contact information
+        - Configuration changes: resource limits, feature settings
+        - Business rule validation during updates
+        - Maintains data integrity and system consistency
+        
+        **Update Restrictions:**
+        - Tenant slug cannot be modified after creation
+        - Status changes must use specific endpoints (suspend/reactivate)
+        - Resource limits cannot be reduced below current usage
+      operationId: updateTenant
+      tags:
+        - Tenant Management
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Unique identifier of the tenant to update
+          schema:
+            type: string
+            format: uuid
+            example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateRequest'
+            examples:
+              update_tenant:
+                summary: Update tenant configuration
+                value:
+                  name: Acme Corporation Ltd
+                  description: Updated enterprise customer description
+                  maxDocuments: 7500
+                  maxStorageMb: 75000
+      responses:
+        '200':
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '400':
+          description: Invalid update data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete tenant
+      description: |
+        Permanently delete a tenant organization and all associated data.
+        
+        **Deletion Process:**
+        - Complete removal of all tenant-associated data
+        - Cleanup of all tenant user accounts
+        - Deletion of tenant settings and configurations
+        - Audit trail creation for compliance purposes
+        
+        **Security Considerations:**
+        - **IRREVERSIBLE OPERATION** - No recovery possible
+        - Ensures complete data removal for compliance
+        - Requires highest level administrative privileges
+        
+        **Alternative Approach:**
+        Consider using suspension instead of deletion for temporary access
+        removal while preserving data for potential reactivation.
+      operationId: deleteTenant
+      tags:
+        - Tenant Management
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Unique identifier of the tenant to delete
+          schema:
+            type: string
+            format: uuid
+            example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '204':
+          description: Tenant deleted successfully
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Cannot delete tenant with active users or data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                cannot_delete:
+                  summary: Tenant has active data
+                  value:
+                    error: Conflict
+                    message: Cannot delete tenant with active users or documents
+                    path: /admin/api/tenants/550e8400-e29b-41d4-a716-446655440000
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tenants/{tenantId}/suspend:
+    post:
+      summary: Suspend tenant
+      description: |
+        Suspend a tenant organization, temporarily disabling access and operations.
+        
+        **Suspension Effects:**
+        - Access blocked: Users cannot authenticate or access resources
+        - Data preserved: All tenant data remains intact
+        - API disabled: All tenant API endpoints return access denied
+        - Audit trail: Suspension reason and timestamp recorded
+        
+        **Common Suspension Reasons:**
+        - Policy violations or security concerns
+        - Payment issues or billing disputes
+        - Administrative maintenance or investigation
+        - Compliance or legal requirements
+        
+        **Reactivation:**
+        - Suspended tenants can be reactivated using the reactivate endpoint
+        - All data and configuration remain available for restoration
+        - Users regain full access upon reactivation
+      operationId: suspendTenant
+      tags:
+        - Tenant Management
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Unique identifier of the tenant to suspend
+          schema:
+            type: string
+            format: uuid
+            example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSuspendRequest'
+            examples:
+              suspend_tenant:
+                summary: Suspend for policy violation
+                value:
+                  reason: Policy violation - inappropriate content detected
+                  notifyUsers: true
+                  adminNotes: Suspended pending investigation of content policy violation
+      responses:
+        '200':
+          description: Tenant suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+              examples:
+                suspended_tenant:
+                  summary: Successfully suspended tenant
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Acme Corporation
+                    slug: acme-corp
+                    status: SUSPENDED
+                    suspensionReason: Policy violation - inappropriate content detected
+                    suspendedAt: 2025-09-20T15:45:00Z
+        '400':
+          description: Invalid suspension request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Tenant already suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tenants/{tenantId}/reactivate:
+    post:
+      summary: Reactivate tenant
+      description: |
+        Reactivate a previously suspended tenant organization.
+        
+        **Reactivation Process:**
+        - Status validation: Verify tenant is currently suspended
+        - Access restoration: Re-enable all tenant operations
+        - User notification: Inform tenant users of reactivation
+        - Audit logging: Record reactivation event and administrator
+        
+        **Restoration Effects:**
+        - Full system access restored for all tenant users
+        - All API endpoints become accessible again
+        - Data and configuration remain unchanged from suspension
+        - Normal operational status resumed
+        
+        **Prerequisites:**
+        - Tenant must be in SUSPENDED status
+        - Administrative review and approval completed
+        - Any suspension issues resolved appropriately
+      operationId: reactivateTenant
+      tags:
+        - Tenant Management
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Unique identifier of the tenant to reactivate
+          schema:
+            type: string
+            format: uuid
+            example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Tenant reactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+              examples:
+                reactivated_tenant:
+                  summary: Successfully reactivated tenant
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Acme Corporation
+                    slug: acme-corp
+                    status: ACTIVE
+                    reactivatedAt: 2025-09-20T16:30:00Z
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Tenant not suspended or cannot be reactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_suspended:
+                  summary: Tenant not suspended
+                  value:
+                    error: Conflict
+                    message: Tenant is not suspended and cannot be reactivated
+                    path: /admin/api/tenants/550e8400-e29b-41d4-a716-446655440000
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  schemas:
+    TenantCreateRequest:
+      type: object
+      required:
+        - name
+        - slug
+      properties:
+        name:
+          type: string
+          description: Human-readable organization name
+          minLength: 2
+          maxLength: 100
+          example: Acme Corporation
+        slug:
+          type: string
+          description: URL-friendly unique identifier
+          pattern: '^[a-z0-9-]+$'
+          minLength: 2
+          maxLength: 50
+          example: acme-corp
+        description:
+          type: string
+          description: Optional organization description
+          maxLength: 500
+          example: Enterprise customer with AI document processing needs
+        maxDocuments:
+          type: integer
+          description: Maximum number of documents allowed
+          minimum: 1
+          default: 1000
+          example: 5000
+        maxStorageMb:
+          type: integer
+          format: int64
+          description: Maximum storage capacity in megabytes
+          minimum: 1
+          default: 10240
+          example: 50000
+
+    TenantUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Updated organization name
+          minLength: 2
+          maxLength: 100
+          example: Acme Corporation Ltd
+        description:
+          type: string
+          description: Updated organization description
+          maxLength: 500
+          example: Updated enterprise customer description
+        maxDocuments:
+          type: integer
+          description: Updated maximum document limit
+          minimum: 1
+          example: 7500
+        maxStorageMb:
+          type: integer
+          format: int64
+          description: Updated maximum storage capacity in megabytes
+          minimum: 1
+          example: 75000
+
+    TenantSuspendRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Reason for tenant suspension
+          minLength: 10
+          maxLength: 500
+          example: Policy violation - inappropriate content detected
+        notifyUsers:
+          type: boolean
+          description: Whether to notify tenant users of suspension
+          default: true
+          example: true
+        adminNotes:
+          type: string
+          description: Internal administrative notes
+          maxLength: 1000
+          example: Suspended pending investigation of content policy violation
+
+    TenantResponse:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique tenant identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Organization name
+          example: Acme Corporation
+        slug:
+          type: string
+          description: URL-friendly identifier
+          example: acme-corp
+        description:
+          type: string
+          description: Organization description
+          nullable: true
+          example: Enterprise customer with AI document processing needs
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, INACTIVE]
+          description: Current operational status
+          example: ACTIVE
+        maxDocuments:
+          type: integer
+          description: Maximum documents allowed
+          example: 5000
+        maxStorageMb:
+          type: integer
+          format: int64
+          description: Maximum storage in megabytes
+          example: 50000
+        userCount:
+          type: integer
+          description: Current number of users
+          example: 25
+        documentCount:
+          type: integer
+          description: Current number of documents
+          example: 150
+        createdAt:
+          type: string
+          format: date-time
+          description: Tenant creation timestamp
+          example: 2025-09-20T10:30:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: 2025-09-20T10:30:00Z
+        suspensionReason:
+          type: string
+          description: Reason for suspension (if suspended)
+          nullable: true
+          example: Policy violation - inappropriate content detected
+        suspendedAt:
+          type: string
+          format: date-time
+          description: Suspension timestamp (if suspended)
+          nullable: true
+          example: 2025-09-20T15:45:00Z
+        reactivatedAt:
+          type: string
+          format: date-time
+          description: Reactivation timestamp (if reactivated)
+          nullable: true
+          example: 2025-09-20T16:30:00Z
+
+    TenantListResponse:
+      type: object
+      required:
+        - content
+        - page
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantSummary'
+          description: List of tenant summaries
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    TenantSummary:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - status
+        - userCount
+        - documentCount
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique tenant identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Organization name
+          example: Acme Corporation
+        slug:
+          type: string
+          description: URL-friendly identifier
+          example: acme-corp
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, INACTIVE]
+          description: Current operational status
+          example: ACTIVE
+        userCount:
+          type: integer
+          description: Number of users
+          example: 25
+        documentCount:
+          type: integer
+          description: Number of documents
+          example: 150
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: 2025-09-20T10:30:00Z
+
+    PageInfo:
+      type: object
+      required:
+        - number
+        - size
+        - totalElements
+        - totalPages
+        - first
+        - last
+      properties:
+        number:
+          type: integer
+          description: Current page number (zero-indexed)
+          example: 0
+        size:
+          type: integer
+          description: Page size
+          example: 10
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+          example: 25
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 3
+        first:
+          type: boolean
+          description: Whether this is the first page
+          example: true
+        last:
+          type: boolean
+          description: Whether this is the last page
+          example: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error category or code
+          example: Validation failed
+        message:
+          type: string
+          description: Detailed error message
+          example: "name: must not be blank, slug: must match pattern ^[a-z0-9-]+$"
+        path:
+          type: string
+          description: Request path that caused the error
+          example: /admin/api/tenants
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: 2025-09-20T10:30:00Z
