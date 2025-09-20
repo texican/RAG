@@ -128,6 +128,15 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Returns the root storage path for health monitoring and diagnostics.
+     * 
+     * @return the root storage path
+     */
+    public Path getStoragePath() {
+        return rootLocation;
+    }
+
     private void createDirectories() {
         try {
             Files.createDirectories(rootLocation);

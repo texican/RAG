@@ -92,4 +92,7 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     @Query("SELECT d FROM Document d WHERE d.processingStatus = 'PROCESSING' AND d.updatedAt < :threshold")
     List<Document> findStuckProcessingDocuments(@Param("threshold") java.time.LocalDateTime threshold);
+
+    @Query("SELECT COUNT(d) FROM Document d WHERE d.processingStatus = :status")
+    long countByProcessingStatus(@Param("status") Document.ProcessingStatus status);
 }

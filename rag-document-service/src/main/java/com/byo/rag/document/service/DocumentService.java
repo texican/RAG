@@ -279,6 +279,21 @@ public class DocumentService {
         return fileStorageService.getTenantStorageUsage(tenantId);
     }
 
+    @Transactional(readOnly = true)
+    public long getTotalDocumentCount() {
+        return documentRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long getPendingDocumentCount() {
+        return documentRepository.countByProcessingStatus(Document.ProcessingStatus.PENDING);
+    }
+
+    @Transactional(readOnly = true)
+    public long getProcessingDocumentCount() {
+        return documentRepository.countByProcessingStatus(Document.ProcessingStatus.PROCESSING);
+    }
+
     private void validateFile(MultipartFile file, Tenant tenant) {
         if (file.isEmpty()) {
             throw new DocumentProcessingException("File is empty");
