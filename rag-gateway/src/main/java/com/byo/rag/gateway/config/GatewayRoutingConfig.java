@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.time.Duration;
 
@@ -49,6 +50,7 @@ import java.time.Duration;
  * @since 1.0
  */
 @Configuration
+@Profile("!test")
 public class GatewayRoutingConfig {
 
     /** JWT authentication filter for securing routes. */
