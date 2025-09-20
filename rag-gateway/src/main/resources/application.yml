@@ -7,6 +7,56 @@ server:
     connection-timeout: 5000
     idle-timeout: 300000
 
+# Gateway Performance Configuration
+gateway:
+  netty:
+    max-connections: 1000
+    acquire-timeout: 45
+    max-idle-time: 30
+    max-life-time: 300
+    read-timeout: 30
+    write-timeout: 30
+    connect-timeout: 10
+  webflux:
+    detailed-errors: false
+    buffer-size: 8192
+    enable-compression: true
+    max-response-size: 10485760
+
+# Security Headers Configuration
+security:
+  headers:
+    hsts:
+      enabled: true
+      max-age: 31536000
+      include-subdomains: true
+    csp:
+      enabled: true
+      policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    frame-options:
+      enabled: true
+      policy: "DENY"
+    content-type-options:
+      enabled: true
+    xss-protection:
+      enabled: true
+    referrer-policy:
+      enabled: true
+      policy: "strict-origin-when-cross-origin"
+    permissions-policy:
+      enabled: true
+      policy: "geolocation=(), microphone=(), camera=()"
+  rate-limiting:
+    global:
+      multiplier: 1000
+    tenant:
+      multiplier: 100
+    user:
+      multiplier: 10
+    adaptive:
+      enabled: true
+      load-threshold: 0.8
+
 spring:
   application:
     name: rag-gateway

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Profile;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -50,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 1.0
  */
 @Service
+@Profile("!test")
 public class AdvancedRateLimitingService {
 
     private static final Logger logger = LoggerFactory.getLogger(AdvancedRateLimitingService.class);

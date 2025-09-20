@@ -1,0 +1,413 @@
+openapi: 3.0.3
+info:
+  title: RAG Admin Service - Authentication API
+  description: Administrative authentication endpoints for secure admin access to the Enterprise RAG system
+  version: 1.0.0
+  contact:
+    name: Enterprise RAG Team
+    email: admin@enterprise-rag.com
+
+servers:
+  - url: http://localhost:8085/admin/api
+    description: Local development server
+  - url: https://admin.rag-enterprise.com/api
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Admin login
+      description: |
+        Authenticate administrative user and return JWT tokens for secure system access.
+        
+        **Security Requirements:**
+        - User must exist in database
+        - Password must match BCrypt hash
+        - Account status must be ACTIVE
+        - User role must be ADMIN
+        
+        **Token Properties:**
+        - 24-hour validity period
+        - Contains username and ADMIN role claims
+        - HMAC-SHA256 signature verification
+      operationId: adminLogin
+      tags:
+        - Authentication
+      security: []  # No auth required for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+            examples:
+              valid_admin:
+                summary: Valid admin login
+                value:
+                  username: admin@company.com
+                  password: secure-admin-password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+              examples:
+                successful_login:
+                  summary: Successful authentication
+                  value:
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    username: admin@company.com
+                    roles: ["ADMIN"]
+                    expiresIn: 86400000
+        '401':
+          description: Invalid credentials or inactive account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_credentials:
+                  summary: Wrong username/password
+                  value:
+                    error: Invalid credentials
+                    message: Username or password is incorrect
+                inactive_account:
+                  summary: Account disabled
+                  value:
+                    error: Account disabled
+                    message: Your account is not active
+        '403':
+          description: Insufficient privileges (non-admin user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                access_denied:
+                  summary: Non-admin user
+                  value:
+                    error: Access denied
+                    message: Admin access required
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      summary: Refresh JWT token
+      description: |
+        Generate new access token using existing valid JWT token.
+        
+        **Refresh Process:**
+        - Validates existing token signature and structure
+        - Extracts username and roles from current token
+        - Generates new token with same claims but fresh expiration
+        - Returns new token with 24-hour validity
+        
+        **Security Features:**
+        - Cryptographic validation of existing token
+        - Claim preservation from original token
+        - New expiration timestamp for continued access
+      operationId: refreshToken
+      tags:
+        - Authentication
+      security: []  # Uses token in request body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRefreshRequest'
+            examples:
+              valid_refresh:
+                summary: Valid token refresh
+                value:
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_token:
+                  summary: Token invalid or expired
+                  value:
+                    error: Invalid token
+                    message: Token is invalid or expired
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: Admin logout
+      description: |
+        Logout administrative user and provide confirmation.
+        
+        **Logout Behavior:**
+        - Server-side logging for audit trail
+        - Confirmation response to client
+        - Client responsible for token disposal
+        
+        **Stateless Architecture:**
+        - JWT tokens are self-contained
+        - Actual logout achieved by client token disposal
+        - Server provides audit logging and confirmation
+      operationId: adminLogout
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+              examples:
+                successful_logout:
+                  summary: Logout confirmation
+                  value:
+                    message: Logged out successfully
+
+  /auth/validate:
+    get:
+      summary: Validate admin user
+      description: |
+        Validate if username corresponds to active administrative user.
+        
+        **Validation Criteria:**
+        - User must exist in database
+        - User must have ADMIN role
+        - Account status must be ACTIVE
+        
+        **Use Cases:**
+        - UI feature toggling based on admin status
+        - Pre-authentication validation
+        - External system integration checks
+      operationId: validateAdmin
+      tags:
+        - Authentication
+      security: []  # Public validation endpoint
+      parameters:
+        - name: username
+          in: query
+          required: true
+          description: Username (email) to validate for admin privileges
+          schema:
+            type: string
+            format: email
+            example: admin@company.com
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserValidationResponse'
+              examples:
+                valid_admin:
+                  summary: Valid admin user
+                  value:
+                    exists: true
+                    username: admin@company.com
+                invalid_user:
+                  summary: Invalid or non-admin user
+                  value:
+                    exists: false
+                    username: user@company.com
+
+  /auth/me:
+    get:
+      summary: Get current admin user
+      description: |
+        Retrieve information about currently authenticated administrative user.
+        
+        **Returned Information:**
+        - Username from JWT token claims
+        - Assigned roles (typically ["ADMIN"])
+        - Real-time authentication context
+        
+        **Authentication Context:**
+        - Information extracted from Spring Security context
+        - Reflects current JWT token claims
+        - Role names cleaned of ROLE_ prefix
+      operationId: getCurrentAdminUser
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+              examples:
+                admin_user:
+                  summary: Current admin user
+                  value:
+                    username: admin@company.com
+                    roles: ["ADMIN"]
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  summary: Not authenticated
+                  value:
+                    error: Unauthorized
+                    message: Authentication required
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  schemas:
+    AdminLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          format: email
+          description: Admin user email address
+          example: admin@company.com
+          minLength: 5
+          maxLength: 255
+        password:
+          type: string
+          format: password
+          description: Admin user password
+          minLength: 8
+          maxLength: 255
+          example: secure-admin-password
+
+    AdminRefreshRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Valid JWT token to refresh
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBjb21wYW55LmNvbSJ9...
+
+    AdminLoginResponse:
+      type: object
+      required:
+        - token
+        - username
+        - roles
+        - expiresIn
+      properties:
+        token:
+          type: string
+          description: JWT access token for API authentication
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBjb21wYW55LmNvbSJ9...
+        username:
+          type: string
+          format: email
+          description: Authenticated admin username
+          example: admin@company.com
+        roles:
+          type: array
+          items:
+            type: string
+          description: List of administrative roles
+          example: ["ADMIN"]
+        expiresIn:
+          type: integer
+          format: int64
+          description: Token expiration time in milliseconds
+          example: 86400000
+
+    AdminUserValidationResponse:
+      type: object
+      required:
+        - exists
+        - username
+      properties:
+        exists:
+          type: boolean
+          description: True if user exists and has admin privileges
+          example: true
+        username:
+          type: string
+          format: email
+          description: The validated username
+          example: admin@company.com
+
+    CurrentUserResponse:
+      type: object
+      required:
+        - username
+        - roles
+      properties:
+        username:
+          type: string
+          format: email
+          description: Current authenticated username
+          example: admin@company.com
+        roles:
+          type: array
+          items:
+            type: string
+          description: List of user roles
+          example: ["ADMIN"]
+
+    LogoutResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Logout confirmation message
+          example: Logged out successfully
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code or type
+          example: Invalid credentials
+        message:
+          type: string
+          description: Human-readable error message
+          example: Username or password is incorrect
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: 2025-09-20T10:30:00Z

@@ -100,6 +100,13 @@ public class TestSecurityConfig {
         Mockito.doNothing().when(mockService).logAuthenticationSuccess(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.doNothing().when(mockService).logAuthenticationFailure(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.doNothing().when(mockService).logRateLimitViolation(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.anyString());
+        
+        // Mock new methods added during implementation
+        Mockito.doNothing().when(mockService).logSecurityEvent(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(mockService).logAuthenticationEvent(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(mockService).logSecurityIncident(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.when(mockService.detectSuspiciousActivity(Mockito.anyString(), Mockito.anyString())).thenReturn(false);
+        
         return mockService;
     }
 
@@ -110,8 +117,46 @@ public class TestSecurityConfig {
     @Primary
     public SessionManagementService mockSessionManagementService() {
         SessionManagementService mockService = Mockito.mock(SessionManagementService.class);
-        // Since SessionValidationResult doesn't exist, we'll mock the actual methods the service has
-        // Check what methods actually exist first and mock those
+        
+        // Mock the methods we added to SessionManagementService
+        Mockito.when(mockService.isTokenBlacklisted(Mockito.anyString())).thenReturn(false);
+        Mockito.when(mockService.validateSession(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
+        Mockito.when(mockService.isRefreshTokenUsed(Mockito.anyString())).thenReturn(false);
+        Mockito.when(mockService.getRefreshCount(Mockito.anyString(), Mockito.any(Duration.class))).thenReturn(0);
+        Mockito.when(mockService.updateSessionActivity(Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(mockService.invalidateAllUserSessions(Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.doNothing().when(mockService).markRefreshTokenUsed(Mockito.anyString());
+        
+        return mockService;
+    }
+
+    /**
+     * Provides mock HierarchicalRateLimitingService for testing.
+     */
+    @Bean
+    @Primary
+    public com.byo.rag.gateway.security.HierarchicalRateLimitingService mockHierarchicalRateLimitingService() {
+        return Mockito.mock(com.byo.rag.gateway.security.HierarchicalRateLimitingService.class);
+    }
+
+    /**
+     * Provides mock InputSanitizationService for testing.
+     */
+    @Bean
+    @Primary
+    public com.byo.rag.gateway.security.InputSanitizationService mockInputSanitizationService() {
+        com.byo.rag.gateway.security.InputSanitizationService mockService = 
+            Mockito.mock(com.byo.rag.gateway.security.InputSanitizationService.class);
+        
+        // Mock to return sanitized versions of input strings
+        Mockito.when(mockService.sanitizeForHtml(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(mockService.sanitizeForSql(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(mockService.normalizePath(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(mockService.safeUrlDecode(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(mockService.sanitizeJson(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(mockService.validateLength(Mockito.anyString(), Mockito.anyInt())).thenReturn(true);
+        Mockito.when(mockService.validateCharacters(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
+        
         return mockService;
     }
 }

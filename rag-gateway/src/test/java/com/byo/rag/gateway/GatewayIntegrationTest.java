@@ -30,7 +30,10 @@ import java.time.Duration;
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     classes = {TestGatewayConfig.class},
     properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration"
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration",
+        "spring.cloud.gateway.route.refresh.enabled=false",
+        "spring.cloud.gateway.routes=",
+        "spring.cloud.gateway.discovery.locator.enabled=false"
     }
 )
 @ActiveProfiles("test")
