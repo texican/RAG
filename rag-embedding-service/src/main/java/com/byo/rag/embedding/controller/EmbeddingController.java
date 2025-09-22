@@ -222,6 +222,38 @@ public class EmbeddingController {
         return ResponseEntity.accepted().body(future);
     }
     
+    @PostMapping("/batch")
+    @Operation(summary = "Generate embeddings for multiple requests in batch")
+    public ResponseEntity<List<EmbeddingResponse>> generateBatchEmbeddings(
+            @Valid @RequestBody List<EmbeddingRequest> requests,
+            @RequestHeader("X-Tenant-ID") 
+            @Parameter(description = "Tenant identifier") UUID tenantId) {
+        
+        logger.info("Generating batch embeddings for {} requests in tenant: {}", 
+                   requests.size(), tenantId);
+        
+        // Validate and update tenant IDs
+        List<EmbeddingRequest> validatedRequests = requests.stream()
+            .map(req -> new EmbeddingRequest(
+                tenantId,
+                req.texts(),
+                req.modelName(),
+                req.documentId(),
+                req.chunkIds()
+            ))
+            .toList();
+        
+        // Use the batch embedding service for efficient processing
+        List<EmbeddingResponse> responses = validatedRequests.stream()
+            .map(embeddingService::generateEmbeddings)
+            .toList();
+        
+        logger.info("Batch embedding generation completed for tenant: {}, {} responses", 
+                   tenantId, responses.size());
+        
+        return ResponseEntity.ok(responses);
+    }
+    
     @PostMapping("/search/batch")
     @Operation(summary = "Perform batch similarity search")
     public ResponseEntity<List<SearchResponse>> searchBatch(
