@@ -504,7 +504,7 @@ The project documentation is organized into the following categories:
 - **[docs/development/CLAUDE.md](docs/development/CLAUDE.md)** - Detailed project status and technical context
 - **[docs/development/METHODOLOGY.md](docs/development/METHODOLOGY.md)** - Development methodology and completed stories management process
 - **[docs/development/TESTING_BEST_PRACTICES.md](docs/development/TESTING_BEST_PRACTICES.md)** - Comprehensive testing guidelines and standards
-- **[rag-embedding-service/KAFKA_ERROR_HANDLING.md](rag-embedding-service/KAFKA_ERROR_HANDLING.md)** - Comprehensive Kafka error handling implementation guide
+- **[docs/development/KAFKA_ERROR_HANDLING.md](docs/development/KAFKA_ERROR_HANDLING.md)** - Comprehensive Kafka error handling implementation guide
 
 ### 📋 Project Management
 - **[docs/project-management/PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md)** - Active task backlog (pending stories only)
