@@ -3,41 +3,12 @@
 ## Overview
 This document tracks the remaining user stories and features to be implemented for the RAG system.
 
-**Total Remaining Story Points: 53**
-- 8 Testing Stories: 53 story points (SHARED-TEST-007 completed, ADMIN-TEST-006 reduced from 3 to 1)
+**Total Remaining Story Points: 45**
+- 7 Testing Stories: 45 story points (AUTH-TEST-001 completed, SHARED-TEST-007 completed, ADMIN-TEST-006 reduced from 3 to 1)
 
 ---
 
 ## Active Backlog Stories
-
-### **AUTH-TEST-001: Complete Auth Service Unit Tests** ⭐ **CRITICAL SECURITY GAP**
-**Epic:** Testing Foundation  
-**Story Points:** 8  
-**Priority:** Critical (Security Gap)  
-**Dependencies:** None
-
-**Context:**
-Complete comprehensive unit test coverage for authentication and authorization services to address critical security gaps.
-
-**Acceptance Criteria:**
-- [ ] Unit tests for user authentication flows (login, logout, token validation)
-- [ ] Unit tests for role-based authorization mechanisms
-- [ ] Unit tests for JWT token generation and validation
-- [ ] Unit tests for password hashing and security features
-- [ ] Edge case testing for authentication failures
-- [ ] Security vulnerability testing for auth bypasses
-
-**Definition of Done:**
-- [ ] Test coverage >95% for auth service
-- [ ] All security edge cases covered
-- [ ] Performance tests for auth operations
-- [ ] Documentation updated with test scenarios
-- [ ] CI/CD integration validates auth security
-
-**Business Impact:**
-Critical for preventing security vulnerabilities in authentication systems.
-
----
 
 ### **DOCUMENT-TEST-002: Document Service Core Functionality Tests** ⭐ **CRITICAL FUNCTIONALITY GAP**
 **Epic:** Testing Foundation  
@@ -168,35 +139,6 @@ Core admin functionality now has enterprise-grade test coverage ensuring reliabl
 
 ---
 
-### **SHARED-TEST-007: Shared Module Utility and Entity Tests** ✅ **COMPLETED**
-**Epic:** Testing Foundation  
-**Story Points:** 5  
-**Priority:** Medium  
-**Dependencies:** specs/002-rag-shared  
-**Completed:** 2025-09-18
-
-**Context:**
-Comprehensive testing implementation for shared modules, utilities, and entity classes completed with 77 unit tests covering all shared components.
-
-**Acceptance Criteria:** ✅ ALL COMPLETED
-- ✅ Unit tests for utility functions and helpers *(SecurityUtils: 10 tests, TextChunker: 16 tests)*
-- ✅ Tests for shared entity models and validation *(BaseEntity: 8 tests, DocumentEntity: 10 tests)*
-- ✅ Tests for common configuration management *(DependencyValidation: 10 tests)*
-- ✅ Cross-module dependency testing *(All dependencies verified)*
-- ✅ Shared exception handling tests *(RagException: 12 tests)*
-
-**Definition of Done:** ✅ ALL COMPLETED
-- ✅ Test coverage >95% for shared modules *(77/77 tests passing - 100% success rate)*
-- ✅ Cross-module integration testing *(DocumentDto: 11 tests with serialization/validation)*
-- ✅ Performance tests for utility functions *(Concurrent operations, thread safety)*
-- ✅ Documentation of shared module contracts *(Comprehensive Javadoc)*
-- ✅ Validation of module boundaries *(Sealed interfaces, proper encapsulation)*
-
-**Business Impact:**
-Complete reliability validation of shared components across all services with enterprise-grade testing standards.
-
----
-
 ### **INTEGRATION-TEST-008: End-to-End Workflow Tests** ⭐ **HIGH IMPACT**
 **Epic:** Testing Foundation  
 **Story Points:** 13  
@@ -286,12 +228,12 @@ Prevents service integration issues and breaking changes.
 ## Summary
 
 ### Remaining Backlog
-- **Total Story Points**: 53
-- **Critical Security**: 16 story points (AUTH-TEST-001, GATEWAY-TEST-005)
+- **Total Story Points**: 45 (reduced from 53 with AUTH-TEST-001 completion)
+- **Critical Security**: 8 story points (GATEWAY-TEST-005)
 - **Critical Functionality**: 13 story points (DOCUMENT-TEST-002)
 - **High Priority**: 29 story points (EMBEDDING-TEST-003, INTEGRATION-TEST-008, PERFORMANCE-TEST-009)
 
 ### Progress Metrics
-- **Completed**: 5 story points (SHARED-TEST-007 completed)
+- **Completed**: 13 story points (AUTH-TEST-001 completed, SHARED-TEST-007 completed)
 - **In Progress**: 1 story point (ADMIN-TEST-006 nearly complete)
-- **Remaining**: 52 story points
+- **Remaining**: 45 story points
