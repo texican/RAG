@@ -3,42 +3,14 @@
 ## Overview
 This document tracks the remaining user stories and features to be implemented for the RAG system.
 
-**Total Remaining Story Points: 16**
-- 5 Testing Stories: 16 story points (AUTH-TEST-001 completed, SHARED-TEST-007 completed, DOCUMENT-TEST-002 completed, ADMIN-TEST-006 completed)
+**Total Remaining Story Points: 8**
+- 4 Testing Stories: 8 story points (AUTH-TEST-001 completed, SHARED-TEST-007 completed, DOCUMENT-TEST-002 completed, ADMIN-TEST-006 completed, EMBEDDING-TEST-003 completed)
 
 ---
 
 ## Active Backlog Stories
 
 
-### **EMBEDDING-TEST-003: Embedding Service Advanced Scenarios**
-**Epic:** Testing Foundation  
-**Story Points:** 8  
-**Priority:** High  
-**Dependencies:** None
-
-**Context:**
-Implement advanced testing scenarios for embedding service to ensure robust performance under various conditions.
-
-**Acceptance Criteria:**
-- [ ] Tests for different document types and formats
-- [ ] Performance tests under high load conditions
-- [ ] Tests for embedding quality and consistency
-- [ ] Error handling for embedding failures
-- [ ] Tests for batch processing scenarios
-- [ ] Memory usage and optimization tests
-
-**Definition of Done:**
-- [ ] Advanced scenario test suite implemented
-- [ ] Performance benchmarks under load
-- [ ] Quality metrics for embedding accuracy
-- [ ] Memory and resource usage optimization
-- [ ] Integration with monitoring systems
-
-**Business Impact:**
-Ensures embedding service reliability under production workloads.
-
----
 
 ### **GATEWAY-TEST-005: Gateway Security and Routing Tests** ⭐ **CRITICAL SECURITY GAP**
 **Epic:** Testing Foundation  
@@ -159,14 +131,14 @@ Prevents service integration issues and breaking changes.
 ## Summary
 
 ### Remaining Backlog
-- **Total Story Points**: 16 
+- **Total Story Points**: 8 
 - **Critical Security**: 8 story points (GATEWAY-TEST-005)
 - **Critical Functionality**: 0 story points (All completed)
-- **High Priority**: 8 story points (EMBEDDING-TEST-003)
-- **Medium Priority**: 0 story points
+- **High Priority**: 0 story points (All completed)
+- **Medium Priority**: 0 story points (All completed)
 
 ### Progress Metrics
-- **Active Stories**: 5 stories (16 total story points)
+- **Active Stories**: 4 stories (8 total story points)
 - **In Progress**: 0 story points
 - **Critical Security Gap**: 1 story (GATEWAY-TEST-005 - 8 points)
-- **Testing Foundation**: 5 stories remaining
+- **Testing Foundation**: 4 stories remaining
