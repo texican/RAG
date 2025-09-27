@@ -16,21 +16,22 @@ NC='\033[0m'
 echo -e "${BLUE}🚀 RAG System Quick Start${NC}"
 echo "=========================="
 
-# Step 1: Run complete setup
+# Step 1: Setup environment (skip Docker since we'll use fixed compose file)
 echo -e "${YELLOW}Step 1: Setting up environment...${NC}"
-"${PROJECT_ROOT}/scripts/setup/setup-local-dev.sh"
+"${PROJECT_ROOT}/scripts/setup/setup-local-dev.sh" --skip-docker
 
-# Step 2: Start all services
-echo -e "${YELLOW}Step 2: Starting all services...${NC}"
-"${PROJECT_ROOT}/scripts/services/start-all-services.sh"
+# Step 2: Start Docker services using fixed compose file
+echo -e "${YELLOW}Step 2: Starting Docker services...${NC}"
+cd "${PROJECT_ROOT}"
+docker-compose -f config/docker/docker-compose.fixed.yml up -d
 
 # Step 3: Wait for services to be ready
 echo -e "${YELLOW}Step 3: Waiting for services to be ready...${NC}"
 sleep 15
 
-# Step 4: Run health check
+# Step 4: Run health check using Docker health script
 echo -e "${YELLOW}Step 4: Verifying system health...${NC}"
-"${PROJECT_ROOT}/scripts/utils/health-check.sh"
+"${PROJECT_ROOT}/config/docker/docker-health.sh"
 
 # Step 5: Run tests
 echo -e "${YELLOW}Step 5: Running integration tests...${NC}"
@@ -46,6 +47,6 @@ echo "- Grafana Dashboard: http://localhost:3000 (admin/admin)"
 echo "- Kafka UI: http://localhost:8080"
 echo ""
 echo "📋 Management Commands:"
-echo "- Stop services: ./scripts/services/stop-all-services.sh"
-echo "- Health check: ./scripts/utils/health-check.sh"
-echo "- Run tests: ./scripts/tests/test-system.sh"
+echo "- Stop services: docker-compose -f config/docker/docker-compose.fixed.yml down"
+echo "- Health check: ./config/docker/docker-health.sh"
+echo "- View logs: docker-compose -f config/docker/docker-compose.fixed.yml logs -f"
