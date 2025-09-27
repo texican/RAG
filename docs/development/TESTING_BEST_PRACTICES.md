@@ -339,3 +339,16 @@ public class ContextAssemblyHealthIndicator implements HealthIndicator {
 ### Contract Tests
 - **Pattern**: `apiMethod_inputCondition_contractBehavior`
 - **Example**: `assembleContext_NullDocuments_ReturnsEmptyString`
+
+---
+
+## 📚 Additional Resources
+
+- **System Architecture**: See `README.md` for detailed architecture overview
+- **Deployment Guide**: See `docs/deployment/DEPLOYMENT.md`
+- **Interactive API Documentation**: Available at each service's `/swagger-ui.html` endpoint ✨ **NEW**
+  - **Primary Gateway**: http://localhost:8080/swagger-ui.html
+  - **Individual Services**: Complete OpenAPI 3.0 specifications with "Try It Out" functionality
+  - **JWT Integration**: Built-in authentication testing capabilities
+- **Monitoring**: Grafana dashboards at http://localhost:3000
+- **Testing Methodology**: See `docs/development/METHODOLOGY.md` for comprehensive development practices
