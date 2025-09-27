@@ -20,6 +20,8 @@ Quick deployment guide for the BYO RAG (Build Your Own Retrieval Augmented Gener
 
 ## 🚀 Quick Start with Docker (Recommended)
 
+> **🆕 NEW**: All services now include comprehensive interactive API documentation via Swagger UI!
+
 ### 1. Clone and Build
 ```bash
 # Clone repository
@@ -55,8 +57,23 @@ curl http://localhost:8080/actuator/health  # Gateway Service
 
 ### 4. Access Points
 - **API Gateway**: http://localhost:8080
+- **Interactive API Documentation**: http://localhost:8080/swagger-ui.html ✨ **NEW**
 - **Redis Insight**: http://localhost:8001
 - **Database**: localhost:5432 (user: `rag_user`, password: `rag_password`)
+
+### 5. Explore APIs Interactively ✨ **NEW**
+All services now provide comprehensive interactive API documentation:
+```bash
+# Primary API Gateway documentation
+open http://localhost:8080/swagger-ui.html
+
+# Individual service documentation
+open http://localhost:8081/swagger-ui.html  # Auth Service
+open http://localhost:8082/swagger-ui.html  # Document Service
+open http://localhost:8083/swagger-ui.html  # Embedding Service
+open http://localhost:8084/swagger-ui.html  # Core Service
+open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
+```
 
 ## 🛠️ Alternative: Manual Service Startup
 
@@ -108,6 +125,8 @@ OLLAMA_HOST=http://localhost:11434
 - **Admin Password**: `admin123`
 
 ## 🧪 Testing the System
+
+> **💡 Tip**: Use the interactive API documentation at http://localhost:8080/swagger-ui.html for easy testing with built-in "Try It Out" functionality!
 
 ### 1. Create a Tenant
 ```bash
@@ -180,6 +199,8 @@ After successful deployment, you'll have:
 
 ## 📚 Next Steps
 
-- Review [README.md](README.md) for architecture details
-- Check [TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md) for testing guidelines
-- See individual service README files for API documentation
+- **🚀 Start Here**: Explore interactive API documentation at http://localhost:8080/swagger-ui.html
+- **📖 Architecture**: Review [README.md](README.md) for detailed architecture overview
+- **🧪 Testing**: Check [TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md) for testing guidelines
+- **📋 Service Guide**: See [SERVICE_CONNECTION_GUIDE.md](SERVICE_CONNECTION_GUIDE.md) for comprehensive API usage
+- **📚 API Portal**: Visit [API_DOCUMENTATION_PORTAL.md](../api/API_DOCUMENTATION_PORTAL.md) for complete API reference

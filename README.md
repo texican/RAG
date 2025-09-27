@@ -160,28 +160,35 @@ cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 | **Grafana** | http://localhost:3000 (admin/admin) | ✅ Working |
 | **Prometheus** | http://localhost:9090 | ✅ Working |
 
-### 4️⃣ Test the System
+### 4️⃣ Explore the APIs
 
-**Using the API Gateway (Recommended):**
+**Interactive API Documentation (Recommended):**
+```bash
+# Access comprehensive API documentation
+open http://localhost:8080/swagger-ui.html
+
+# Or explore individual service APIs:
+open http://localhost:8081/swagger-ui.html  # Auth Service
+open http://localhost:8082/swagger-ui.html  # Document Service  
+open http://localhost:8083/swagger-ui.html  # Embedding Service
+open http://localhost:8084/swagger-ui.html  # Core Service
+open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
+```
+
+**Test Using curl (Alternative):**
 ```bash
 # 1. Check system health through gateway
 curl http://localhost:8080/actuator/health
 
-# 2. Create a tenant through gateway
-curl -X POST http://localhost:8080/api/auth/tenants/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Dev Company",
-    "slug": "dev-company", 
-    "description": "Development tenant"
-  }'
+# 2. Create admin user (first time only)
+./scripts/db/create-admin-user.sh
 
-# 3. Login through gateway (admin user exists by default)
+# 3. Login through gateway
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@enterprise-rag.com",
-    "password": "AdminPass123!"
+    "password": "admin123"
   }'
 
 # 4. Use the returned JWT token for authenticated requests
@@ -201,9 +208,10 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 
 ## 📊 Development Status
 
-### 📊 Project Status (2025-09-22): **EMBEDDING-TEST-003 IMPLEMENTATION COMPLETE** 🎯
+### 📊 Project Status (2025-09-24): **DOC-002 API DOCUMENTATION COMPLETE** 🎯
 
 - **All 6 microservices operational** in Docker with full system integration
+- **✅ DOC-002 COMPLETED** - Comprehensive OpenAPI 3.0 specifications for all 6 services with interactive Swagger UI documentation (100% API coverage)
 - **✅ EMBEDDING-TEST-003 COMPLETED** - Comprehensive embedding service advanced tests with 77/77 tests passing (100% success rate) covering document types, performance, quality, error handling, batch processing, and memory optimization
 - **✅ DOCUMENT-TEST-002 COMPLETED** - Comprehensive document service unit tests with 103/103 tests passing (100% success rate)
 - **✅ AUTH-TEST-001 COMPLETED** - Comprehensive authentication service unit tests with 71/71 tests passing (100% success rate)
@@ -213,21 +221,25 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 - **✅ BACKLOG CONSOLIDATED** - Single authoritative backlog with remaining testing/security stories
 - **System reliability significantly enhanced** with enterprise-grade error handling, automatic recovery, and comprehensive monitoring
 - **Production-ready core services** with complete security and functionality testing including document processing, authentication flows, embedding service advanced scenarios, and vulnerability testing
+- **World-class API documentation** with 100% endpoint coverage and interactive Swagger UI across all 6 services
 - **Comprehensive project management** with data protection safeguards and process improvements
-- **Next focus**: Gateway security testing (GATEWAY-TEST-005)
+- **Next focus**: Developer onboarding guide (DOC-003)
 
-### ✅ Services Implementation Status (All Complete with Tests)
-| Service | Implementation | Features | Test Status | Docker Ready |
-|---------|---------------|----------|-------------|--------------|
-| **rag-shared** | ✅ Complete | Common DTOs, entities, utilities | ✅ Unit Tests | ✅ Library |
-| **rag-auth-service** | ✅ Complete | JWT auth, tenant management | ✅ **71/71 Tests** (AUTH-TEST-001) | ✅ Production |
-| **rag-document-service** | ✅ Complete | File processing, chunking, async processing | ✅ **103/103 Tests** (DOCUMENT-TEST-002) | ✅ Production |
-| **rag-embedding-service** | ✅ Complete | Vector operations, similarity search, **enterprise error handling** | ✅ **77/77 Tests** (EMBEDDING-TEST-003) | ✅ Production |
-| **rag-admin-service** | ✅ Complete | Admin operations, database analytics | ✅ Unit Tests | ✅ Production |
-| **rag-core-service** | ✅ Complete | RAG pipeline, LLM integration, streaming | ✅ **100% Unit Tests** | ✅ Production |
-| **rag-gateway** | ✅ Complete | API Gateway, JWT validation, routing | ✅ Unit Tests | ✅ Production |
+### ✅ Services Implementation Status (All Complete with Tests & API Docs)
+| Service | Implementation | Features | Test Status | API Documentation | Docker Ready |
+|---------|---------------|----------|-------------|-------------------|--------------|
+| **rag-shared** | ✅ Complete | Common DTOs, entities, utilities | ✅ Unit Tests | N/A (Library) | ✅ Library |
+| **rag-auth-service** | ✅ Complete | JWT auth, tenant management | ✅ **71/71 Tests** (AUTH-TEST-001) | ✅ **Swagger UI** | ✅ Production |
+| **rag-document-service** | ✅ Complete | File processing, chunking, async processing | ✅ **103/103 Tests** (DOCUMENT-TEST-002) | ✅ **Swagger UI** | ✅ Production |
+| **rag-embedding-service** | ✅ Complete | Vector operations, similarity search, **enterprise error handling** | ✅ **77/77 Tests** (EMBEDDING-TEST-003) | ✅ **Swagger UI** | ✅ Production |
+| **rag-admin-service** | ✅ Complete | Admin operations, database analytics | ✅ Unit Tests | ✅ **Swagger UI** | ✅ Production |
+| **rag-core-service** | ✅ Complete | RAG pipeline, LLM integration, streaming | ✅ **100% Unit Tests** | ✅ **Swagger UI** | ✅ Production |
+| **rag-gateway** | ✅ Complete | API Gateway, JWT validation, routing | ✅ Unit Tests | ✅ **Swagger UI** | ✅ Production |
 
-### 🎯 Recent Major Achievements (2025-09-22)
+### 🎯 Recent Major Achievements (2025-09-24)
+- ✅ **DOC-002 COMPLETE**: Comprehensive OpenAPI 3.0 specifications with interactive Swagger UI documentation (100% API coverage)
+- ✅ **Complete API Documentation**: 6 enhanced OpenAPI configurations covering all services with detailed descriptions, authentication schemes, and developer examples
+- ✅ **Interactive Developer Experience**: Swagger UI available at all service endpoints with "Try It Out" functionality and JWT authentication integration
 - ✅ **EMBEDDING-TEST-003 COMPLETE**: Comprehensive embedding service advanced testing with 77/77 tests passing (100% success rate)
 - ✅ **Complete Embedding Service Coverage**: 6 advanced test scenarios covering DocumentTypeEmbeddingTest (10 tests), PerformanceLoadTest (12 tests), EmbeddingQualityConsistencyTest (12 tests), ErrorHandlingTest (17 tests), BatchProcessingTest (15 tests), MemoryOptimizationTest (11 tests)
 - ✅ **Production-Grade Testing**: Performance benchmarks, quality validation, error resilience, memory optimization, and batch processing testing
