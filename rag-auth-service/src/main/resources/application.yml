@@ -28,6 +28,34 @@ spring:
   
   jackson:
     default-property-inclusion: NON_NULL
+
+# OpenAPI 3.0 Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    doc-expansion: none
+    tags-sorter: alpha
+    operations-sorter: alpha
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - url: /v3/api-docs
+        name: Auth Service API
+        primary: true
+  show-actuator: true
+  group-configs:
+    - group: auth-public
+      display-name: Public Authentication API
+      paths-to-match: /auth/**
+    - group: user-management  
+      display-name: User Management API
+      paths-to-match: /users/**
+    - group: tenant-management
+      display-name: Tenant Management API
+      paths-to-match: /tenants/**
     serialization:
       write-dates-as-timestamps: false
 

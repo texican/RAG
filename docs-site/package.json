@@ -1,0 +1,30 @@
+{
+  "name": "rag-system-docs",
+  "version": "1.0.0",
+  "description": "BYO RAG System Documentation Site",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "vitepress": "^1.0.0-rc.31",
+    "@types/node": "^20.5.0"
+  },
+  "keywords": [
+    "documentation",
+    "rag",
+    "ai",
+    "vector-database",
+    "spring-boot",
+    "microservices"
+  ],
+  "author": "RAG System Team",
+  "license": "MIT"
+}
