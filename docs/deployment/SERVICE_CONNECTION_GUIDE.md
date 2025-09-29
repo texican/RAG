@@ -119,10 +119,18 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 
 **All services now provide comprehensive interactive API documentation powered by OpenAPI 3.0 and Swagger UI:**
 
-#### **🎯 Primary API Portal**
-- **URL**: http://localhost:8080/swagger-ui.html
-- **Features**: Complete API gateway documentation with routing information
-- **Recommended**: Primary entry point for all API exploration
+#### **🎯 Swagger UI Access Points**
+
+**✅ Publicly Accessible:**
+- **Document Service**: http://localhost:8082/swagger-ui.html (No login required)
+
+**🔑 Authentication Required (Username: `user`):**
+- **API Gateway**: http://localhost:8080/swagger-ui.html (Password: `726bcacd-081f-4a08-96e1-9037edc2ac45`)
+- **Embedding Service**: http://localhost:8083/swagger-ui.html (Password: `681650f3-b562-4c16-828a-d8a996b01217`)
+- **Core Service**: http://localhost:8084/swagger-ui.html (Password: `77147b40-70e6-477d-8557-fcf417e9ca9f`)
+- **Admin Service**: http://localhost:8085/admin/api/swagger-ui.html (Password: `5080a46c-bfef-45fc-a403-2ea299ee531d`)
+
+> **📋 Complete Access Guide**: See [SWAGGER_UI_ACCESS_GUIDE.md](SWAGGER_UI_ACCESS_GUIDE.md) for detailed credentials and troubleshooting
 
 #### **🔍 Service-Specific Documentation**
 Each service provides detailed API documentation with:

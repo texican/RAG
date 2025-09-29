@@ -63,17 +63,27 @@ curl http://localhost:8080/actuator/health  # Gateway Service
 
 ### 5. Explore APIs Interactively ✨ **NEW**
 All services now provide comprehensive interactive API documentation:
+
+**📋 Quick Access with Credentials:**
 ```bash
-# Primary API Gateway documentation
+# Public access (no login required)
+open http://localhost:8082/swagger-ui.html  # Document Service
+
+# Authenticated access (username: user)
+# API Gateway (password: 726bcacd-081f-4a08-96e1-9037edc2ac45)
 open http://localhost:8080/swagger-ui.html
 
-# Individual service documentation
-open http://localhost:8081/swagger-ui.html  # Auth Service
-open http://localhost:8082/swagger-ui.html  # Document Service
-open http://localhost:8083/swagger-ui.html  # Embedding Service
-open http://localhost:8084/swagger-ui.html  # Core Service
-open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
+# Core Service (password: 77147b40-70e6-477d-8557-fcf417e9ca9f)  
+open http://localhost:8084/swagger-ui.html
+
+# Embedding Service (password: 681650f3-b562-4c16-828a-d8a996b01217)
+open http://localhost:8083/swagger-ui.html
+
+# Admin Service (password: 5080a46c-bfef-45fc-a403-2ea299ee531d)
+open http://localhost:8085/admin/api/swagger-ui.html
 ```
+
+> **📋 Complete Credentials Guide**: See [docs/deployment/SWAGGER_UI_ACCESS_GUIDE.md](SWAGGER_UI_ACCESS_GUIDE.md) for detailed access information and troubleshooting
 
 ## 🛠️ Alternative: Manual Service Startup
 

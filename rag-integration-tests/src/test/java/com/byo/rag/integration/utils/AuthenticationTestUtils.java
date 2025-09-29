@@ -117,7 +117,7 @@ public final class AuthenticationTestUtils {
         // Try to login with default admin credentials first
         UserDto.LoginRequest defaultAdminLogin = new UserDto.LoginRequest(
             "admin@enterprise-rag.com", 
-            "AdminPass123!"
+            "admin123"
         );
         
         try {

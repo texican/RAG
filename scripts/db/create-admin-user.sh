@@ -52,8 +52,8 @@ EOF
 if command -v javac >/dev/null 2>&1 && [[ -f "/Users/stryfe/Projects/RAG/rag-admin-service/target/classes" ]]; then
     BCRYPT_PASSWORD=$(cd /tmp && javac -cp "/Users/stryfe/Projects/RAG/rag-admin-service/target/classes:/Users/stryfe/.m2/repository/org/springframework/security/spring-security-crypto/6.1.11/spring-security-crypto-6.1.11.jar" bcrypt_hash.java && java -cp ".:/Users/stryfe/Projects/RAG/rag-admin-service/target/classes:/Users/stryfe/.m2/repository/org/springframework/security/spring-security-crypto/6.1.11/spring-security-crypto-6.1.11.jar" bcrypt_hash "$ADMIN_PASSWORD")
 else
-    # Pre-generated BCrypt hash for "admin123" with strength 10
-    BCRYPT_PASSWORD='$2a$10$8.1VrLQH1dpLgUaLtZ2VHeyJmY1gWW0Ih8z8wJLM8N1r8xO1m.NJq'
+    # Pre-generated BCrypt hash for "admin123" with strength 10 (verified working)
+    BCRYPT_PASSWORD='$2a$10$4ruqE8FlnERNCuIW/6pI6.1rlZmJiG/plwFwif5KPGxjwbM9Sm6je'
     echo -e "${YELLOW}⚠️  Using pre-generated hash for default password 'admin123'${NC}"
 fi
 

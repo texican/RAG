@@ -3,12 +3,59 @@
 ## Overview
 This document tracks the remaining user stories and features to be implemented for the RAG system.
 
-**Total Remaining Story Points: 26**
+**Total Remaining Story Points: 34** (26 + 8 for AUTH-FIX-001)
 - 4 Testing Stories: 26 story points (AUTH-TEST-001 completed, SHARED-TEST-007 completed, DOCUMENT-TEST-002 completed, ADMIN-TEST-006 completed, EMBEDDING-TEST-003 completed, GATEWAY-TEST-005 completed)
 
 ---
 
 ## Active Backlog Stories
+
+### **AUTH-FIX-001: Fix Admin Service BCrypt Authentication Validation** ⭐ **CRITICAL BUG**
+**Epic:** Authentication & Authorization Infrastructure  
+**Story Points:** 8  
+**Priority:** P0 - Critical (Blocking administrative operations)  
+**Dependencies:** None
+
+**Context:**
+Admin service authentication endpoint consistently returns "Invalid credentials" for `admin@enterprise-rag.com` despite valid user, correct BCrypt hashes, and proper request format. This blocks all administrative functionality including tenant management, user administration, and system analytics.
+
+**Problem Evidence:**
+- ✅ User exists in database with ADMIN role and ACTIVE status
+- ✅ Request validation passes (email format, password length)
+- ✅ Service finds user in database queries successfully
+- ❌ BCrypt password validation consistently fails
+- ❌ Multiple valid BCrypt hashes tested without success
+
+**Acceptance Criteria:**
+- [ ] Admin user `admin@enterprise-rag.com` authenticates with password `admin123`
+- [ ] Authentication returns valid JWT token with ADMIN role claims
+- [ ] JWT token works for accessing protected admin endpoints
+- [ ] Authentication logging shows successful login without warnings
+- [ ] BCrypt validation matches standard Spring Security implementation
+
+**Technical Investigation Required:**
+- [ ] Debug BCrypt configuration in admin service
+- [ ] Investigate AdminAuthController password validation logic
+- [ ] Check for BCryptPasswordEncoder bean configuration issues
+- [ ] Verify Spring Security dependency versions
+- [ ] Add debug logging for authentication flow
+
+**Definition of Done:**
+- [ ] Admin authentication works for existing credentials
+- [ ] All admin endpoints accessible with generated JWT tokens
+- [ ] Unit and integration tests pass
+- [ ] Authentication performance <500ms
+- [ ] Security audit confirms no vulnerabilities introduced
+
+**Business Impact:**
+**CRITICAL** - Completely blocks administrative operations, tenant management, system oversight, and production readiness.
+
+**Current Workarounds:**
+- Use Document Service Swagger UI (public access): http://localhost:8082/swagger-ui.html
+- Individual service Swagger UIs with generated passwords
+- Direct database operations for urgent admin tasks
+
+---
 
 
 
