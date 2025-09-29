@@ -164,16 +164,17 @@ cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 
 **Interactive API Documentation (Recommended):**
 ```bash
-# Access comprehensive API documentation
-open http://localhost:8080/swagger-ui.html
+# Start with public access (no credentials needed)
+open http://localhost:8082/swagger-ui.html  # Document Service
 
-# Or explore individual service APIs:
-open http://localhost:8081/swagger-ui.html  # Auth Service
-open http://localhost:8082/swagger-ui.html  # Document Service  
-open http://localhost:8083/swagger-ui.html  # Embedding Service
+# Authenticated APIs (username: user, see guide for passwords)
+open http://localhost:8080/swagger-ui.html  # API Gateway  
 open http://localhost:8084/swagger-ui.html  # Core Service
+open http://localhost:8083/swagger-ui.html  # Embedding Service
 open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
 ```
+
+> **🔑 Access Credentials**: See [docs/deployment/SWAGGER_UI_ACCESS_GUIDE.md](docs/deployment/SWAGGER_UI_ACCESS_GUIDE.md) for complete login credentials and troubleshooting
 
 **Test Using curl (Alternative):**
 ```bash
