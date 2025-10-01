@@ -1,0 +1,73 @@
+# Quality Checklist - MANDATORY Before Marking Work Complete
+
+## ✅ Pre-Completion Validation
+
+### **Technical Validation**
+- [ ] **Full Test Suite**: `./scripts/quality/validate-system.sh` passes 100%
+- [ ] **Integration Tests**: All Spring Boot contexts load successfully  
+- [ ] **Core Workflows**: Document upload, authentication, search functional
+- [ ] **Error Handling**: No HTTP 500 errors in normal operations
+- [ ] **Database Operations**: All CRUD operations working
+- [ ] **Service Health**: All actuator endpoints healthy
+
+### **Production Readiness**  
+- [ ] **Environment Testing**: `docker-compose up -d` successful
+- [ ] **Service Communication**: Inter-service calls working
+- [ ] **Security**: Authentication/authorization functional
+- [ ] **Performance**: Response times acceptable
+- [ ] **Monitoring**: Health checks operational
+
+### **Documentation & Deployment**
+- [ ] **API Documentation**: Updated for endpoint changes
+- [ ] **Configuration**: Environment variables documented
+- [ ] **Deployment Guide**: Production deployment steps
+- [ ] **Rollback Plan**: Steps to revert if needed
+
+## 🚫 Quality Gates
+
+### **STOP WORK if ANY of these are true:**
+- [ ] Any test failures exist
+- [ ] HTTP 500 errors in core functionality  
+- [ ] Spring Boot contexts fail to load
+- [ ] Database operations failing
+- [ ] Service startup failures
+- [ ] Core user workflows broken
+
+### **NEVER claim "Done" unless:**
+- [ ] 100% test pass rate
+- [ ] All functionality manually verified
+- [ ] Zero known bugs or errors
+- [ ] Production deployment validated
+- [ ] Documentation complete
+
+## 📊 Required Status Report Format
+
+```markdown
+## Test Results Summary
+✅/❌ **Passing Tests**: X/Y total (Z%)
+❌ **Failing Tests**: N failures (if any)
+
+## 🔧 Broken Functionality  
+- [List any non-working features]
+
+## 🚫 Production Blockers
+- [What prevents production deployment]
+
+## ✅ Verified Working
+- [Only tested functionality]
+```
+
+## 🛠️ Validation Commands
+
+```bash
+# MANDATORY before any completion claims:
+./scripts/quality/validate-system.sh
+
+# Manual verification:
+docker-compose up -d
+curl http://localhost:8081/actuator/health
+curl http://localhost:8082/actuator/health  
+curl http://localhost:8083/actuator/health
+curl http://localhost:8084/actuator/health
+curl http://localhost:8085/admin/api/actuator/health
+```
