@@ -11,14 +11,14 @@ NC='\033[0m'
 echo "🔍 RAG Service Status Check"
 echo "==========================="
 
-# Define services and their ports
+# Define services and their ports (gateway archived per ADR-001)
 services=(
     "rag-auth-service:8081"
-    "rag-core-service:8082"
-    "rag-document-service:8083"
-    "rag-embedding-service:8084"
-    "rag-admin-service:8085"
-    "rag-gateway:8080"
+    "rag-document-service:8082"
+    "rag-embedding-service:8083"
+    "rag-core-service:8084"
+    "rag-admin-service:8086"
+    # "rag-gateway:8080"  # Archived per ADR-001
 )
 
 echo ""
@@ -35,7 +35,7 @@ for service_info in "${services[@]}"; do
         
         # Check if it's actually our service by testing health endpoint
         case $port in
-            8085) health_url="http://localhost:$port/admin/api/actuator/health" ;;
+            8086) health_url="http://localhost:$port/admin/api/actuator/health" ;;
             *) health_url="http://localhost:$port/actuator/health" ;;
         esac
         
@@ -79,7 +79,11 @@ else
 fi
 
 echo ""
-echo "🌐 Access URLs:"
+echo "🌐 Access URLs (Direct Service Access - ADR-001):"
 echo "- Grafana Dashboard: http://localhost:3000 (admin/admin)"
 echo "- Redis Insight: http://localhost:8001"
-echo "- Admin Service API: http://localhost:8085/admin/api/swagger-ui.html"
+echo "- Auth Service: http://localhost:8081/swagger-ui.html"
+echo "- Document Service: http://localhost:8082/swagger-ui.html"
+echo "- Admin Service: http://localhost:8086/admin/api/swagger-ui.html"
+echo ""
+echo "Note: Gateway archived - using direct service access per ADR-001"
