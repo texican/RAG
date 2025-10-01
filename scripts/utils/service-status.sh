@@ -35,7 +35,7 @@ for service_info in "${services[@]}"; do
         
         # Check if it's actually our service by testing health endpoint
         case $port in
-            8086) health_url="http://localhost:$port/admin/api/actuator/health" ;;
+            8085) health_url="http://localhost:$port/admin/api/actuator/health" ;;
             *) health_url="http://localhost:$port/actuator/health" ;;
         esac
         
@@ -53,26 +53,26 @@ done
 echo "🐳 Infrastructure Services:"
 echo ""
 
-# Check Docker services
-if docker-compose ps postgres | grep -q "Up"; then
+# Check Docker services (try multiple methods)
+if docker ps --format '{{.Names}}:{{.Status}}' | grep -E "(postgres|enterprise-rag-postgres)" | grep -q "Up"; then
     echo -e "✅ PostgreSQL: ${GREEN}Running${NC}"
 else
     echo -e "❌ PostgreSQL: ${RED}Stopped${NC}"
 fi
 
-if docker-compose ps redis | grep -q "Up"; then
+if docker ps --format '{{.Names}}:{{.Status}}' | grep -E "(redis|enterprise-rag-redis)" | grep -q "Up"; then
     echo -e "✅ Redis Stack: ${GREEN}Running${NC}"
 else
     echo -e "❌ Redis Stack: ${RED}Stopped${NC}"
 fi
 
-if docker-compose ps kafka | grep -q "Up"; then
+if docker ps --format '{{.Names}}:{{.Status}}' | grep "kafka" | grep -q "Up"; then
     echo -e "✅ Kafka: ${GREEN}Running${NC}"
 else
     echo -e "❌ Kafka: ${RED}Stopped${NC}"
 fi
 
-if docker-compose ps grafana | grep -q "Up"; then
+if docker ps --format '{{.Names}}:{{.Status}}' | grep "grafana" | grep -q "Up"; then
     echo -e "✅ Grafana: ${GREEN}Running${NC}"
 else
     echo -e "❌ Grafana: ${RED}Stopped${NC}"

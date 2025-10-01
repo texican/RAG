@@ -459,7 +459,8 @@ EOF
             "status": "${service_status[$component]}",
             "alerts": "$alerts",
             "metrics": "${service_metrics[$component]}"
-        }EOF
+        }
+EOF
             first_alert=false
         fi
     done

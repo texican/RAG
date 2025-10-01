@@ -20,7 +20,7 @@ echo "Test 1: Admin Service Authentication"
 response=$(curl -s -w "%{http_code}" -X POST http://localhost:8085/admin/api/auth/login \
     -H "Content-Type: application/json" \
     -d '{
-        "username": "admin@enterprise-rag.com",
+        "username": "admin@enterprise.com",
         "password": "admin123"
     }')
 
@@ -31,7 +31,7 @@ else
     echo -e "❌ Admin authentication: ${RED}FAILED${NC} (HTTP: $http_code)"
 fi
 
-# Test 2: Service Health Checks (Direct access per ADR-001)
+# Test 2: Service Health Checks
 echo ""
 echo "Test 2: Service Health Checks"
 healthy_count=0
