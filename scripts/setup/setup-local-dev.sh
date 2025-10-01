@@ -280,8 +280,8 @@ JWT_SECRET=admin-super-secret-key-that-should-be-at-least-256-bits-long-for-prod
 # OPENAI_API_KEY=your-openai-key-here
 OLLAMA_HOST=http://localhost:11434
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+# CORS Configuration (Gateway bypassed per ADR-001)
+CORS_ALLOWED_ORIGINS=http://localhost:3000
 EOF
     
     # Create local development profile
@@ -332,14 +332,13 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 echo "Starting all RAG services..."
 
-# Array of services in startup order
+# Array of services in startup order (Gateway bypassed per ADR-001)
 services=(
     "rag-auth-service:8081"
+    "rag-document-service:8082"
+    "rag-embedding-service:8083"
+    "rag-core-service:8084"
     "rag-admin-service:8085"
-    "rag-embedding-service:8084"
-    "rag-document-service:8083"
-    "rag-core-service:8082"
-    "rag-gateway:8080"
 )
 
 for service_info in "${services[@]}"; do
@@ -369,13 +368,12 @@ done
 echo ""
 echo "🎉 All services started! Check logs in ${PROJECT_ROOT}/logs/"
 echo ""
-echo "Service URLs:"
-echo "- API Gateway: http://localhost:8080/actuator/health"
-echo "- Auth Service: http://localhost:8081/swagger-ui.html"
+echo "Service URLs (Direct Access - ADR-001):"
+echo "- Auth Service: http://localhost:8081/actuator/health"
+echo "- Document Service: http://localhost:8082/swagger-ui.html"
+echo "- Embedding Service: http://localhost:8083/swagger-ui.html"
+echo "- Core Service: http://localhost:8084/swagger-ui.html"
 echo "- Admin Service: http://localhost:8085/admin/api/swagger-ui.html"
-echo "- Document Service: http://localhost:8083/swagger-ui.html"
-echo "- Embedding Service: http://localhost:8084/swagger-ui.html"
-echo "- RAG Core: http://localhost:8082/swagger-ui.html"
 EOF
 
     # Create stop-all script
@@ -466,12 +464,11 @@ echo ""
 echo "🚀 Application Services:"
 
 services=(
-    "API Gateway:http://localhost:8080/actuator/health"
     "Auth Service:http://localhost:8081/actuator/health"
+    "Document Service:http://localhost:8082/actuator/health"
+    "Embedding Service:http://localhost:8083/actuator/health"
+    "Core Service:http://localhost:8084/actuator/health"
     "Admin Service:http://localhost:8085/admin/api/actuator/health"
-    "Document Service:http://localhost:8083/actuator/health"
-    "Embedding Service:http://localhost:8084/actuator/health"
-    "RAG Core:http://localhost:8082/actuator/health"
 )
 
 for service_info in "${services[@]}"; do
@@ -488,7 +485,6 @@ done
 echo ""
 echo "🎯 Quick Test URLs:"
 echo "- Grafana Dashboard: http://localhost:3000 (admin/admin)"
-echo "- Kafka UI: http://localhost:8080"
 echo "- Redis Insight: http://localhost:8001"
 EOF
 
@@ -539,15 +535,14 @@ fi
 echo ""
 echo "Test 2: Service Health Checks"
 healthy_count=0
-total_services=6
+total_services=5
 
 services=(
-    "Gateway:http://localhost:8080/actuator/health"
     "Auth:http://localhost:8081/actuator/health"
+    "Document:http://localhost:8082/actuator/health"
+    "Embedding:http://localhost:8083/actuator/health"
+    "Core:http://localhost:8084/actuator/health"
     "Admin:http://localhost:8085/admin/api/actuator/health"
-    "Document:http://localhost:8083/actuator/health"
-    "Embedding:http://localhost:8084/actuator/health"
-    "Core:http://localhost:8082/actuator/health"
 )
 
 for service_info in "${services[@]}"; do

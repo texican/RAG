@@ -31,19 +31,18 @@ else
     echo -e "❌ Admin authentication: ${RED}FAILED${NC} (HTTP: $http_code)"
 fi
 
-# Test 2: Service Health Checks
+# Test 2: Service Health Checks (Direct access per ADR-001)
 echo ""
 echo "Test 2: Service Health Checks"
 healthy_count=0
-total_services=6
+total_services=5
 
 services=(
-    "Gateway:http://localhost:8080/actuator/health"
     "Auth:http://localhost:8081/actuator/health"
-    "Admin:http://localhost:8085/admin/api/actuator/health"
     "Document:http://localhost:8082/actuator/health"
     "Embedding:http://localhost:8083/actuator/health"
     "Core:http://localhost:8084/actuator/health"
+    "Admin:http://localhost:8085/admin/api/actuator/health"
 )
 
 for service_info in "${services[@]}"; do
