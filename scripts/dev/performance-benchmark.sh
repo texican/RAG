@@ -46,14 +46,13 @@ declare -A profiles=(
     ["heavy"]="duration=600 users=50 ramp_up=60"
 )
 
-# Service endpoints and test scenarios
+# Service endpoints and test scenarios (Gateway bypassed per ADR-001)
 declare -A service_endpoints=(
-    ["rag-gateway"]="http://localhost:8080"
     ["rag-auth-service"]="http://localhost:8081"
-    ["rag-admin-service"]="http://localhost:8085/admin/api"
     ["rag-document-service"]="http://localhost:8082"
     ["rag-embedding-service"]="http://localhost:8083"
     ["rag-core-service"]="http://localhost:8084"
+    ["rag-admin-service"]="http://localhost:8085/admin/api"
 )
 
 # Logging function
@@ -389,9 +388,6 @@ run_service_benchmark() {
         "rag-core-service")
             run_core_service_benchmark "$endpoint" "$service_output"
             ;;
-        "rag-gateway")
-            run_gateway_benchmark "$endpoint" "$service_output"
-            ;;
         *)
             run_generic_benchmark "$endpoint" "$service_output"
             ;;
@@ -499,21 +495,6 @@ run_admin_service_benchmark() {
     local output_dir=$2
     
     log INFO "Running admin service performance tests..."
-    
-    # Health check
-    run_load_test "Health Check" \
-        "GET" \
-        "$endpoint/actuator/health" \
-        "" \
-        "$output_dir/health_check.json"
-}
-
-# Gateway benchmark
-run_gateway_benchmark() {
-    local endpoint=$1
-    local output_dir=$2
-    
-    log INFO "Running gateway performance tests..."
     
     # Health check
     run_load_test "Health Check" \

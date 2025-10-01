@@ -327,8 +327,8 @@ load_alert_rules() {
 check_service_health() {
     local alerts=()
     
-    # Define services to check
-    local services=("rag-gateway:8080" "rag-auth-service:8081" "rag-document-service:8082" 
+    # Define services to check (Gateway bypassed per ADR-001)
+    local services=("rag-auth-service:8081" "rag-document-service:8082"
                    "rag-embedding-service:8083" "rag-core-service:8084" "rag-admin-service:8085")
     
     for service_info in "${services[@]}"; do
@@ -414,7 +414,7 @@ check_infrastructure() {
 check_response_times() {
     local alerts=()
     
-    local services=("rag-gateway:8080" "rag-auth-service:8081" "rag-document-service:8082")
+    local services=("rag-auth-service:8081" "rag-document-service:8082" "rag-embedding-service:8083")
     
     for service_info in "${services[@]}"; do
         local service_name=${service_info%:*}
@@ -485,10 +485,10 @@ check_security_events() {
         fi
     fi
     
-    # Check for unauthorized access attempts
-    local gateway_log="${PROJECT_ROOT}/logs/rag-gateway.log"
-    if [[ -f "$gateway_log" ]]; then
-        local unauthorized_attempts=$(grep -c "403\|401\|Unauthorized" "$gateway_log" 2>/dev/null || echo "0")
+    # Check for unauthorized access attempts in auth service logs
+    local auth_log="${PROJECT_ROOT}/logs/rag-auth-service.log"
+    if [[ -f "$auth_log" ]]; then
+        local unauthorized_attempts=$(grep -c "403\|401\|Unauthorized" "$auth_log" 2>/dev/null || echo "0")
         if [[ $unauthorized_attempts -ge 10 ]]; then
             alerts+=("critical:Multiple unauthorized access attempts: $unauthorized_attempts")
         fi
