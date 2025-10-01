@@ -34,14 +34,14 @@ mvn clean package -DskipTests
 
 ### 2. Start All Services
 ```bash
-# Start with Docker Compose
-docker-compose -f config/docker/docker-compose.fixed.yml up -d
+# Start with Docker Compose (or use: make start)
+docker-compose up -d
 
-# Check service status
-docker-compose -f config/docker/docker-compose.fixed.yml ps
+# Check service status (or use: make status)
+docker-compose ps
 
-# View logs
-docker-compose -f config/docker/docker-compose.fixed.yml logs -f
+# View logs (or use: make logs)
+docker-compose logs -f
 ```
 
 ### 3. Verify Services (Direct Access - ADR-001)
@@ -91,7 +91,7 @@ If you prefer to run services individually:
 ### 1. Start Infrastructure
 ```bash
 # Start only database and Redis
-docker-compose -f config/docker/docker-compose.fixed.yml up -d postgres redis-stack
+docker-compose up -d postgres redis-stack
 ```
 
 ### 2. Start Application Services
@@ -166,34 +166,34 @@ curl -X POST http://localhost:8084/api/rag/query \
 ## 🔧 Stopping Services
 
 ```bash
-# Stop all Docker services
-docker-compose -f config/docker/docker-compose.fixed.yml down
+# Stop all Docker services (or use: make stop)
+docker-compose down
 
-# Stop with volume cleanup
-docker-compose -f config/docker/docker-compose.fixed.yml down -v
+# Stop with volume cleanup (⚠️ deletes all data!)
+docker-compose down -v
 ```
 
 ## 🔍 Troubleshooting
 
 ### Service Won't Start
 ```bash
-# Check specific service logs
-docker-compose -f config/docker/docker-compose.fixed.yml logs <service-name>
+# Check specific service logs (or use: make logs SERVICE=<name>)
+docker-compose logs <service-name>
 
 # Examples:
-docker-compose -f config/docker/docker-compose.fixed.yml logs rag-auth
-docker-compose -f config/docker/docker-compose.fixed.yml logs rag-core
+make logs SERVICE=rag-auth
+make logs SERVICE=rag-core
 ```
 
 ### Database Issues
 ```bash
 # Reset database (WARNING: loses all data)
-docker-compose -f config/docker/docker-compose.fixed.yml down -v
-docker-compose -f config/docker/docker-compose.fixed.yml up -d
+docker-compose down -v
+docker-compose up -d
 ```
 
 ### Port Conflicts
-If ports are already in use, edit `config/docker/docker-compose.fixed.yml` to change port mappings:
+If ports are already in use, edit `docker-compose.yml` to change port mappings:
 ```yaml
 ports:
   - "8081:8081"  # Change first number to available port

@@ -147,9 +147,9 @@ public class SecurityConfig {
                 // Public endpoints for authentication
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants/register").permitAll()
-                
+
                 // Health check and documentation endpoints
-                .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/error").permitAll()
                 
                 // Admin only endpoints
                 .requestMatchers("/api/v1/tenants/**").hasRole("ADMIN")

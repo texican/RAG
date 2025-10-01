@@ -356,6 +356,17 @@ public class TenantService {
     }
 
     /**
+     * Finds a tenant by slug without throwing exception.
+     *
+     * @param slug the tenant slug
+     * @return Optional containing the tenant if found, empty otherwise
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<Tenant> findBySlugOptional(String slug) {
+        return tenantRepository.findBySlug(slug);
+    }
+
+    /**
      * Checks if a tenant with the given slug exists without retrieving the full entity.
      * 
      * <p>This method provides efficient existence checking for slug validation

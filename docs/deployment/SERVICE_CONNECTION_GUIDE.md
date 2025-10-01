@@ -36,7 +36,7 @@ Ensure all services are running:
 ./scripts/utils/quick-start.sh
 
 # Verify system health
-./config/docker/docker-health.sh
+./scripts/utils/health-check.sh
 ```
 
 ### System Status Check

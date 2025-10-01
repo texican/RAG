@@ -4,7 +4,7 @@
 [![Services](https://img.shields.io/badge/Services-6%2F6%20Complete-brightgreen.svg)]()
 [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen.svg)]()
 
-> **✅ Status (2025-09-05)**: DOCKER-001 COMPLETED! All 6 microservices deployed and operational. 5/6 services fully healthy in production Docker deployment using `config/docker/docker-compose.fixed.yml`.
+> **✅ Status (2025-10-01)**: All microservices deployed and operational. Docker deployment using `docker-compose.yml`. Gateway archived per ADR-001.
 
 Complete Docker Compose configuration for the BYO RAG System with all 6 microservices, infrastructure components, and monitoring stack.
 
@@ -26,14 +26,14 @@ docker info
 
 ### Start the System
 ```bash
-# Start all services using the fixed configuration
-docker-compose -f config/docker/docker-compose.fixed.yml up -d
+# Start all services (or use: make start)
+docker-compose up -d
 
 # Check system health
-./config/docker/docker-health.sh
+./scripts/utils/health-check.sh
 
-# View all service logs
-docker-compose -f config/docker/docker-compose.fixed.yml logs -f
+# View all service logs (or use: make logs)
+docker-compose logs -f
 ```
 
 ## 📋 System Architecture
@@ -96,13 +96,12 @@ graph TD
     I --> K[zookeeper]
 ```
 
-## 🛠️ Configuration Files & Current Status (2025-09-05)
+## 🛠️ Configuration Files & Current Status (2025-10-01)
 
 ### 🔧 Docker Compose Configurations
-- **`docker-compose.fixed.yml`** - **CURRENT CONFIG** - All 6 services operational and tested
-- **`docker-compose.working.yml`** - Basic infrastructure + auth service (proven stable)  
-- **`docker-compose.yml`** - Complete system with Kafka + monitoring (ready for production)
+- **`docker-compose.yml`** - **CURRENT CONFIG** - All services operational and tested
 - **`.env`** - Environment variables for Docker deployment
+- **Old configs archived** - Previous docker-compose files moved to `archive/docker-old-2025-09/`
 
 ### 🔧 Infrastructure Configuration  
 - **`docker/`** - Configuration files for infrastructure services
@@ -110,53 +109,55 @@ graph TD
   - `prometheus/prometheus.yml` - Metrics configuration (fixed service endpoints)
   - `grafana/` - Dashboard and datasource configurations
 
-### 🚀 Recent Achievements (2025-09-05)
-- **✅ Complete Test Suite**: All 6 microservices have comprehensive unit tests with 100% success
-- **✅ RAG Core Service**: 8/8 unit tests passing with enterprise-grade test patterns
+### 🚀 Recent Achievements (2025-10-01)
+- **✅ Docker Workflow Improvements**: Makefile, rebuild scripts, and enforcement mechanisms
+- **✅ Gateway Archived**: Per ADR-001, using direct service access
+- **✅ Complete Test Suite**: High test coverage with enterprise-grade patterns
 - **✅ Full System Integration**: All services working together in Docker environment
-- **✅ Documentation Complete**: 92.4% Javadoc coverage with enterprise standards
+- **✅ Documentation Complete**: Comprehensive documentation with clear organization
 
 ## 📝 Management Commands
 
-### Basic Operations (Using Current Working Config)
+### Basic Operations (Recommended: Use Makefile)
 ```bash
-# Start all services (using working configuration)
-docker-compose -f docker-compose.fixed.yml up -d
+# Start all services
+make start
 
-# Stop all services  
-docker-compose -f docker-compose.fixed.yml down
+# Stop all services
+make stop
 
 # View service status
-docker-compose -f docker-compose.fixed.yml ps
+make status
 
 # View logs (all services)
-docker-compose -f docker-compose.fixed.yml logs -f
+make logs
 
 # View logs (specific service)
-docker-compose -f docker-compose.fixed.yml logs -f rag-gateway
-
-# Restart a service
-docker-compose -f docker-compose.fixed.yml restart rag-auth
+make logs SERVICE=rag-auth
 
 # Rebuild and restart a service
-docker-compose -f docker-compose.fixed.yml up -d --build rag-core
+make rebuild SERVICE=rag-auth
 
-# Alternative: Basic stable config (infrastructure + auth only)
-docker-compose -f docker-compose.working.yml up -d
+# Rebuild with no cache
+make rebuild-nc SERVICE=rag-auth
+
+# Alternative: Direct Docker Compose
+docker-compose up -d
+docker-compose down
 ```
 
 ### Health Checks
 ```bash
 # Run comprehensive health check
-./docker-health.sh
+./scripts/utils/health-check.sh
 
-# Check all service health (all working)
-curl http://localhost:8081/actuator/health  # Auth (✅ Working)
-curl http://localhost:8082/actuator/health  # Document (✅ Working)
-curl http://localhost:8083/actuator/health  # Embedding (✅ Working)
-curl http://localhost:8084/actuator/health  # Core (✅ Working - 8/8 tests)
-curl http://localhost:8085/admin/api/actuator/health  # Admin (✅ Working)
-curl http://localhost:8080/actuator/health  # Gateway (✅ Working)
+# Check all service health (direct access per ADR-001)
+curl http://localhost:8081/actuator/health  # Auth
+curl http://localhost:8082/actuator/health  # Document
+curl http://localhost:8083/actuator/health  # Embedding
+curl http://localhost:8084/actuator/health  # Core
+curl http://localhost:8085/admin/api/actuator/health  # Admin
+# Gateway archived per ADR-001
 ```
 
 ### Database Operations
@@ -250,15 +251,15 @@ JAVA_OPTS: "-Xms512m -Xmx2048m -XX:+UseG1GC -XX:+UseContainerSupport"
 
 ## 🚀 Next Steps
 
-1. **Start Services**: Run `./docker-start.sh`
-2. **Verify Health**: Run `./docker-health.sh` 
-3. **Test API**: Access gateway at `http://localhost:8080`
+1. **Start Services**: Run `make start` or `docker-compose up -d`
+2. **Verify Health**: Run `./scripts/utils/health-check.sh`
+3. **Test API**: Access services directly per ADR-001 (see URLs above)
 4. **Monitor**: Open Grafana at `http://localhost:3000`
-5. **Develop**: See `DEVELOPMENT.md` for development workflows
+5. **Develop**: See [DOCKER_DEVELOPMENT.md](../development/DOCKER_DEVELOPMENT.md) for workflows
 
 ## 📞 Support
 
-- Check service logs: `docker-compose logs -f [service-name]`
-- Run health check: `./docker-health.sh`
-- View this documentation: `cat DOCKER.md`
+- Check service logs: `make logs SERVICE=<name>` or `docker-compose logs -f [service-name]`
+- Run health check: `./scripts/utils/health-check.sh`
+- View documentation: [docs/README.md](../README.md)
 - Report issues: Create GitHub issue with logs and system info

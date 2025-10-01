@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Pre-push hook to ensure Docker images are properly tagged
+# Install: ln -sf ../../.githooks/pre-push .git/hooks/pre-push
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${YELLOW}🔍 Checking Docker image consistency...${NC}"
+
+# Check if any service images exist with wrong names
+WRONG_NAMES=$(docker images | grep -E "(rag_rag-|docker-rag-)" | grep -v "rag-auth:latest\|rag-admin:latest\|rag-document:latest\|rag-embedding:latest\|rag-core:latest")
+
+if [ ! -z "$WRONG_NAMES" ]; then
+    echo -e "${RED}❌ Found Docker images with non-standard names:${NC}"
+    echo "$WRONG_NAMES"
+    echo ""
+    echo -e "${YELLOW}These images should be named:${NC}"
+    echo "  - rag-auth:latest"
+    echo "  - rag-admin:latest"
+    echo "  - rag-document:latest"
+    echo "  - rag-embedding:latest"
+    echo "  - rag-core:latest"
+    echo ""
+    echo -e "${YELLOW}💡 Use the rebuild script instead:${NC}"
+    echo "  make rebuild SERVICE=rag-auth"
+    echo ""
+    read -p "Continue anyway? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+echo -e "${GREEN}✅ Docker images look good${NC}"
+exit 0

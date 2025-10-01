@@ -27,6 +27,7 @@ services:
 
   # Authentication Service - JWT auth, user/tenant management
   rag-auth:
+    image: rag-auth:latest
     build:
       context: .
       dockerfile: rag-auth-service/Dockerfile
@@ -57,6 +58,7 @@ services:
 
   # Document Processing Service - File upload, text extraction, chunking
   rag-document:
+    image: rag-document:latest
     build:
       context: .
       dockerfile: rag-document-service/Dockerfile
@@ -91,6 +93,7 @@ services:
 
   # Embedding Service - Vector generation and similarity search
   rag-embedding:
+    image: rag-embedding:latest
     build:
       context: .
       dockerfile: rag-embedding-service/Dockerfile
@@ -120,6 +123,7 @@ services:
 
   # RAG Core Service - Query processing, LLM integration, response generation
   rag-core:
+    image: rag-core:latest
     build:
       context: .
       dockerfile: rag-core-service/Dockerfile
@@ -150,6 +154,7 @@ services:
 
   # Admin Service - System administration, tenant management, analytics
   rag-admin:
+    image: rag-admin:latest
     build:
       context: .
       dockerfile: rag-admin-service/Dockerfile

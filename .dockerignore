@@ -1,0 +1,33 @@
+# Prevent direct docker build from wrong context
+# Force use of rebuild script or make commands
+
+# If someone tries to build from service directory, it will fail
+# because dependencies won't be in context
+**/target/
+!rag-*/target/*.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+
+# Scripts
+scripts/
+
+# Test files
+**/src/test/
+
+# Maven wrapper
+.mvn/
+
+# Logs
+logs/
+*.log
