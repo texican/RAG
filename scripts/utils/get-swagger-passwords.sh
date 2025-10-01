@@ -47,8 +47,7 @@ echo ""
 
 echo "🔐 AUTHENTICATED ACCESS (Generated Passwords):"
 
-# Get passwords for all authenticated services
-get_service_password "rag-gateway" "API Gateway" "8080" "/swagger-ui.html"
+# Get passwords for all authenticated services (Gateway bypassed per ADR-001)
 get_service_password "rag-embedding" "Embedding Service" "8083" "/swagger-ui.html"
 get_service_password "rag-core" "Core Service" "8084" "/swagger-ui.html"
 get_service_password "rag-admin" "Admin Service" "8085" "/admin/api/swagger-ui.html"

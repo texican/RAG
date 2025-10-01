@@ -174,14 +174,13 @@ Rarely used, advanced features:
 ```bash
 # Change these ports across all scripts:
 8080 → REMOVE (gateway archived)
-8085 → 8086 (admin service actual port)
 
 # Correct service ports:
 8081 - Auth Service
 8082 - Document Service
 8083 - Embedding Service
 8084 - Core Service
-8086 - Admin Service (NOT 8085!)
+8085 - Admin Service (configured in application.yml)
 ```
 
 ### **Service Array Updates**
