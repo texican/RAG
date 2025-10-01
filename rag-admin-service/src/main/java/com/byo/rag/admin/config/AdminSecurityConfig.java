@@ -46,7 +46,7 @@ public class AdminSecurityConfig {
                         // Public endpoints
                         .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                         .requestMatchers("/health", "/info").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         
                         // Admin-only endpoints
