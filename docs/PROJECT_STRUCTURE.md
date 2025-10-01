@@ -290,7 +290,7 @@ rag-admin-service/
 - Document Service: http://localhost:8082
 - Embedding Service: http://localhost:8083
 - Core Service: http://localhost:8084
-- Admin Service: http://localhost:8086
+- Admin Service: http://localhost:8085
 
 ---
 
@@ -505,7 +505,7 @@ Production Deployment (Direct Service Access - ADR-001):
 │   ├── Document Service (rag-document:8082)
 │   ├── Embedding Service (rag-embedding:8083)
 │   ├── Core Service (rag-core:8084)
-│   └── Admin Service (rag-admin:8086)
+│   └── Admin Service (rag-admin:8085)
 │
 ├── Infrastructure:
 │   ├── PostgreSQL Cluster (Primary + Replicas)

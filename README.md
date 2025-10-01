@@ -56,7 +56,7 @@ This system implements a **microservices architecture** with complete **multi-te
 📄 Document Service (Port 8082) → File processing & text extraction
 🔍 Embedding Service (Port 8083) → Vector generation & similarity search
 🤖 RAG Core Service (Port 8084)  → LLM integration & query processing
-⚙️  Admin Service (Port 8086)    → Administrative operations & analytics
+⚙️  Admin Service (Port 8085)    → Administrative operations & analytics
 ```
 
 > **Note**: The API Gateway has been bypassed in favor of direct service access. See [ADR-001: Bypass API Gateway](docs/development/ADR-001-BYPASS-API-GATEWAY.md) for rationale.
@@ -196,7 +196,7 @@ curl -X POST http://localhost:8081/auth/login \
 
 # 4. Use the returned JWT token for authenticated requests (direct service access)
 TOKEN="your-jwt-token-here"
-curl -X GET http://localhost:8086/admin/api/tenants \
+curl -X GET http://localhost:8085/admin/api/tenants \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -247,7 +247,7 @@ graph TB
     Doc[Document Service<br/>Port 8082<br/>✅ WORKING]
     Embed[Embedding Service<br/>Port 8083<br/>✅ WORKING]
     Core[RAG Core Service<br/>Port 8084<br/>✅ WORKING]
-    Admin[Admin Service<br/>Port 8086<br/>✅ WORKING]
+    Admin[Admin Service<br/>Port 8085<br/>✅ WORKING]
 
     PG[(PostgreSQL<br/>Port 5432<br/>✅ WORKING)]
     Redis[(Redis Stack<br/>Port 6379<br/>✅ WORKING)]

@@ -19,7 +19,7 @@ services=(
     "Document Service:http://localhost:8082/actuator/health"
     "Embedding Service:http://localhost:8083/actuator/health"
     "Core Service:http://localhost:8084/actuator/health"
-    "Admin Service:http://localhost:8086/admin/api/actuator/health"
+    "Admin Service:http://localhost:8085/admin/api/actuator/health"
     # "Gateway:http://localhost:8080/actuator/health"  # Archived per ADR-001
 )
 

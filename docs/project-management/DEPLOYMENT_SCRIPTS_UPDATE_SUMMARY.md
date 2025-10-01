@@ -148,7 +148,7 @@ curl http://localhost:8081/actuator/health  # Auth
 curl http://localhost:8082/actuator/health  # Document
 curl http://localhost:8083/actuator/health  # Embedding
 curl http://localhost:8084/actuator/health  # Core
-curl http://localhost:8086/admin/api/actuator/health  # Admin
+curl http://localhost:8085/admin/api/actuator/health  # Admin
 ```
 
 ---

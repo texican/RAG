@@ -126,7 +126,7 @@ Gateway bypassed. System uses direct service access:
 - Document Service: http://localhost:8082
 - Embedding Service: http://localhost:8083
 - Core Service: http://localhost:8084
-- Admin Service: http://localhost:8086
+- Admin Service: http://localhost:8085
 
 See [ADR-001](docs/development/ADR-001-BYPASS-API-GATEWAY.md) for complete rationale and impact assessment.
 
