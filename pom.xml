@@ -53,7 +53,8 @@
         <module>rag-embedding-service</module>
         <module>rag-core-service</module>
         <module>rag-admin-service</module>
-        <module>rag-gateway</module>
+        <!-- Gateway archived per ADR-001 - Bypass API Gateway -->
+        <!-- <module>rag-gateway</module> -->
         <module>rag-integration-tests</module>
     </modules>
 

@@ -71,9 +71,7 @@ docker-compose -f docker-compose.fixed.yml up -d --build rag-auth rag-admin rag-
 echo -e "${YELLOW}⏳ Waiting for Core Services${NC}"
 sleep 30  # Give services time to start
 
-# Start gateway last (depends on other services)
-echo -e "${BLUE}🌐 Starting API Gateway${NC}"
-docker-compose -f docker-compose.fixed.yml up -d --build rag-gateway
+# All core microservices are now running
 
 # Start monitoring services
 echo -e "${BLUE}📊 Starting Monitoring Services${NC}"
@@ -83,7 +81,7 @@ docker-compose up -d prometheus grafana kafka-ui
 echo -e "\n${YELLOW}🔍 Final Health Check${NC}"
 sleep 20
 
-SERVICES=("rag-postgres:5432" "rag-redis:6379" "rag-kafka:9092" "rag-auth:8081" "rag-admin:8085" "rag-document:8082" "rag-embedding:8083" "rag-core:8084" "rag-gateway:8080")
+SERVICES=("rag-postgres:5432" "rag-redis:6379" "rag-kafka:9092" "rag-auth:8081" "rag-admin:8085" "rag-document:8082" "rag-embedding:8083" "rag-core:8084")
 
 for service in "${SERVICES[@]}"; do
     name=${service%:*}
@@ -99,7 +97,6 @@ done
 echo -e "\n${GREEN}🎉 BYO RAG System Started!${NC}"
 echo "================================================"
 echo -e "${BLUE}📖 Service URLs:${NC}"
-echo "• Gateway (API):     http://localhost:8080"
 echo "• Auth Service:      http://localhost:8081"
 echo "• Document Service:  http://localhost:8082" 
 echo "• Embedding Service: http://localhost:8083"
@@ -109,7 +106,7 @@ echo ""
 echo -e "${BLUE}🔧 Management URLs:${NC}"
 echo "• Grafana:          http://localhost:3000 (admin/admin)"
 echo "• Prometheus:       http://localhost:9090"
-echo "• Kafka UI:         http://localhost:8080"
+echo "• Kafka UI:         http://localhost:8080/kafka-ui"
 echo "• Redis Insight:    http://localhost:8001"
 echo "• Ollama:           http://localhost:11434"
 echo ""

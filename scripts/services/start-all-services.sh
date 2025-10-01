@@ -8,14 +8,14 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 echo "Starting all RAG services..."
 
-# Array of services in startup order
+# Array of services in startup order (gateway archived per ADR-001)
 services=(
     "rag-auth-service:8081"
-    "rag-admin-service:8085"
-    "rag-embedding-service:8084"
-    "rag-document-service:8083"
-    "rag-core-service:8082"
-    "rag-gateway:8080"
+    "rag-admin-service:8086"
+    "rag-document-service:8082"
+    "rag-embedding-service:8083"
+    "rag-core-service:8084"
+    # "rag-gateway:8080"  # Archived per ADR-001
 )
 
 for service_info in "${services[@]}"; do
@@ -45,10 +45,11 @@ done
 echo ""
 echo "🎉 All services started! Check logs in ${PROJECT_ROOT}/logs/"
 echo ""
-echo "Service URLs:"
-echo "- API Gateway: http://localhost:8080/actuator/health"
+echo "Service URLs (Direct Access - ADR-001):"
 echo "- Auth Service: http://localhost:8081/swagger-ui.html"
-echo "- Admin Service: http://localhost:8085/admin/api/swagger-ui.html"
-echo "- Document Service: http://localhost:8083/swagger-ui.html"
-echo "- Embedding Service: http://localhost:8084/swagger-ui.html"
-echo "- RAG Core: http://localhost:8082/swagger-ui.html"
+echo "- Admin Service: http://localhost:8086/admin/api/swagger-ui.html"
+echo "- Document Service: http://localhost:8082/swagger-ui.html"
+echo "- Embedding Service: http://localhost:8083/swagger-ui.html"
+echo "- RAG Core: http://localhost:8084/swagger-ui.html"
+echo ""
+echo "Note: Gateway archived - using direct service access per ADR-001"
