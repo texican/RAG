@@ -52,13 +52,14 @@ This system implements a **microservices architecture** with complete **multi-te
 
 ### Microservices Overview
 ```
-🌐 API Gateway (Port 8080)     → Routes and secures all external traffic
-🔐 Auth Service (Port 8081)    → JWT authentication & tenant management  
+🔐 Auth Service (Port 8081)    → JWT authentication & tenant management
 📄 Document Service (Port 8082) → File processing & text extraction
 🔍 Embedding Service (Port 8083) → Vector generation & similarity search
 🤖 RAG Core Service (Port 8084)  → LLM integration & query processing
-⚙️  Admin Service (Port 8085)    → Administrative operations & analytics
+⚙️  Admin Service (Port 8086)    → Administrative operations & analytics
 ```
+
+> **Note**: The API Gateway has been bypassed in favor of direct service access. See [ADR-001: Bypass API Gateway](docs/development/ADR-001-BYPASS-API-GATEWAY.md) for rationale.
 
 ## 🌟 Key Features
 
@@ -130,7 +131,7 @@ docker-compose -f config/docker/docker-compose.fixed.yml logs -f
 mvn clean install
 
 # Run each service in a separate terminal
-cd rag-gateway && mvn spring-boot:run             # Port 8080 - API Gateway
+# Gateway bypassed - use direct service access (see ADR-001)
 cd rag-auth-service && mvn spring-boot:run        # Port 8081 - Authentication
 cd rag-document-service && mvn spring-boot:run    # Port 8082 - Document Processing
 cd rag-embedding-service && mvn spring-boot:run   # Port 8083 - Vector Operations
@@ -143,7 +144,7 @@ cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 **Current Docker Service Status (DOCKER-001 Completed):**
 | Service | Health Check URL | Port | Status |
 |---------|------------------|------|--------|
-| **API Gateway** | http://localhost:8080/actuator/health | 8080 | ✅ Healthy |
+| ~~API Gateway~~ | ~~http://localhost:8080/actuator/health~~ | ~~8080~~ | 📦 Archived (bypassed) |
 | **Auth Service** | http://localhost:8081/actuator/health | 8081 | ✅ Healthy |
 | **Document Service** | http://localhost:8082/actuator/health | 8082 | ✅ Healthy |
 | **Embedding Service** | http://localhost:8083/actuator/health | 8083 | ✅ Healthy |
@@ -168,7 +169,7 @@ cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 open http://localhost:8082/swagger-ui.html  # Document Service
 
 # Authenticated APIs (username: user, see guide for passwords)
-open http://localhost:8080/swagger-ui.html  # API Gateway  
+# Gateway bypassed - access services directly (see ADR-001)  
 open http://localhost:8084/swagger-ui.html  # Core Service
 open http://localhost:8083/swagger-ui.html  # Embedding Service
 open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
@@ -178,23 +179,24 @@ open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
 
 **Test Using curl (Alternative):**
 ```bash
-# 1. Check system health through gateway
-curl http://localhost:8080/actuator/health
+# 1. Check service health (direct access, no gateway)
+curl http://localhost:8081/actuator/health  # Auth Service
+curl http://localhost:8082/actuator/health  # Document Service
 
 # 2. Create admin user (first time only)
 ./scripts/db/create-admin-user.sh
 
-# 3. Login through gateway
-curl -X POST http://localhost:8080/api/auth/login \
+# 3. Login via Auth Service (direct)
+curl -X POST http://localhost:8081/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@enterprise-rag.com",
     "password": "admin123"
   }'
 
-# 4. Use the returned JWT token for authenticated requests
+# 4. Use the returned JWT token for authenticated requests (direct service access)
 TOKEN="your-jwt-token-here"
-curl -X GET http://localhost:8080/api/admin/tenants \
+curl -X GET http://localhost:8086/admin/api/tenants \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -209,64 +211,30 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 
 ## 📊 Development Status
 
-### 📊 Project Status (2025-09-24): **DOC-002 API DOCUMENTATION COMPLETE** 🎯
+### Current Status: Production-Ready RAG System ✅
 
-- **All 6 microservices operational** in Docker with full system integration
-- **✅ DOC-002 COMPLETED** - Comprehensive OpenAPI 3.0 specifications for all 6 services with interactive Swagger UI documentation (100% API coverage)
-- **✅ EMBEDDING-TEST-003 COMPLETED** - Comprehensive embedding service advanced tests with 77/77 tests passing (100% success rate) covering document types, performance, quality, error handling, batch processing, and memory optimization
-- **✅ DOCUMENT-TEST-002 COMPLETED** - Comprehensive document service unit tests with 103/103 tests passing (100% success rate)
-- **✅ AUTH-TEST-001 COMPLETED** - Comprehensive authentication service unit tests with 71/71 tests passing (100% success rate)
-- **✅ ERROR-001 & KAFKA-001 COMPLETED** - Comprehensive Kafka error handling with retry mechanisms, circuit breakers, dead letter queues, and monitoring (16 story points total)
-- **✅ PROJECT MANAGEMENT ENHANCED** - Consolidated backlog management with comprehensive safeguards and validation procedures
-- **✅ DOCUMENTATION UPDATED** - All project documentation current with testing completion reflected
-- **✅ BACKLOG CONSOLIDATED** - Single authoritative backlog with remaining testing/security stories
-- **System reliability significantly enhanced** with enterprise-grade error handling, automatic recovery, and comprehensive monitoring
-- **Production-ready core services** with complete security and functionality testing including document processing, authentication flows, embedding service advanced scenarios, and vulnerability testing
-- **World-class API documentation** with 100% endpoint coverage and interactive Swagger UI across all 6 services
-- **Comprehensive project management** with data protection safeguards and process improvements
-- **Next focus**: Developer onboarding guide (DOC-003)
+All 6 microservices operational with comprehensive testing, API documentation, and Docker deployment.
 
-### ✅ Services Implementation Status (All Complete with Tests & API Docs)
-| Service | Implementation | Features | Test Status | API Documentation | Docker Ready |
-|---------|---------------|----------|-------------|-------------------|--------------|
-| **rag-shared** | ✅ Complete | Common DTOs, entities, utilities | ✅ Unit Tests | N/A (Library) | ✅ Library |
-| **rag-auth-service** | ✅ Complete | JWT auth, tenant management | ✅ **71/71 Tests** (AUTH-TEST-001) | ✅ **Swagger UI** | ✅ Production |
-| **rag-document-service** | ✅ Complete | File processing, chunking, async processing | ✅ **103/103 Tests** (DOCUMENT-TEST-002) | ✅ **Swagger UI** | ✅ Production |
-| **rag-embedding-service** | ✅ Complete | Vector operations, similarity search, **enterprise error handling** | ✅ **77/77 Tests** (EMBEDDING-TEST-003) | ✅ **Swagger UI** | ✅ Production |
-| **rag-admin-service** | ✅ Complete | Admin operations, database analytics | ✅ Unit Tests | ✅ **Swagger UI** | ✅ Production |
-| **rag-core-service** | ✅ Complete | RAG pipeline, LLM integration, streaming | ✅ **100% Unit Tests** | ✅ **Swagger UI** | ✅ Production |
-| **rag-gateway** | ✅ Complete | API Gateway, JWT validation, routing | ✅ Unit Tests | ✅ **Swagger UI** | ✅ Production |
+### Services Overview
+| Service | Status | Tests | API Docs | Docker |
+|---------|--------|-------|----------|--------|
+| **rag-shared** | ✅ Complete | ✅ Unit Tests | N/A | ✅ Library |
+| **rag-auth-service** | ✅ Complete | ✅ 71/71 | ✅ Swagger UI | ✅ Production |
+| **rag-document-service** | ✅ Complete | ✅ 103/103 | ✅ Swagger UI | ✅ Production |
+| **rag-embedding-service** | ✅ Complete | ✅ 77/77 | ✅ Swagger UI | ✅ Production |
+| **rag-admin-service** | ✅ Complete | ✅ 58/58 | ✅ Swagger UI | ✅ Production |
+| **rag-core-service** | ✅ Complete | ✅ 100% | ✅ Swagger UI | ✅ Production |
+| ~~rag-gateway~~ | 📦 Archived | N/A | N/A | 📦 Bypassed |
 
-### 🎯 Recent Major Achievements (2025-09-24)
-- ✅ **DOC-002 COMPLETE**: Comprehensive OpenAPI 3.0 specifications with interactive Swagger UI documentation (100% API coverage)
-- ✅ **Complete API Documentation**: 6 enhanced OpenAPI configurations covering all services with detailed descriptions, authentication schemes, and developer examples
-- ✅ **Interactive Developer Experience**: Swagger UI available at all service endpoints with "Try It Out" functionality and JWT authentication integration
-- ✅ **EMBEDDING-TEST-003 COMPLETE**: Comprehensive embedding service advanced testing with 77/77 tests passing (100% success rate)
-- ✅ **Complete Embedding Service Coverage**: 6 advanced test scenarios covering DocumentTypeEmbeddingTest (10 tests), PerformanceLoadTest (12 tests), EmbeddingQualityConsistencyTest (12 tests), ErrorHandlingTest (17 tests), BatchProcessingTest (15 tests), MemoryOptimizationTest (11 tests)
-- ✅ **Production-Grade Testing**: Performance benchmarks, quality validation, error resilience, memory optimization, and batch processing testing
-- ✅ **DOCUMENT-TEST-002 COMPLETE**: Comprehensive document service unit testing with 103/103 tests passing (100% success rate)
-- ✅ **Complete Document Service Coverage**: 4 test suites covering DocumentService (23 tests), DocumentChunkService (30+ tests), TextExtractionService (29 tests), FileStorageService (21 tests)
-- ✅ **Security & Multi-Tenant Testing**: Path traversal protection, tenant isolation, file validation, and access control testing
-- ✅ **AUTH-TEST-001 COMPLETE**: Comprehensive authentication service unit testing with 71/71 tests passing (100% success rate)
-- ✅ **Critical Functionality Gaps Resolved**: Document processing pipeline and embedding service now have enterprise-grade test coverage ensuring reliable operations
-- ✅ **Documentation Updated**: All project documentation reflects completion of all major testing initiatives and comprehensive test coverage
-
-### 🔧 Current System Status
-- ✅ **Complete Implementation**: All 6 microservices fully implemented and operational in Docker
-- ✅ **Embedding Service Testing Complete**: EMBEDDING-TEST-003 implementation finished with 77/77 tests passing
-- ✅ **Document Service Testing Complete**: DOCUMENT-TEST-002 implementation finished with 103/103 tests passing
-- ✅ **Authentication Security Complete**: AUTH-TEST-001 implementation finished with 71/71 tests passing
-- 🧪 **Testing Infrastructure**: Major progress with core services fully tested
-  - **Embedding Service**: ✅ **COMPLETE** - 77/77 tests passing (DocumentTypeEmbeddingTest: 10, PerformanceLoadTest: 12, EmbeddingQualityConsistencyTest: 12, ErrorHandlingTest: 17, BatchProcessingTest: 15, MemoryOptimizationTest: 11)
-  - **Document Service**: ✅ **COMPLETE** - 103/103 tests passing (DocumentService: 23, DocumentChunkService: 30+, TextExtractionService: 29, FileStorageService: 21)
-  - **Auth Service**: ✅ **COMPLETE** - 71/71 tests passing (AuthService: 26, JwtService: 30, AuthController: 15)
-  - **Strong Areas**: Core RAG service (100% unit test success), Admin service (58/58 tests passing - enterprise-grade testing)
-  - **Remaining Gaps**: Gateway (minimal security tests - GATEWAY-TEST-005 pending)
-- ✅ **Database integration**: PostgreSQL + Redis Stack healthy and connected
-- ✅ **Authentication service**: JWT-based auth with multi-tenant support fully working  
-- ✅ **Service Architecture**: Clean separation of concerns with proper dependency injection
-- ✅ **Docker deployment**: Production-ready deployment with all services operational
-- ✅ **Documentation**: Enterprise-grade API documentation and comprehensive testing guidelines
+### System Capabilities
+- ✅ **Multi-tenant Architecture**: Complete data isolation with JWT authentication
+- ✅ **Document Processing**: PDF, DOCX, TXT, MD, HTML with intelligent chunking
+- ✅ **Vector Operations**: Redis-powered similarity search with enterprise error handling
+- ✅ **RAG Pipeline**: LLM integration with streaming responses
+- ✅ **Admin Operations**: Tenant management, user administration, analytics
+- ✅ **Testing**: 309+ passing tests across all services
+- ✅ **Documentation**: Interactive Swagger UI for all endpoints
+- ✅ **Deployment**: Docker Compose with health monitoring
 
 ## 🛠️ Developer Reference
 
@@ -274,40 +242,42 @@ curl -X GET http://localhost:8080/api/admin/tenants \
 
 ```mermaid
 graph TB
-    Gateway[API Gateway<br/>Port 8080<br/>✅ WORKING]
+    Client[Client Applications<br/>Direct Access]
     Auth[Auth Service<br/>Port 8081<br/>✅ WORKING]
-    Doc[Document Service<br/>Port 8082<br/>✅ WORKING] 
+    Doc[Document Service<br/>Port 8082<br/>✅ WORKING]
     Embed[Embedding Service<br/>Port 8083<br/>✅ WORKING]
     Core[RAG Core Service<br/>Port 8084<br/>✅ WORKING]
-    Admin[Admin Service<br/>Port 8085<br/>✅ WORKING]
-    
+    Admin[Admin Service<br/>Port 8086<br/>✅ WORKING]
+
     PG[(PostgreSQL<br/>Port 5432<br/>✅ WORKING)]
     Redis[(Redis Stack<br/>Port 6379<br/>✅ WORKING)]
     Kafka[(Apache Kafka<br/>Port 9092<br/>✅ WORKING)]
     Ollama[(Ollama LLM<br/>Port 11434<br/>✅ WORKING)]
-    
-    Gateway --> Auth
-    Gateway --> Doc
-    Gateway --> Embed
-    Gateway --> Core
-    Gateway --> Admin
-    
+
+    Client --> Auth
+    Client --> Doc
+    Client --> Embed
+    Client --> Core
+    Client --> Admin
+
     Auth --> PG
     Doc --> PG
     Embed --> Redis
     Core --> Redis
     Admin --> PG
-    
+
     Doc --> Kafka
     Embed --> Kafka
     Core --> Kafka
-    
+
     Core --> Ollama
     Embed --> Ollama
-    
+
     classDef working fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#FFFFFF;
-    class Gateway,Auth,Doc,Embed,Core,Admin,PG,Redis,Kafka,Ollama working;
+    class Client,Auth,Doc,Embed,Core,Admin,PG,Redis,Kafka,Ollama working;
 ```
+
+> **Note**: Gateway bypassed per [ADR-001](docs/development/ADR-001-BYPASS-API-GATEWAY.md) - clients access services directly
 
 ### Microservices Architecture
 - **Multi-tenant isolation**: Complete data separation by tenant
@@ -485,7 +455,7 @@ docker-compose logs testcontainers
 ```bash
 # Prometheus: http://localhost:9090
 # Grafana: http://localhost:3000 (admin/admin)
-# Kafka UI: http://localhost:8080
+# Kafka UI: http://localhost:9021 (if Confluent Control Center enabled)
 ```
 
 ## 🎯 Roadmap
