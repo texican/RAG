@@ -232,14 +232,14 @@ check_system_status() {
     
     # Check if critical services are running
     local running_services=0
-    local expected_services=6
-    
-    for port in 8080 8081 8082 8083 8084 8085; do
+    local expected_services=5
+
+    for port in 8081 8082 8083 8084 8085; do
         if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
             ((running_services++))
         fi
     done
-    
+
     if [[ $running_services -lt $expected_services ]]; then
         log WARN "Some services may not be running ($running_services/$expected_services)"
         ((issues_found++))
@@ -706,8 +706,8 @@ task_health_diagnostics() {
     local services_checked=0
     local healthy_services=0
     
-    # Check application services
-    local services=("8080:gateway" "8081:auth" "8082:document" "8083:embedding" "8084:core" "8085:admin")
+    # Check application services (Gateway bypassed per ADR-001)
+    local services=("8081:auth" "8082:document" "8083:embedding" "8084:core" "8085:admin")
     
     for service_info in "${services[@]}"; do
         local port=${service_info%:*}

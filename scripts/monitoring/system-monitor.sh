@@ -38,9 +38,8 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Service configuration
+# Service configuration (Gateway bypassed per ADR-001)
 declare -A services=(
-    ["rag-gateway"]="8080"
     ["rag-auth-service"]="8081"
     ["rag-document-service"]="8082"
     ["rag-embedding-service"]="8083"

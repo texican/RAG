@@ -51,7 +51,6 @@ services=(
     "rag-document-service"
     "rag-embedding-service"
     "rag-core-service"
-    "rag-gateway"
     "rag-integration-tests"
 )
 

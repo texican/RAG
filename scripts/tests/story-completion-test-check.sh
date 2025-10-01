@@ -13,7 +13,7 @@ echo
 if [ -z "$1" ]; then
     echo "❌ ERROR: Service name required"
     echo "Usage: $0 <service-name>"
-    echo "Example: $0 rag-gateway"
+    echo "Example: $0 rag-auth-service"
     echo
     echo "Available services:"
     ls -1 | grep "^rag-" | grep -v ".md"
