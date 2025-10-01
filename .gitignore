@@ -70,3 +70,13 @@ docker-volumes/
 # Docker and test artifacts
 test-storage/
 *.test.txt
+
+# Test results
+/tmp/*-test-results.txt
+
+# Backup directories
+backups/
+
+# Service logs
+rag-*/logs/*.log
+rag-*/logs/*.gz
