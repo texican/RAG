@@ -4,7 +4,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen.svg)](https://www.docker.com/)
 [![Status](https://img.shields.io/badge/Status-Complete-brightgreen.svg)](https://github.com/your-org/byo-rag)
 
-> **✅ Development Status (2025-09-05)**: All 6 microservices complete with 100% test success. Full Docker deployment ready.
+> **✅ Development Status (2025-09-30)**: 5 active microservices (gateway archived per ADR-001) with 98% test success. Full Docker deployment ready.
 
 Quick deployment guide for the BYO RAG (Build Your Own Retrieval Augmented Generation) system.
 
@@ -44,44 +44,43 @@ docker-compose -f config/docker/docker-compose.fixed.yml ps
 docker-compose -f config/docker/docker-compose.fixed.yml logs -f
 ```
 
-### 3. Verify Services
+### 3. Verify Services (Direct Access - ADR-001)
 ```bash
-# Health checks
+# Health checks (direct service access, no gateway)
 curl http://localhost:8081/actuator/health  # Auth Service
-curl http://localhost:8082/actuator/health  # Document Service  
+curl http://localhost:8082/actuator/health  # Document Service
 curl http://localhost:8083/actuator/health  # Embedding Service
 curl http://localhost:8084/actuator/health  # Core Service
-curl http://localhost:8085/admin/api/actuator/health  # Admin Service
-curl http://localhost:8080/actuator/health  # Gateway Service
+curl http://localhost:8086/admin/api/actuator/health  # Admin Service
 ```
 
+> **Note**: Gateway bypassed per [ADR-001](../development/ADR-001-BYPASS-API-GATEWAY.md). Services accessed directly.
+
 ### 4. Access Points
-- **API Gateway**: http://localhost:8080
-- **Interactive API Documentation**: http://localhost:8080/swagger-ui.html ✨ **NEW**
+- **Auth Service**: http://localhost:8081
+- **Document Service**: http://localhost:8082
+- **Embedding Service**: http://localhost:8083
+- **Core Service**: http://localhost:8084
+- **Admin Service**: http://localhost:8086
 - **Redis Insight**: http://localhost:8001
 - **Database**: localhost:5432 (user: `rag_user`, password: `rag_password`)
 
-### 5. Explore APIs Interactively ✨ **NEW**
-All services now provide comprehensive interactive API documentation:
+### 5. Explore APIs Interactively (Direct Service Access)
+All services provide comprehensive interactive API documentation:
 
-**📋 Quick Access with Credentials:**
+**📋 Quick Access:**
 ```bash
 # Public access (no login required)
 open http://localhost:8082/swagger-ui.html  # Document Service
 
-# Authenticated access (username: user)
-# API Gateway (password: 726bcacd-081f-4a08-96e1-9037edc2ac45)
-open http://localhost:8080/swagger-ui.html
-
-# Core Service (password: 77147b40-70e6-477d-8557-fcf417e9ca9f)  
-open http://localhost:8084/swagger-ui.html
-
-# Embedding Service (password: 681650f3-b562-4c16-828a-d8a996b01217)
-open http://localhost:8083/swagger-ui.html
-
-# Admin Service (password: 5080a46c-bfef-45fc-a403-2ea299ee531d)
-open http://localhost:8085/admin/api/swagger-ui.html
+# Authenticated access (see credentials guide)
+open http://localhost:8081/swagger-ui.html  # Auth Service
+open http://localhost:8084/swagger-ui.html  # Core Service
+open http://localhost:8083/swagger-ui.html  # Embedding Service
+open http://localhost:8086/admin/api/swagger-ui.html  # Admin Service
 ```
+
+> **Note**: Gateway removed - access services directly per ADR-001
 
 > **📋 Complete Credentials Guide**: See [docs/deployment/SWAGGER_UI_ACCESS_GUIDE.md](SWAGGER_UI_ACCESS_GUIDE.md) for detailed access information and troubleshooting
 
@@ -103,7 +102,7 @@ cd rag-document-service && mvn spring-boot:run    # Port 8082
 cd rag-embedding-service && mvn spring-boot:run   # Port 8083
 cd rag-core-service && mvn spring-boot:run        # Port 8084
 cd rag-admin-service && mvn spring-boot:run       # Port 8085
-cd rag-gateway && mvn spring-boot:run             # Port 8080
+# Gateway archived per ADR-001 - use direct service access
 ```
 
 ## ⚙️ Configuration
@@ -134,33 +133,35 @@ OLLAMA_HOST=http://localhost:11434
 - **Admin User**: `admin@enterprise-rag.com`
 - **Admin Password**: `admin123`
 
-## 🧪 Testing the System
+## 🧪 Testing the System (Direct Service Access)
 
-> **💡 Tip**: Use the interactive API documentation at http://localhost:8080/swagger-ui.html for easy testing with built-in "Try It Out" functionality!
+> **💡 Tip**: Use interactive API documentation for each service - see service URLs above
 
-### 1. Create a Tenant
+### 1. Authenticate (Direct Auth Service)
 ```bash
-curl -X POST http://localhost:8080/api/admin/auth/login \
+curl -X POST http://localhost:8081/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@enterprise-rag.com","password":"admin123"}'
 
 # Save the JWT token from response
 ```
 
-### 2. Test Document Upload
+### 2. Test Document Upload (Direct Document Service)
 ```bash
-curl -X POST http://localhost:8080/api/documents/upload \
+curl -X POST http://localhost:8082/api/documents/upload \
   -H "Authorization: Bearer <your-jwt-token>" \
   -F "file=@sample.txt"
 ```
 
-### 3. Test RAG Query
+### 3. Test RAG Query (Direct Core Service)
 ```bash
-curl -X POST http://localhost:8080/api/rag/query \
+curl -X POST http://localhost:8084/api/rag/query \
   -H "Authorization: Bearer <your-jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{"query":"What is the main topic of the document?"}'
 ```
+
+> **Note**: All requests go directly to services (no gateway) per ADR-001
 
 ## 🔧 Stopping Services
 
@@ -201,15 +202,15 @@ ports:
 ## 🎯 What's Running
 
 After successful deployment, you'll have:
-- **6 microservices** handling authentication, document processing, embeddings, RAG queries, and admin functions
+- **5 active microservices** handling authentication, document processing, embeddings, RAG queries, and admin functions
 - **PostgreSQL database** for persistent data
 - **Redis Stack** for vector storage and caching
-- **API Gateway** routing requests to appropriate services
+- **Direct service access** (gateway archived per ADR-001)
 - **Full RAG pipeline** from document upload to AI-powered queries
 
 ## 📚 Next Steps
 
-- **🚀 Start Here**: Explore interactive API documentation at http://localhost:8080/swagger-ui.html
+- **🚀 Start Here**: Explore interactive API documentation for each service (see URLs above)
 - **📖 Architecture**: Review [README.md](README.md) for detailed architecture overview
 - **🧪 Testing**: Check [TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md) for testing guidelines
 - **📋 Service Guide**: See [SERVICE_CONNECTION_GUIDE.md](SERVICE_CONNECTION_GUIDE.md) for comprehensive API usage
