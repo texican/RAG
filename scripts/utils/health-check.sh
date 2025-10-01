@@ -45,7 +45,7 @@ services=(
     "Document Service:http://localhost:8082/actuator/health"
     "Embedding Service:http://localhost:8083/actuator/health"
     "RAG Core:http://localhost:8084/actuator/health"
-    "Admin Service:http://localhost:8086/admin/api/actuator/health"
+    "Admin Service:http://localhost:8085/admin/api/actuator/health"
 )
 
 for service_info in "${services[@]}"; do

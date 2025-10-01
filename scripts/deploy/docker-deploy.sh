@@ -663,7 +663,7 @@ EOF
             <li><a href="http://localhost:8082/swagger-ui.html">Document Service API</a></li>
             <li><a href="http://localhost:8083/swagger-ui.html">Embedding Service API</a></li>
             <li><a href="http://localhost:8084/swagger-ui.html">Core Service API</a></li>
-            <li><a href="http://localhost:8086/admin/api/swagger-ui.html">Admin Service API</a></li>
+            <li><a href="http://localhost:8085/admin/api/swagger-ui.html">Admin Service API</a></li>
         </ul>
     </div>
 </body>
@@ -695,7 +695,7 @@ show_deployment_status() {
     echo "- Document Service: http://localhost:8082/swagger-ui.html"
     echo "- Embedding Service: http://localhost:8083/swagger-ui.html"
     echo "- Core Service: http://localhost:8084/swagger-ui.html"
-    echo "- Admin Service: http://localhost:8086/admin/api/swagger-ui.html"
+    echo "- Admin Service: http://localhost:8085/admin/api/swagger-ui.html"
     echo ""
     echo "Note: Gateway bypassed per ADR-001 - services accessed directly"
     

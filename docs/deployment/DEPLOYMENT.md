@@ -51,7 +51,7 @@ curl http://localhost:8081/actuator/health  # Auth Service
 curl http://localhost:8082/actuator/health  # Document Service
 curl http://localhost:8083/actuator/health  # Embedding Service
 curl http://localhost:8084/actuator/health  # Core Service
-curl http://localhost:8086/admin/api/actuator/health  # Admin Service
+curl http://localhost:8085/admin/api/actuator/health  # Admin Service
 ```
 
 > **Note**: Gateway bypassed per [ADR-001](../development/ADR-001-BYPASS-API-GATEWAY.md). Services accessed directly.
@@ -61,7 +61,7 @@ curl http://localhost:8086/admin/api/actuator/health  # Admin Service
 - **Document Service**: http://localhost:8082
 - **Embedding Service**: http://localhost:8083
 - **Core Service**: http://localhost:8084
-- **Admin Service**: http://localhost:8086
+- **Admin Service**: http://localhost:8085
 - **Redis Insight**: http://localhost:8001
 - **Database**: localhost:5432 (user: `rag_user`, password: `rag_password`)
 
@@ -77,7 +77,7 @@ open http://localhost:8082/swagger-ui.html  # Document Service
 open http://localhost:8081/swagger-ui.html  # Auth Service
 open http://localhost:8084/swagger-ui.html  # Core Service
 open http://localhost:8083/swagger-ui.html  # Embedding Service
-open http://localhost:8086/admin/api/swagger-ui.html  # Admin Service
+open http://localhost:8085/admin/api/swagger-ui.html  # Admin Service
 ```
 
 > **Note**: Gateway removed - access services directly per ADR-001

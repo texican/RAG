@@ -49,7 +49,7 @@ Client → Gateway (8080) → Auth Service (8081)
 Users are already accessing services directly:
 - Auth Service: http://localhost:8081
 - Document Service: http://localhost:8082/swagger-ui.html (public)
-- Admin Service: http://localhost:8086/admin/api/swagger-ui.html
+- Admin Service: http://localhost:8085/admin/api/swagger-ui.html
 - Core Service: http://localhost:8084
 - Embedding Service: http://localhost:8083
 

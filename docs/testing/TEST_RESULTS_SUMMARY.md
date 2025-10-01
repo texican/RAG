@@ -206,7 +206,7 @@
 - Document: http://localhost:8082
 - Embedding: http://localhost:8083
 - Core: http://localhost:8084
-- Admin: http://localhost:8086
+- Admin: http://localhost:8085
 
 **See**: [ADR-001-BYPASS-API-GATEWAY.md](../development/ADR-001-BYPASS-API-GATEWAY.md) for complete decision rationale
 

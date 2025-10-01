@@ -17,7 +17,7 @@ services=(
     "rag-document-service:8082"
     "rag-embedding-service:8083"
     "rag-core-service:8084"
-    "rag-admin-service:8086"
+    "rag-admin-service:8085"
     # "rag-gateway:8080"  # Archived per ADR-001
 )
 
@@ -84,6 +84,6 @@ echo "- Grafana Dashboard: http://localhost:3000 (admin/admin)"
 echo "- Redis Insight: http://localhost:8001"
 echo "- Auth Service: http://localhost:8081/swagger-ui.html"
 echo "- Document Service: http://localhost:8082/swagger-ui.html"
-echo "- Admin Service: http://localhost:8086/admin/api/swagger-ui.html"
+echo "- Admin Service: http://localhost:8085/admin/api/swagger-ui.html"
 echo ""
 echo "Note: Gateway archived - using direct service access per ADR-001"

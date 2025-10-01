@@ -66,7 +66,7 @@ The RAG system is now **fully operational** with all 6 microservices running hea
 - **Document Service**: ✅ http://localhost:8082 (file processing)
 - **Embedding Service**: ✅ http://localhost:8083 (vector operations)
 - **Core Service**: ✅ http://localhost:8084 (RAG pipeline)
-- **Admin Service**: ✅ http://localhost:8086 (administration)
+- **Admin Service**: ✅ http://localhost:8085 (administration)
 - **PostgreSQL**: ✅ localhost:5432
 - **Redis Stack**: ✅ localhost:6379
 - **Admin User**: ✅ `admin@enterprise-rag.com` / `admin123`
@@ -77,7 +77,7 @@ The RAG system is now **fully operational** with all 6 microservices running hea
 ### 📋 **Quick Access URLs (Direct Service Access)**
 - **Auth Swagger**: http://localhost:8081/swagger-ui.html
 - **Document Swagger**: http://localhost:8082/swagger-ui.html (public)
-- **Admin Swagger**: http://localhost:8086/admin/api/swagger-ui.html
+- **Admin Swagger**: http://localhost:8085/admin/api/swagger-ui.html
 - **Core Swagger**: http://localhost:8084/swagger-ui.html
 - **Embedding Swagger**: http://localhost:8083/swagger-ui.html
 - **Redis Insight**: http://localhost:8001
