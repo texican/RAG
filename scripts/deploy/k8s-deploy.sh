@@ -299,9 +299,9 @@ data:
   openai-api-key: $(echo -n "your-openai-api-key" | base64)
 EOF
 
-    # Create service manifests for each application service
-    local services=("rag-auth-service" "rag-admin-service" "rag-document-service" "rag-embedding-service" "rag-core-service" "rag-gateway")
-    local ports=("8081" "8085" "8082" "8083" "8084" "8080")
+    # Create service manifests for each application service (gateway archived per ADR-001)
+    local services=("rag-auth-service" "rag-admin-service" "rag-document-service" "rag-embedding-service" "rag-core-service")
+    local ports=("8081" "8086" "8082" "8083" "8084")
     
     for i in "${!services[@]}"; do
         local service="${services[$i]}"
@@ -417,13 +417,7 @@ spec:
   - host: rag.{{ environment }}.local
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: rag-gateway
-            port:
-              number: 80
+      # Gateway archived per ADR-001 - direct service routing
       - path: /auth
         pathType: Prefix
         backend:

@@ -5,6 +5,11 @@
 
 set -e
 
+# Get the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+COMPOSE_FILE="${PROJECT_ROOT}/config/docker/docker-compose.fixed.yml"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -47,7 +52,7 @@ check_port() {
 
 # Check Docker containers
 echo -e "\n${YELLOW}📦 Container Status${NC}"
-docker-compose -f config/docker/docker-compose.fixed.yml ps
+docker-compose -f "$COMPOSE_FILE" ps
 
 echo -e "\n${YELLOW}🔍 Service Health Checks${NC}"
 
@@ -60,7 +65,6 @@ check_port "Ollama" "localhost" "11434"
 
 # Microservices Health Endpoints
 echo -e "\n${BLUE}Microservices Health:${NC}"
-check_http_health "Gateway" "http://localhost:8080/actuator/health"
 check_http_health "Auth Service" "http://localhost:8081/actuator/health"
 check_http_health "Document Service" "http://localhost:8082/actuator/health"
 check_http_health "Embedding Service" "http://localhost:8083/actuator/health"
@@ -71,14 +75,14 @@ check_http_health "Admin Service" "http://localhost:8085/admin/api/actuator/heal
 echo -e "\n${BLUE}Monitoring Services:${NC}"
 check_http_health "Prometheus" "http://localhost:9090/-/healthy" 5
 check_http_health "Grafana" "http://localhost:3000/api/health" 5
-check_http_health "Kafka UI" "http://localhost:8080/actuator/health" 5
+check_http_health "Kafka UI" "http://localhost:8080" 5
 
 # Service-specific health details
 echo -e "\n${YELLOW}🔬 Detailed Health Information${NC}"
 
 # Check database connectivity
 echo -e "\n${BLUE}Database Connectivity:${NC}"
-if docker-compose -f config/docker/docker-compose.fixed.yml exec -T rag-postgres pg_isready -U rag_user -d rag_enterprise > /dev/null 2>&1; then
+if docker-compose -f "$COMPOSE_FILE" exec -T rag-postgres pg_isready -U rag_user -d rag_enterprise > /dev/null 2>&1; then
     echo -e "✅ PostgreSQL: ${GREEN}Database accessible${NC}"
 else
     echo -e "❌ PostgreSQL: ${RED}Database not accessible${NC}"
@@ -86,7 +90,7 @@ fi
 
 # Check Redis connectivity
 echo -e "\n${BLUE}Redis Connectivity:${NC}"
-if docker-compose -f config/docker/docker-compose.fixed.yml exec -T rag-redis redis-cli -a redis_password ping 2>/dev/null | grep -q PONG; then
+if docker-compose -f "$COMPOSE_FILE" exec -T rag-redis redis-cli -a redis_password ping 2>/dev/null | grep -q PONG; then
     echo -e "✅ Redis: ${GREEN}Cache accessible${NC}"
 else
     echo -e "❌ Redis: ${RED}Cache not accessible${NC}"
@@ -104,8 +108,8 @@ docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
 # Service logs (last few lines)
 echo -e "\n${YELLOW}📜 Recent Service Logs${NC}"
-echo "Gateway Service (last 3 lines):"
-docker-compose logs --tail=3 rag-gateway 2>/dev/null || echo "No logs available"
+echo "Auth Service (last 3 lines):"
+docker-compose logs --tail=3 rag-auth 2>/dev/null || echo "No logs available"
 
 echo -e "\n${GREEN}🏁 Health Check Complete${NC}"
 echo "For detailed logs: docker-compose logs -f [service-name]"

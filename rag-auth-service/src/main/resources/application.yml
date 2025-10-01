@@ -28,6 +28,8 @@ spring:
   
   jackson:
     default-property-inclusion: NON_NULL
+    serialization:
+      write-dates-as-timestamps: false
 
 # OpenAPI 3.0 Configuration
 springdoc:
@@ -50,14 +52,12 @@ springdoc:
     - group: auth-public
       display-name: Public Authentication API
       paths-to-match: /auth/**
-    - group: user-management  
+    - group: user-management
       display-name: User Management API
       paths-to-match: /users/**
     - group: tenant-management
       display-name: Tenant Management API
       paths-to-match: /tenants/**
-    serialization:
-      write-dates-as-timestamps: false
 
 # JWT Configuration
 jwt:
@@ -81,14 +81,6 @@ management:
     export:
       prometheus:
         enabled: true
-
-# OpenAPI Documentation
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: method
 
 # Logging
 logging:

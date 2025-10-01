@@ -24,36 +24,6 @@ services:
   # MICROSERVICES - BYO RAG System (6 Services)
   # ==================================================
 
-  # API Gateway Service - Routes all external traffic
-  rag-gateway:
-    build:
-      context: .
-      dockerfile: rag-gateway/Dockerfile
-    container_name: rag-gateway
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
-      - DOCUMENT_SERVICE_URL=${DOCUMENT_SERVICE_URL}
-      - EMBEDDING_SERVICE_URL=${EMBEDDING_SERVICE_URL}
-      - CORE_SERVICE_URL=${CORE_SERVICE_URL}
-      - ADMIN_SERVICE_URL=${ADMIN_SERVICE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      redis:
-        condition: service_healthy
-      rag-auth:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    networks:
-      - rag-network
 
   # Authentication Service - JWT auth, user/tenant management
   rag-auth:

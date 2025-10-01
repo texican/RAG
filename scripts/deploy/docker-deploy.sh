@@ -48,7 +48,7 @@ declare -A env_configs=(
     ["production"]="compose_file=docker-compose.prod.yml profile=production replicas=3"
 )
 
-# Service order for deployment
+# Service order for deployment (gateway archived per ADR-001)
 deployment_order=(
     "postgres"
     "redis"
@@ -58,7 +58,7 @@ deployment_order=(
     "rag-embedding-service"
     "rag-document-service"
     "rag-core-service"
-    "rag-gateway"
+    # "rag-gateway"  # Archived per ADR-001 - Bypass API Gateway
 )
 
 # Logging function
@@ -182,7 +182,7 @@ Environments:
 Examples:
   $0                                           # Deploy dev environment
   $0 --environment production --build          # Production deployment with rebuild
-  $0 --services rag-auth-service,rag-gateway  # Deploy specific services
+  $0 --services rag-auth-service,rag-admin-service  # Deploy specific services
   $0 --scale rag-embedding-service:5           # Scale embedding service to 5 replicas
   $0 --rollback                               # Rollback to previous version
 
@@ -526,14 +526,14 @@ wait_for_health_checks() {
             # Get service port from docker-compose
             local port=$(docker-compose port "$service" 8080 2>/dev/null | cut -d: -f2)
             if [[ -z "$port" ]]; then
-                # Try common service ports
+                # Try common service ports (gateway archived per ADR-001)
                 case $service in
-                    rag-gateway) port=8080 ;;
+                    # rag-gateway) port=8080 ;;  # Archived
                     rag-auth-service) port=8081 ;;
                     rag-document-service) port=8082 ;;
                     rag-embedding-service) port=8083 ;;
                     rag-core-service) port=8084 ;;
-                    rag-admin-service) port=8085 ;;
+                    rag-admin-service) port=8086 ;;
                     *) continue ;;
                 esac
             fi
@@ -609,16 +609,16 @@ EOF
             status="Running"
             replicas=$(docker-compose ps "$service" | grep -c "Up" || echo "1")
             
-            # Check health if it's an application service
+            # Check health if it's an application service (gateway archived per ADR-001)
             if [[ "$service" =~ ^rag- ]]; then
                 local port=""
                 case $service in
-                    rag-gateway) port=8080 ;;
+                    # rag-gateway) port=8080 ;;  # Archived
                     rag-auth-service) port=8081 ;;
                     rag-document-service) port=8082 ;;
                     rag-embedding-service) port=8083 ;;
                     rag-core-service) port=8084 ;;
-                    rag-admin-service) port=8085 ;;
+                    rag-admin-service) port=8086 ;;
                 esac
                 
                 if [[ -n "$port" ]] && curl -sf "http://localhost:$port/actuator/health" &> /dev/null; then
@@ -656,14 +656,14 @@ EOF
     </div>
     
     <div class="section">
-        <h2>Service URLs</h2>
+        <h2>Service URLs (Direct Access - ADR-001)</h2>
+        <p><em>Note: Gateway bypassed per ADR-001. Services accessed directly.</em></p>
         <ul>
-            <li><a href="http://localhost:8080/actuator/health">API Gateway Health</a></li>
             <li><a href="http://localhost:8081/swagger-ui.html">Auth Service API</a></li>
             <li><a href="http://localhost:8082/swagger-ui.html">Document Service API</a></li>
             <li><a href="http://localhost:8083/swagger-ui.html">Embedding Service API</a></li>
             <li><a href="http://localhost:8084/swagger-ui.html">Core Service API</a></li>
-            <li><a href="http://localhost:8085/admin/api/swagger-ui.html">Admin Service API</a></li>
+            <li><a href="http://localhost:8086/admin/api/swagger-ui.html">Admin Service API</a></li>
         </ul>
     </div>
 </body>
@@ -690,13 +690,14 @@ show_deployment_status() {
     docker-compose ps
     
     echo ""
-    echo "Service URLs:"
-    echo "- API Gateway: http://localhost:8080/actuator/health"
+    echo "Service URLs (Direct Access - ADR-001):"
     echo "- Auth Service: http://localhost:8081/swagger-ui.html"
     echo "- Document Service: http://localhost:8082/swagger-ui.html"
     echo "- Embedding Service: http://localhost:8083/swagger-ui.html"
     echo "- Core Service: http://localhost:8084/swagger-ui.html"
-    echo "- Admin Service: http://localhost:8085/admin/api/swagger-ui.html"
+    echo "- Admin Service: http://localhost:8086/admin/api/swagger-ui.html"
+    echo ""
+    echo "Note: Gateway bypassed per ADR-001 - services accessed directly"
     
     echo ""
     echo "Management Commands:"

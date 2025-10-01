@@ -36,17 +36,16 @@ else
     echo -e "❌ Kafka: ${RED}Not Running${NC}"
 fi
 
-# Application services
+# Application services (gateway archived per ADR-001)
 echo ""
-echo "🚀 Application Services:"
+echo "🚀 Application Services (Direct Access):"
 
 services=(
-    "API Gateway:http://localhost:8080/actuator/health"
     "Auth Service:http://localhost:8081/actuator/health"
-    "Admin Service:http://localhost:8085/admin/api/actuator/health"
-    "Document Service:http://localhost:8083/actuator/health"
-    "Embedding Service:http://localhost:8084/actuator/health"
-    "RAG Core:http://localhost:8082/actuator/health"
+    "Document Service:http://localhost:8082/actuator/health"
+    "Embedding Service:http://localhost:8083/actuator/health"
+    "RAG Core:http://localhost:8084/actuator/health"
+    "Admin Service:http://localhost:8086/admin/api/actuator/health"
 )
 
 for service_info in "${services[@]}"; do
@@ -61,7 +60,10 @@ for service_info in "${services[@]}"; do
 done
 
 echo ""
-echo "🎯 Quick Test URLs:"
+echo "🎯 Quick Access URLs:"
 echo "- Grafana Dashboard: http://localhost:3000 (admin/admin)"
-echo "- Kafka UI: http://localhost:8080"
 echo "- Redis Insight: http://localhost:8001"
+echo "- Auth Swagger: http://localhost:8081/swagger-ui.html"
+echo "- Document Swagger: http://localhost:8082/swagger-ui.html"
+echo ""
+echo "Note: Gateway archived per ADR-001 - use direct service access"

@@ -144,30 +144,25 @@ public class SecurityConfig {
             
             // Configure endpoint authorization rules
             .authorizeHttpRequests(authz -> authz
-                // Public endpoints - no authentication required
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/tenants/register").permitAll()
+                // Public endpoints for authentication
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/tenants/register").permitAll()
                 
-                // Operational endpoints - health checks and documentation
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Health check and documentation endpoints
+                .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 
-                // Administrative endpoints - admin role required
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/**").hasRole("ADMIN")
+                // Admin only endpoints
+                .requestMatchers("/api/v1/tenants/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
                 
-                // Tenant lifecycle management - admin-only operations
-                .requestMatchers(HttpMethod.POST, "/api/v1/tenants").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/**").hasRole("ADMIN")
+                // User profile endpoints accessible by authenticated users
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/auth/profile").authenticated()
                 
-                // User self-service - profile management
-                .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/users/me").authenticated()
-                
-                // User management - accessible to both admins and users (with tenant isolation)
+                // Multi-role endpoints (admin and user management)
                 .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "USER")
                 
-                // Default policy - all other endpoints require authentication
+                // All other endpoints require authentication
                 .anyRequest().authenticated()
             )
             
