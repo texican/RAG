@@ -127,7 +127,35 @@ public class UserService {
             throw new IllegalArgumentException("User with email '" + request.email() + "' already exists");
         }
 
-        Tenant tenant = tenantService.findById(request.tenantId());
+        // Handle tenant - if tenantId is null, find or create a default tenant
+        Tenant tenant;
+        if (request.tenantId() != null) {
+            tenant = tenantService.findById(request.tenantId());
+        } else {
+            // Use Optional to avoid exceptions that mark transactions for rollback
+            java.util.Optional<Tenant> existingTenant = tenantService.findBySlugOptional("default");
+            if (existingTenant.isPresent()) {
+                tenant = existingTenant.get();
+                logger.info("Using existing default tenant for new user");
+            } else {
+                logger.info("Creating default tenant for new user registration");
+                TenantDto.TenantConfig config = new TenantDto.TenantConfig(
+                    1000,  // maxDocuments
+                    1000L, // maxStorageMb
+                    null,  // embeddingModel
+                    null,  // llmModel
+                    null   // chunking
+                );
+                TenantDto.CreateTenantRequest tenantRequest = new TenantDto.CreateTenantRequest(
+                    "Default Tenant",
+                    "default",
+                    "Default tenant for user registrations",
+                    config
+                );
+                TenantDto.TenantResponse tenantResponse = tenantService.createTenant(tenantRequest);
+                tenant = tenantService.findById(tenantResponse.id());
+            }
+        }
 
         User user = new User();
         user.setFirstName(request.firstName());

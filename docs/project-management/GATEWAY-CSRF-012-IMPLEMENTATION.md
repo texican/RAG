@@ -157,7 +157,7 @@ mvn clean package -f rag-gateway/pom.xml -DskipTests
 docker build -f rag-gateway/Dockerfile -t local/rag-gateway .
 
 # Deploy with docker-compose
-docker-compose -f config/docker/docker-compose.yml up -d rag-gateway
+docker-compose up -d rag-gateway
 ```
 
 ### 2. Verification Steps

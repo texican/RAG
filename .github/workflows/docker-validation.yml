@@ -1,0 +1,139 @@
+name: Docker Image Validation
+
+on:
+  pull_request:
+    paths:
+      - 'rag-*-service/**'
+      - 'config/docker/**'
+      - '.github/workflows/docker-validation.yml'
+
+jobs:
+  validate-docker-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build all JARs
+        run: mvn clean package -DskipTests
+
+      - name: Validate docker-compose.yml has explicit image names
+        run: |
+          echo "Checking docker-compose.yml for explicit image names..."
+
+          # Check each service has explicit image field
+          services=("rag-auth" "rag-document" "rag-embedding" "rag-core" "rag-admin")
+
+          for service in "${services[@]}"; do
+            if ! grep -A 3 "^  ${service}:" config/docker/docker-compose.yml | grep -q "image: ${service}:latest"; then
+              echo "❌ Service $service missing explicit 'image: ${service}:latest' field"
+              exit 1
+            fi
+            echo "✅ $service has explicit image name"
+          done
+
+      - name: Build Docker images with docker-compose
+        run: |
+          cd config/docker
+          docker-compose build --no-cache
+
+      - name: Verify image names
+        run: |
+          echo "Verifying Docker images were created with correct names..."
+
+          services=("rag-auth" "rag-document" "rag-embedding" "rag-core" "rag-admin")
+
+          for service in "${services[@]}"; do
+            if ! docker images | grep -q "^${service}\s"; then
+              echo "❌ Image ${service}:latest not found"
+              docker images
+              exit 1
+            fi
+            echo "✅ Found ${service}:latest"
+          done
+
+      - name: Check for incorrectly named images
+        run: |
+          echo "Checking for incorrectly named images..."
+
+          # Look for old naming patterns that shouldn't exist
+          if docker images | grep -qE "(rag_rag-|docker-rag-)"; then
+            echo "❌ Found images with incorrect naming:"
+            docker images | grep -E "(rag_rag-|docker-rag-)"
+            echo ""
+            echo "Images should be named: rag-auth, rag-admin, etc."
+            exit 1
+          fi
+
+          echo "✅ No incorrectly named images found"
+
+      - name: Verify rebuild script exists and is executable
+        run: |
+          if [ ! -x scripts/dev/rebuild-service.sh ]; then
+            echo "❌ rebuild-service.sh not found or not executable"
+            exit 1
+          fi
+          echo "✅ Rebuild script is executable"
+
+      - name: Test rebuild script (dry run)
+        run: |
+          # Test the script's validation logic
+          ./scripts/dev/rebuild-service.sh 2>&1 | grep -q "Error: Service name required"
+          if [ $? -eq 0 ]; then
+            echo "✅ Rebuild script validation works"
+          else
+            echo "❌ Rebuild script validation failed"
+            exit 1
+          fi
+
+  validate-documentation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check documentation exists
+        run: |
+          files=(
+            "docs/DOCKER_DEVELOPMENT.md"
+            "docs/DOCKER_IMPROVEMENTS_SUMMARY.md"
+            "Makefile"
+            "CLAUDE.md"
+          )
+
+          for file in "${files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Required file missing: $file"
+              exit 1
+            fi
+            echo "✅ Found $file"
+          done
+
+      - name: Verify Makefile has required targets
+        run: |
+          targets=("rebuild" "rebuild-nc" "logs" "status" "help")
+
+          for target in "${targets[@]}"; do
+            if ! grep -q "^${target}:" Makefile; then
+              echo "❌ Makefile missing target: $target"
+              exit 1
+            fi
+            echo "✅ Makefile has target: $target"
+          done
+
+      - name: Check README mentions new workflow
+        run: |
+          if ! grep -q "make rebuild" README.md; then
+            echo "❌ README.md doesn't mention new workflow"
+            exit 1
+          fi
+          echo "✅ README.md documents new workflow"

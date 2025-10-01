@@ -102,27 +102,35 @@ This system implements a **microservices architecture** with complete **multi-te
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/enterprise-rag.git
-cd enterprise-rag
+cd enterprise-rag/RAG
 
-# Start infrastructure services (PostgreSQL, Redis, Kafka, Ollama)
-docker-compose up -d
+# Install development tools (git hooks, etc.)
+./scripts/setup/install-dev-tools.sh
+
+# Build all services
+make build-all
+
+# Start all services
+make start
 
 # Verify all services are running
-docker-compose ps
+make status
 ```
+
+> **⚠️ IMPORTANT:** Do not use manual `docker build` or `docker restart` commands. Always use `make rebuild SERVICE=name`. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ### 2️⃣ Build and Run Services
 
 **Option 1: Docker Compose (Recommended)**
 ```bash
-# Start all services with infrastructure (using fixed configuration)
-docker-compose -f config/docker/docker-compose.fixed.yml up -d
+# Start all services
+docker-compose -f config/docker/docker-compose.yml up -d
 
 # Check system health
-./config/docker/docker-health.sh
+./scripts/utils/health-check.sh
 
-# View service logs
-docker-compose -f config/docker/docker-compose.fixed.yml logs -f
+# View all service status
+make status
 ```
 
 **Option 2: Individual Maven Services**
@@ -138,6 +146,33 @@ cd rag-embedding-service && mvn spring-boot:run   # Port 8083 - Vector Operation
 cd rag-core-service && mvn spring-boot:run        # Port 8084 - RAG Pipeline
 cd rag-admin-service && mvn spring-boot:run       # Port 8085 - Admin Operations
 ```
+
+### 💡 Development Quick Commands
+
+The project includes a Makefile for common development tasks:
+
+```bash
+# Rebuild a single service (rebuilds JAR + Docker image + restarts container)
+make rebuild SERVICE=rag-auth
+
+# Rebuild with no cache (for stubborn issues)
+make rebuild-nc SERVICE=rag-auth
+
+# View logs in real-time
+make logs SERVICE=rag-auth
+
+# Show all services status
+make status
+
+# Start/stop all services
+make start
+make stop
+
+# Run tests
+make test SERVICE=rag-auth
+```
+
+See `make help` for all available commands or consult [docs/development/DOCKER_DEVELOPMENT.md](docs/development/DOCKER_DEVELOPMENT.md) for detailed Docker workflow guidance.
 
 ### 3️⃣ Verify Installation
 

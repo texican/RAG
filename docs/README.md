@@ -1,121 +1,170 @@
-# BYO RAG System - Documentation Index
+# RAG System Documentation Hub
 
-Welcome to the comprehensive documentation for the BYO RAG (Build Your Own Retrieval Augmented Generation) system.
+Welcome to the RAG System documentation! This page is your starting point for all project documentation.
 
-## 📚 Documentation Structure
+## 🚀 Getting Started (New Developers Start Here!)
 
-The documentation is organized into three main categories to help you quickly find the information you need:
+**New to the project?** Start here:
 
-## 🚀 Deployment & Infrastructure
+- **[Quick Reference](getting-started/QUICK_REFERENCE.md)** - Cheat sheet for common commands ⭐
+- **[Installation Guide](../README.md#getting-started)** - Full setup instructions (in root README)
+- **[Contributing Guide](../CONTRIBUTING.md)** - Development workflow and best practices
 
-**Get the system up and running in your environment**
+## 📚 Documentation Categories
 
-- **[deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md)** - **START HERE** for quick setup and deployment
-  - Prerequisites and system requirements
-  - Docker deployment instructions
-  - Service verification and testing
-  - Basic troubleshooting
+### 🛠️ Development
 
-- **[deployment/DOCKER.md](deployment/DOCKER.md)** - Advanced Docker configuration and management
-  - Docker Compose configurations
-  - Service orchestration details
-  - Container networking and volumes
-  - Production Docker considerations
+Guides for daily development work:
 
+- **[Docker Development Guide](development/DOCKER_DEVELOPMENT.md)** - Docker workflow, troubleshooting ⭐
+- **[Make vs Alternatives](development/MAKE_VS_ALTERNATIVES.md)** - Why we chose Make
+- **[Testing Best Practices](development/TESTING_BEST_PRACTICES.md)** - How to write tests
+- **[Error Handling Guidelines](development/ERROR_HANDLING_GUIDELINES.md)** - Error handling patterns
+- **[Development Methodology](development/METHODOLOGY.md)** - Our development approach
+- **[ADR-001: Bypass API Gateway](development/ADR-001-BYPASS-API-GATEWAY.md)** - Architecture decision
+- **[Security Documentation](development/SECURITY-001-DOCUMENTATION.md)** - Security guidelines
+- **[Documentation Templates](development/templates/DOCUMENTATION_TEMPLATES.md)** - Doc templates
 
-## 🛠️ Development & Testing
+### 🚀 Deployment & Operations
 
-**For developers working on the codebase**
+Guides for deploying and running the system:
 
-- **[development/CLAUDE.md](development/CLAUDE.md)** - Complete project context and status
-  - Architecture overview and microservices details
-  - Current development status and achievements
-  - Technology stack and implementation notes
-  - Development guidelines and best practices
+- **[Deployment Guide](deployment/DEPLOYMENT.md)** - How to deploy ⭐
+- **[Docker Guide](deployment/DOCKER.md)** - Docker setup and configuration
+- **[Service Connection Guide](deployment/SERVICE_CONNECTION_GUIDE.md)** - How services connect
+- **[Swagger UI Access](deployment/SWAGGER_UI_ACCESS_GUIDE.md)** - Access Swagger documentation
+- **[Docker Improvements Summary](deployment/DOCKER_IMPROVEMENTS_SUMMARY.md)** - Docker workflow improvements
+- **[Enforcement Mechanisms](deployment/ENFORCEMENT_MECHANISMS.md)** - How we ensure correct Docker usage
 
-- **[development/METHODOLOGY.md](development/METHODOLOGY.md)** - Development methodology and process guidelines
-  - Story point anchoring methodology
-  - Completed stories management process
-  - Project workflow standards
-  - Quality assurance guidelines
+### 🏗️ Architecture
 
-- **[development/TESTING_BEST_PRACTICES.md](development/TESTING_BEST_PRACTICES.md)** - Testing standards and guidelines
-  - Testing methodology and patterns
-  - Unit testing best practices
-  - Integration testing approaches
-  - Bug prevention strategies
+System design and structure:
 
-- **[development/ERROR_HANDLING_GUIDELINES.md](development/ERROR_HANDLING_GUIDELINES.md)** - Standardized error handling approach
-  - Consistent exception handling patterns
-  - Error message formatting standards
-  - Service method implementation guidelines
-  - Testing error scenarios
+- **[Project Structure](architecture/PROJECT_STRUCTURE.md)** - Repository organization
+- **[Enforcement Diagram](architecture/ENFORCEMENT_DIAGRAM.md)** - Visual workflow diagrams
 
-- **[development/CONTEXT_ASSEMBLY_ERROR_ANALYSIS.md](development/CONTEXT_ASSEMBLY_ERROR_ANALYSIS.md)** - Service-specific error handling analysis
-  - Practical application of error handling guidelines
-  - Thread safety and configuration validation
-  - Implementation recommendations and examples
+### 🌐 API Documentation
 
-## 📋 Project Management
+- **[API Documentation Portal](api/API_DOCUMENTATION_PORTAL.md)** - Hub for all API docs
 
-**Project planning, progress tracking, and task management**
+### 🧪 Testing
 
-- **[project-management/PROJECT_BACKLOG.md](project-management/PROJECT_BACKLOG.md)** - Active task backlog
-  - Current active/pending stories only
-  - Story point estimation and task breakdown
-  - Priority levels and dependencies
-  - Future roadmap and planning
+- **[Test Results Summary](testing/TEST_RESULTS_SUMMARY.md)** - Latest test results
 
-- **[project-management/COMPLETED_STORIES.md](project-management/COMPLETED_STORIES.md)** - Completed stories archive
-  - Historical record of all completed work
-  - Business impact summaries
-  - Completion dates and story point totals
-  - Project velocity tracking
+### 📊 Project Management
 
-- **[project-management/DOCKER-001-SUMMARY.md](project-management/DOCKER-001-SUMMARY.md)** - Docker integration milestone completion
-  - Technical achievement details
-  - Issues resolved and fixes implemented
-  - System validation results
-  - Next steps for development
+Internal project tracking (for maintainers):
 
-## 🎯 Quick Navigation
+- **[Current Tasks](project-management/CURRENT_TASKS.md)** - Active work
+- **[Project Backlog](project-management/PROJECT_BACKLOG.md)** - Planned work
+- **[Completed Stories](project-management/COMPLETED_STORIES.md)** - Done work
+- **[Sprint Plan](project-management/SPRINT_PLAN.md)** - Current sprint
+- And more in [project-management/](project-management/)
 
-### New to the project?
-1. Start with **[deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md)** to get the system running
-2. Review **[development/CLAUDE.md](development/CLAUDE.md)** for architecture understanding
-3. Check **[project-management/PROJECT_BACKLOG.md](project-management/PROJECT_BACKLOG.md)** for current active work
+### 📦 Archive
 
-### Looking to contribute?
-1. Read **[development/TESTING_BEST_PRACTICES.md](development/TESTING_BEST_PRACTICES.md)** for quality standards
-2. Review **[development/ERROR_HANDLING_GUIDELINES.md](development/ERROR_HANDLING_GUIDELINES.md)** for consistent error handling
-3. Study **[development/METHODOLOGY.md](development/METHODOLOGY.md)** for project workflow and processes
-4. Check **[project-management/PROJECT_BACKLOG.md](project-management/PROJECT_BACKLOG.md)** for available tasks
+Older documentation kept for reference:
 
-### Deploying to production?
-1. Follow **[deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md)** for basic setup
-2. Consult **[deployment/DOCKER.md](deployment/DOCKER.md)** for advanced configurations
-3. Check **[project-management/DOCKER-001-SUMMARY.md](project-management/DOCKER-001-SUMMARY.md)** for milestone achievements and known issues
+- **[Archive](archive/)** - Deprecated/historical docs
 
-### Managing project stories?
-1. Review **[development/METHODOLOGY.md](development/METHODOLOGY.md)** for completed stories management process
-2. Use **[project-management/PROJECT_BACKLOG.md](project-management/PROJECT_BACKLOG.md)** for active work tracking
-3. Archive completed work in **[project-management/COMPLETED_STORIES.md](project-management/COMPLETED_STORIES.md)**
+## 🎯 Quick Links by Role
 
-## 📊 System Status
+### I'm a New Developer
+1. Read [Quick Reference](getting-started/QUICK_REFERENCE.md) ⭐
+2. Follow [Installation Guide](../README.md#getting-started)
+3. Review [Contributing Guide](../CONTRIBUTING.md)
+4. Check [Docker Development Guide](development/DOCKER_DEVELOPMENT.md)
 
-> **✅ Current Status (2025-09-08)**: **CORE SERVICE INFRASTRUCTURE COMPLETE**
-> - All 6 microservices operational in Docker
-> - VECTOR-001 & CORE-TEST-001 completed (18 story points total)
-> - Testing infrastructure foundation established
-> - Ready for service reliability improvements and advanced testing
+### I'm Working on a Feature
+1. Check [Current Tasks](project-management/CURRENT_TASKS.md)
+2. Review [Testing Best Practices](development/TESTING_BEST_PRACTICES.md)
+3. Follow [Contributing Guide](../CONTRIBUTING.md)
+4. Use [Quick Reference](getting-started/QUICK_REFERENCE.md) for commands
 
-## 🔗 External Resources
+### I'm Deploying the System
+1. Read [Deployment Guide](deployment/DEPLOYMENT.md) ⭐
+2. Check [Service Connection Guide](deployment/SERVICE_CONNECTION_GUIDE.md)
+3. Review [Docker Guide](deployment/DOCKER.md)
+4. Use [Swagger UI Access](deployment/SWAGGER_UI_ACCESS_GUIDE.md) for testing
 
-- **Main Project**: [../README.md](../README.md) - Project overview and quick start
-- **Ollama Chat**: [../ollama-chat/README.md](../ollama-chat/README.md) - Lightweight chat interface
-- **Configuration**: [../config/](../config/) - Docker and infrastructure configurations
-- **Scripts**: [../scripts/](../scripts/) - Utility scripts for development and deployment
+### I'm Debugging an Issue
+1. Check [Docker Development Guide](development/DOCKER_DEVELOPMENT.md) ⭐
+2. Review [Quick Reference](getting-started/QUICK_REFERENCE.md) for commands
+3. Check [Error Handling Guidelines](development/ERROR_HANDLING_GUIDELINES.md)
+4. Look at [Test Results](testing/TEST_RESULTS_SUMMARY.md)
+
+### I'm Understanding the Architecture
+1. Read [Project Structure](architecture/PROJECT_STRUCTURE.md)
+2. Check [ADR-001: Bypass API Gateway](development/ADR-001-BYPASS-API-GATEWAY.md)
+3. Review [Service Connection Guide](deployment/SERVICE_CONNECTION_GUIDE.md)
+4. Look at [Enforcement Diagram](architecture/ENFORCEMENT_DIAGRAM.md)
+
+## 📖 Documentation Standards
+
+When creating new documentation:
+
+1. Use the [templates](development/templates/DOCUMENTATION_TEMPLATES.md)
+2. Place in appropriate directory (see structure below)
+3. Add link to this README
+4. Follow [Methodology](development/METHODOLOGY.md)
+
+## 🔍 Can't Find What You Need?
+
+1. Use GitHub search: Press `/` and search keywords
+2. Check the [Archive](archive/) for older docs
+3. Ask in team chat
+4. Create an issue if documentation is missing
+
+## 📝 Contributing to Documentation
+
+Documentation improvements are always welcome!
+
+1. Follow [Contributing Guide](../CONTRIBUTING.md)
+2. Use [Documentation Templates](development/templates/DOCUMENTATION_TEMPLATES.md)
+3. Update this README if adding new docs
+4. Keep docs in appropriate categories
+
+## 🗂️ Directory Structure
+
+```
+docs/
+├── README.md (this file)           # Documentation hub
+│
+├── getting-started/                # New developer guides
+│   └── QUICK_REFERENCE.md         # Cheat sheet ⭐
+│
+├── development/                    # Development guides
+│   ├── DOCKER_DEVELOPMENT.md      # Docker workflow ⭐
+│   ├── MAKE_VS_ALTERNATIVES.md
+│   ├── TESTING_BEST_PRACTICES.md
+│   └── ...
+│
+├── deployment/                     # Deployment/ops guides
+│   ├── DEPLOYMENT.md              # Deployment guide ⭐
+│   ├── DOCKER.md
+│   └── ...
+│
+├── architecture/                   # System design docs
+│   ├── PROJECT_STRUCTURE.md
+│   └── ...
+│
+├── api/                           # API documentation
+│   └── API_DOCUMENTATION_PORTAL.md
+│
+├── testing/                       # Testing docs
+│   └── TEST_RESULTS_SUMMARY.md
+│
+├── project-management/            # Project tracking
+│   ├── CURRENT_TASKS.md
+│   ├── PROJECT_BACKLOG.md
+│   └── ...
+│
+└── archive/                       # Old/deprecated docs
+    └── ...
+```
 
 ---
 
-*Last Updated: 2025-09-08*
+**Last Updated:** 2025-10-01
+
+**Quick Navigation:** [Root README](../README.md) | [Contributing](../CONTRIBUTING.md) | [Quick Reference](getting-started/QUICK_REFERENCE.md)
