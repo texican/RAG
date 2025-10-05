@@ -49,6 +49,11 @@ spring:
           max-idle: 10
           min-idle: 3
           max-wait: -1ms
+
+# Redis Jedis Configuration (for VectorSearchService)
+redis:
+  jedis:
+    timeout: 2000  # milliseconds, no suffix
   
   # Kafka Configuration
   kafka:
