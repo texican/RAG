@@ -9,11 +9,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Get script directory and project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+
 # Configuration
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-rag_enterprise}"
-DB_USER="${DB_USER:-rag_user}"
+DB_USER="${DB_USERNAME:-rag_user}"
 DB_PASSWORD="${DB_PASSWORD:-rag_password}"
 
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@enterprise-rag.com}"
@@ -48,9 +52,13 @@ public class bcrypt_hash {
 }
 EOF
 
-# Try to use Java to generate hash, fallback to pre-generated hash if not available  
-if command -v javac >/dev/null 2>&1 && [[ -f "/Users/stryfe/Projects/RAG/rag-admin-service/target/classes" ]]; then
-    BCRYPT_PASSWORD=$(cd /tmp && javac -cp "/Users/stryfe/Projects/RAG/rag-admin-service/target/classes:/Users/stryfe/.m2/repository/org/springframework/security/spring-security-crypto/6.1.11/spring-security-crypto-6.1.11.jar" bcrypt_hash.java && java -cp ".:/Users/stryfe/Projects/RAG/rag-admin-service/target/classes:/Users/stryfe/.m2/repository/org/springframework/security/spring-security-crypto/6.1.11/spring-security-crypto-6.1.11.jar" bcrypt_hash "$ADMIN_PASSWORD")
+# Try to use Java to generate hash, fallback to pre-generated hash if not available
+ADMIN_SERVICE_TARGET="$PROJECT_ROOT/rag-admin-service/target/classes"
+M2_REPO="${HOME}/.m2/repository"
+SPRING_SECURITY_JAR="$M2_REPO/org/springframework/security/spring-security-crypto/6.1.11/spring-security-crypto-6.1.11.jar"
+
+if command -v javac >/dev/null 2>&1 && [[ -f "$ADMIN_SERVICE_TARGET" ]] && [[ -f "$SPRING_SECURITY_JAR" ]]; then
+    BCRYPT_PASSWORD=$(cd /tmp && javac -cp "$ADMIN_SERVICE_TARGET:$SPRING_SECURITY_JAR" bcrypt_hash.java && java -cp ".:$ADMIN_SERVICE_TARGET:$SPRING_SECURITY_JAR" bcrypt_hash "$ADMIN_PASSWORD")
 else
     # Pre-generated BCrypt hash for "admin123" with strength 10 (verified working)
     BCRYPT_PASSWORD='$2a$10$4ruqE8FlnERNCuIW/6pI6.1rlZmJiG/plwFwif5KPGxjwbM9Sm6je'
