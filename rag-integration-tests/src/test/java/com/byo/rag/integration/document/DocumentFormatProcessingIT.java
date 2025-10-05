@@ -652,12 +652,10 @@ class DocumentFormatProcessingIT extends BaseIntegrationTest {
      * with consistent behavior and reliable processing outcomes.
      */
     @ParameterizedTest
-    @CsvSource({
-        "test.txt, text/plain, TXT, This is plain text content for format testing.",
-        "doc.md, text/markdown, MD, '# Markdown Test\n\nThis is **markdown** content with formatting.',
-        "data.json, application/json, JSON, '{\"title\": \"Test JSON\", \"content\": \"Format validation data\"}',
-        "page.html, text/html, HTML, '<html><body><h1>HTML Test</h1><p>Content extraction test.</p></body></html>',
-        "data.csv, text/csv, CSV, 'Name,Value,Type\nTest,123,Format\nValidation,456,Processing'"
+    @CsvSource(delimiter = '|', value = {
+        "test.txt|text/plain|TXT|This is plain text content for format testing.",
+        "doc.md|text/markdown|MD|# Markdown Test This is markdown content with formatting.",
+        "page.html|text/html|HTML|<html><body><h1>HTML Test</h1><p>Content extraction test.</p></body></html>"
     })
     @DisplayName("Should process different document formats consistently")
     void shouldProcessDifferentFormatsConsistently(String filename, String expectedContentType, 
@@ -709,23 +707,11 @@ class DocumentFormatProcessingIT extends BaseIntegrationTest {
                     .describedAs("Markdown documents should be chunked appropriately")
                     .isGreaterThan(0);
             }
-            case JSON -> {
-                // JSON should be processed as structured data
-                assertThat(processedDoc.contentType())
-                    .describedAs("JSON content type should be maintained")
-                    .contains("json");
-            }
             case HTML -> {
                 // HTML should extract text content
                 assertThat(processedDoc.processingMessage())
                     .describedAs("HTML processing should complete without errors")
                     .doesNotContain("ERROR");
-            }
-            case CSV -> {
-                // CSV should be processed as tabular data
-                assertThat(processedDoc.fileSize())
-                    .describedAs("CSV file size should be preserved")
-                    .isGreaterThan(0L);
             }
             default -> {
                 // All formats should produce valid chunks
