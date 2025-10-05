@@ -328,17 +328,129 @@ public class ContextAssemblyHealthIndicator implements HealthIndicator {
 
 ## Test Categories & Naming Conventions
 
-### Unit Tests
+### File Naming Standards
+
+#### 1. Unit Tests (JUnit - Surefire plugin)
+**Pattern**: `{ClassName}Test.java`
+- **Purpose**: Test individual classes/methods in isolation with mocks
+- **Location**: `src/test/java` in same package as class under test
+- **Execution**: Maven Surefire (`mvn test`)
+- **Examples**:
+  - `DocumentServiceTest.java` - tests `DocumentService.java`
+  - `RagControllerTest.java` - tests `RagController.java`
+  - `TextChunkerTest.java` - tests `TextChunker.java`
+
+#### 2. Integration Tests (Failsafe plugin)
+**Pattern**: `{Feature}IT.java` or `{Component}IntegrationTest.java`
+- **Purpose**: Test component interactions with real dependencies (DB, messaging)
+- **Location**: `src/test/java` in integration-specific packages
+- **Execution**: Maven Failsafe (`mvn verify` or `mvn integration-test`)
+- **Examples**:
+  - `DocumentUploadProcessingIT.java` - tests document upload flow
+  - `EmbeddingRepositoryIntegrationTest.java` - tests repository with real DB
+  - `ServiceStartupIntegrationTest.java` - tests service startup
+
+**Standard**: Use `IT` suffix for newer tests, `IntegrationTest` suffix is legacy but acceptable
+
+#### 3. End-to-End Tests
+**Pattern**: `{Scenario}E2ETest.java` or `{Feature}EndToEndIT.java`
+- **Purpose**: Test complete user journeys across all services
+- **Location**: `rag-integration-tests/src/test/java/com/byo/rag/integration/endtoend/`
+- **Execution**: Maven Failsafe with profile (`mvn verify -Pintegration-tests`)
+- **Examples**:
+  - `StandaloneRagE2ETest.java` - tests complete RAG pipeline
+  - `ComprehensiveRagEndToEndIT.java` - comprehensive E2E scenarios
+
+**Standard**: Prefer `E2ETest` for clarity, `EndToEndIT` is acceptable
+
+#### 4. Test Infrastructure & Utilities
+**Pattern**: `{Purpose}{Type}.java`
+- **Base Classes**: `Base{Type}Test.java` (e.g., `BaseIntegrationTest.java`)
+- **Configurations**: `Test{Component}Config.java` (e.g., `TestSecurityConfig.java`)
+- **Utilities**: `{Domain}TestUtils.java` or `TestData{Purpose}.java`
+- **Examples**:
+  - `BaseIntegrationTest.java` - base class for integration tests
+  - `TestContainersConfiguration.java` - TestContainers setup
+  - `AuthenticationTestUtils.java` - auth helper utilities
+  - `TestDataBuilder.java` - test data construction
+
+#### 5. Specialized Test Categories
+**Pattern**: Descriptive names matching test focus
+
+**Validation Tests**: `{Component}ValidationTest.java`
+- `ApiEndpointValidationTest.java`
+- `InfrastructureValidationTest.java`
+
+**Security Tests**: `{Component}SecurityTest.java`
+- `GatewayAuthenticationSecurityTest.java`
+- `SecurityConfigurationTest.java`
+
+**Performance Tests**: `{Feature}LoadTest.java` or `{Feature}PerformanceTest.java`
+- `PerformanceLoadTest.java`
+- `MemoryOptimizationTest.java`
+
+**Smoke Tests**: `{Component}SmokeIT.java`
+- `IntegrationTestInfrastructureSmokeIT.java`
+
+### Method Naming Standards
+
+#### Unit Tests
 - **Pattern**: `methodName_condition_expectedBehavior`
 - **Example**: `assembleContext_SingleDocumentExceedsLimit_TruncatesContent`
 
-### Integration Tests  
+#### Integration Tests
 - **Pattern**: `feature_scenario_expectedOutcome`
 - **Example**: `ragPipeline_LargeDocument_RespectsTokenLimits`
 
-### Contract Tests
+#### Contract Tests
 - **Pattern**: `apiMethod_inputCondition_contractBehavior`
 - **Example**: `assembleContext_NullDocuments_ReturnsEmptyString`
+
+### Migration Guide for Existing Tests
+
+**Current Inconsistencies**:
+- ❌ `StandaloneRagE2ETest.java` - E2E test without IT suffix (won't run with Failsafe)
+- ❌ `AdminAuthControllerIntegrationTest.java` - should be `AdminAuthControllerIT.java`
+- ❌ Mixed patterns: some use `IntegrationTest`, some use `IT`
+
+**Standardization Plan** (TECH-DEBT-002):
+1. **Keep existing names** for now to avoid breaking CI/CD
+2. **New tests MUST follow** the standards above
+3. **Gradual migration**: Rename during refactoring, not in bulk
+4. **Priority**: Ensure Failsafe picks up all integration/E2E tests (verify with `-Dit.test=*`)
+
+### Maven Configuration Requirements
+
+**Surefire (Unit Tests)**:
+```xml
+<plugin>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <configuration>
+        <includes>
+            <include>**/*Test.java</include>
+        </includes>
+        <excludes>
+            <exclude>**/*IT.java</exclude>
+            <exclude>**/*IntegrationTest.java</exclude>
+            <exclude>**/*E2ETest.java</exclude>
+        </excludes>
+    </configuration>
+</plugin>
+```
+
+**Failsafe (Integration & E2E Tests)**:
+```xml
+<plugin>
+    <artifactId>maven-failsafe-plugin</artifactId>
+    <configuration>
+        <includes>
+            <include>**/*IT.java</include>
+            <include>**/*IntegrationTest.java</include>
+            <include>**/*E2ETest.java</include>
+        </includes>
+    </configuration>
+</plugin>
+```
 
 ---
 
