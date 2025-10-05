@@ -1,6 +1,8 @@
 package com.byo.rag.document.service;
 
 import com.byo.rag.document.repository.DocumentRepository;
+import com.byo.rag.document.repository.TenantRepository;
+import com.byo.rag.document.repository.UserRepository;
 import com.byo.rag.shared.dto.DocumentDto;
 import com.byo.rag.shared.dto.TenantDto;
 import com.byo.rag.shared.dto.UserDto;
@@ -10,6 +12,8 @@ import com.byo.rag.shared.entity.Tenant;
 import com.byo.rag.shared.entity.User;
 import com.byo.rag.shared.exception.DocumentNotFoundException;
 import com.byo.rag.shared.exception.DocumentProcessingException;
+import com.byo.rag.shared.exception.TenantNotFoundException;
+import com.byo.rag.shared.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -98,6 +102,8 @@ public class DocumentService {
     private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
 
     private final DocumentRepository documentRepository;
+    private final TenantRepository tenantRepository;
+    private final UserRepository userRepository;
     private final DocumentChunkService chunkService;
     private final FileStorageService fileStorageService;
     private final TextExtractionService textExtractionService;
@@ -105,32 +111,54 @@ public class DocumentService {
 
     public DocumentService(
             DocumentRepository documentRepository,
+            TenantRepository tenantRepository,
+            UserRepository userRepository,
             DocumentChunkService chunkService,
             FileStorageService fileStorageService,
             TextExtractionService textExtractionService,
             DocumentProcessingKafkaServiceInterface kafkaService) {
         this.documentRepository = documentRepository;
+        this.tenantRepository = tenantRepository;
+        this.userRepository = userRepository;
         this.chunkService = chunkService;
         this.fileStorageService = fileStorageService;
         this.textExtractionService = textExtractionService;
         this.kafkaService = kafkaService;
     }
 
-    public DocumentDto.DocumentResponse uploadDocument(DocumentDto.UploadDocumentRequest request, 
+    public DocumentDto.DocumentResponse uploadDocument(DocumentDto.UploadDocumentRequest request,
                                                        Tenant tenant, User user) {
         MultipartFile file = (MultipartFile) request.file();
-        
-        // For testing - create dummy tenant if null
-        if (tenant == null) {
-            tenant = createDummyTenant();
-        }
-        if (user == null) {
-            user = createDummyUser(tenant);
-        }
-        
-        logger.info("Uploading document: {} for tenant: {}", file.getOriginalFilename(), tenant.getSlug());
 
-        validateFile(file, tenant);
+        // Fetch the fully hydrated tenant from database to avoid detached entity issues
+        Tenant hydratedTenant;
+        if (tenant != null && tenant.getId() != null) {
+            UUID tenantId = tenant.getId();
+            hydratedTenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new TenantNotFoundException(tenantId));
+        } else {
+            // For testing - create dummy tenant if null
+            hydratedTenant = createDummyTenant();
+        }
+
+        // Fetch the fully hydrated user from database to avoid detached entity issues
+        User hydratedUser;
+        if (user != null && user.getId() != null) {
+            UUID userId = user.getId();
+            hydratedUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        } else {
+            // For testing - find or create dummy user to avoid duplicate email constraint violations
+            hydratedUser = userRepository.findByEmailAndTenantId("test@test-company.com", hydratedTenant.getId())
+                .orElseGet(() -> {
+                    User newUser = createDummyUser(hydratedTenant);
+                    return userRepository.save(newUser);
+                });
+        }
+
+        logger.info("Uploading document: {} for tenant: {}", file.getOriginalFilename(), hydratedTenant.getSlug());
+
+        validateFile(file, hydratedTenant);
 
         Document.DocumentType documentType = textExtractionService.detectDocumentType(
             file.getOriginalFilename(), file.getContentType());
@@ -141,15 +169,15 @@ public class DocumentService {
         document.setFileSize(file.getSize());
         document.setContentType(file.getContentType());
         document.setDocumentType(documentType);
-        document.setTenant(tenant);
-        document.setUploadedBy(user);
+        document.setTenant(hydratedTenant);
+        document.setUploadedBy(hydratedUser);
         document.setProcessingStatus(Document.ProcessingStatus.PENDING);
 
         document = documentRepository.save(document);
 
         try {
             // Store file
-            String filePath = fileStorageService.storeFile(file, tenant.getId(), document.getId());
+            String filePath = fileStorageService.storeFile(file, hydratedTenant.getId(), document.getId());
             document.setFilePath(filePath);
             document = documentRepository.save(document);
 
@@ -400,10 +428,11 @@ public class DocumentService {
     
     private User createDummyUser(Tenant tenant) {
         User user = new User();
-        user.setId(UUID.randomUUID());
+        // Don't set ID - let JPA generate it to avoid detached entity issues
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEmail("test@test-company.com");
+        user.setPasswordHash("$2a$10$dummyHashForTestingPurposesOnly1234567890"); // BCrypt dummy hash
         user.setTenant(tenant);
         user.setRole(User.UserRole.USER);
         user.setStatus(User.UserStatus.ACTIVE);

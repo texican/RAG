@@ -1,6 +1,8 @@
 package com.byo.rag.document.service;
 
 import com.byo.rag.document.repository.DocumentRepository;
+import com.byo.rag.document.repository.TenantRepository;
+import com.byo.rag.document.repository.UserRepository;
 import com.byo.rag.shared.dto.DocumentDto;
 import com.byo.rag.shared.dto.TenantDto;
 import com.byo.rag.shared.entity.Document;
@@ -51,19 +53,25 @@ class DocumentServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
-    
+
+    @Mock
+    private TenantRepository tenantRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
     @Mock
     private DocumentChunkService chunkService;
-    
+
     @Mock
     private FileStorageService fileStorageService;
-    
+
     @Mock
     private TextExtractionService textExtractionService;
-    
+
     @Mock
     private DocumentProcessingKafkaServiceInterface kafkaService;
-    
+
     @InjectMocks
     private DocumentService documentService;
 
@@ -85,6 +93,17 @@ class DocumentServiceTest {
         testUser = createTestUser(userId, testTenant);
         testDocument = createTestDocument(documentId, testTenant, testUser);
         testFile = new MockMultipartFile("file", "test.pdf", "application/pdf", "test content".getBytes());
+
+        // Mock repository behavior for entity hydration
+        lenient().when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(testTenant));
+        lenient().when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        lenient().when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            if (user.getId() == null) {
+                user.setId(UUID.randomUUID());
+            }
+            return user;
+        });
     }
 
     @Nested
@@ -511,6 +530,132 @@ class DocumentServiceTest {
     }
 
     // Helper methods for creating test data
+    @Nested
+    @DisplayName("Entity Hydration and Detached Entity Prevention Tests")
+    class EntityHydrationTests {
+
+        @Test
+        @DisplayName("Should properly hydrate tenant from database when ID is provided")
+        void shouldHydrateTenantFromDatabase() {
+            // Given
+            Tenant tenantWithOnlyId = new Tenant();
+            tenantWithOnlyId.setId(tenantId);
+
+            DocumentDto.UploadDocumentRequest request = new DocumentDto.UploadDocumentRequest(testFile, null);
+
+            when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(testTenant));
+            when(textExtractionService.detectDocumentType(anyString(), anyString())).thenReturn(Document.DocumentType.PDF);
+            when(textExtractionService.getMaxFileSize()).thenReturn(10485760L);
+            when(textExtractionService.isValidDocumentType(anyString(), anyString())).thenReturn(true);
+            when(documentRepository.countByTenantId(tenantId)).thenReturn(5L);
+            when(fileStorageService.getTenantStorageUsage(tenantId)).thenReturn(1000000L);
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+            when(fileStorageService.storeFile(any(), any(), any())).thenReturn("/storage/test.pdf");
+
+            // When
+            documentService.uploadDocument(request, tenantWithOnlyId, null);
+
+            // Then
+            verify(tenantRepository).findById(tenantId);
+            verify(documentRepository, atLeastOnce()).save(any(Document.class));
+        }
+
+        @Test
+        @DisplayName("Should properly hydrate user from database when ID is provided")
+        void shouldHydrateUserFromDatabase() {
+            // Given
+            User userWithOnlyId = new User();
+            userWithOnlyId.setId(userId);
+
+            DocumentDto.UploadDocumentRequest request = new DocumentDto.UploadDocumentRequest(testFile, null);
+
+            when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(testTenant));
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(textExtractionService.detectDocumentType(anyString(), anyString())).thenReturn(Document.DocumentType.PDF);
+            when(textExtractionService.getMaxFileSize()).thenReturn(10485760L);
+            when(textExtractionService.isValidDocumentType(anyString(), anyString())).thenReturn(true);
+            when(documentRepository.countByTenantId(tenantId)).thenReturn(5L);
+            when(fileStorageService.getTenantStorageUsage(tenantId)).thenReturn(1000000L);
+            when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+            when(fileStorageService.storeFile(any(), any(), any())).thenReturn("/storage/test.pdf");
+
+            // When
+            Tenant tenantWithOnlyId = new Tenant();
+            tenantWithOnlyId.setId(tenantId);
+            documentService.uploadDocument(request, tenantWithOnlyId, userWithOnlyId);
+
+            // Then
+            verify(userRepository).findById(userId);
+            verify(documentRepository, atLeastOnce()).save(any(Document.class));
+        }
+
+        @Test
+        @DisplayName("Should create and persist new user when user is null")
+        void shouldCreateAndPersistUserWhenNull() {
+            // Given
+            DocumentDto.UploadDocumentRequest request = new DocumentDto.UploadDocumentRequest(testFile, null);
+
+            User savedUser = new User();
+            savedUser.setId(UUID.randomUUID());
+            savedUser.setFirstName("Test");
+            savedUser.setLastName("User");
+
+            when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(testTenant));
+            when(textExtractionService.detectDocumentType(anyString(), anyString())).thenReturn(Document.DocumentType.PDF);
+            when(textExtractionService.getMaxFileSize()).thenReturn(10485760L);
+            when(textExtractionService.isValidDocumentType(anyString(), anyString())).thenReturn(true);
+            when(documentRepository.countByTenantId(tenantId)).thenReturn(5L);
+            when(fileStorageService.getTenantStorageUsage(tenantId)).thenReturn(1000000L);
+            when(userRepository.save(any(User.class))).thenReturn(savedUser);
+            when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+            when(fileStorageService.storeFile(any(), any(), any())).thenReturn("/storage/test.pdf");
+
+            // When
+            Tenant tenantWithOnlyId = new Tenant();
+            tenantWithOnlyId.setId(tenantId);
+            documentService.uploadDocument(request, tenantWithOnlyId, null);
+
+            // Then
+            verify(userRepository).save(any(User.class));
+            verify(documentRepository, atLeastOnce()).save(any(Document.class));
+        }
+
+        @Test
+        @DisplayName("Should not set ID on dummy user to avoid detached entity issues")
+        void shouldNotSetIdOnDummyUser() {
+            // Given
+            DocumentDto.UploadDocumentRequest request = new DocumentDto.UploadDocumentRequest(testFile, null);
+
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+            when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(testTenant));
+            when(textExtractionService.detectDocumentType(anyString(), anyString())).thenReturn(Document.DocumentType.PDF);
+            when(textExtractionService.getMaxFileSize()).thenReturn(10485760L);
+            when(textExtractionService.isValidDocumentType(anyString(), anyString())).thenReturn(true);
+            when(documentRepository.countByTenantId(tenantId)).thenReturn(5L);
+            when(fileStorageService.getTenantStorageUsage(tenantId)).thenReturn(1000000L);
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+                User user = inv.getArgument(0);
+                // Verify ID is null before save (will be generated by JPA)
+                assertThat(user.getId()).isNull();
+                user.setId(UUID.randomUUID());
+                return user;
+            });
+            when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+            when(fileStorageService.storeFile(any(), any(), any())).thenReturn("/storage/test.pdf");
+
+            // When
+            Tenant tenantWithOnlyId = new Tenant();
+            tenantWithOnlyId.setId(tenantId);
+            documentService.uploadDocument(request, tenantWithOnlyId, null);
+
+            // Then
+            verify(userRepository).save(userCaptor.capture());
+            // At this point the user should have been saved and gotten an ID
+        }
+    }
+
     private Tenant createTestTenant(UUID tenantId) {
         Tenant tenant = new Tenant();
         tenant.setId(tenantId);
