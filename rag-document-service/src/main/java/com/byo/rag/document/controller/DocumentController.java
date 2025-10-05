@@ -159,10 +159,11 @@ public class DocumentController {
 
         // Create upload request
         DocumentDto.UploadDocumentRequest request = new DocumentDto.UploadDocumentRequest(file, metadata);
-        
+
         // For now, use dummy tenant and user - in production this would come from security context
         Tenant tenant = createDummyTenant(tenantId);
-        User user = createDummyUser(tenant);
+        // Pass null for user - service will create dummy user or use real one based on tenant
+        User user = null;
 
         DocumentDto.DocumentResponse response = documentService.uploadDocument(request, tenant, user);
         

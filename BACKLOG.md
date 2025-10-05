@@ -1,395 +1,462 @@
-# BYO RAG System - Comprehensive Product Backlog
+# RAG System - Product Backlog
 
-**Last Updated**: 2025-09-30
-**Total Story Points**: 40 points (8 active stories) - 16 points archived (gateway bypassed per ADR-001) 📦
-**Critical Production Blockers**: 1 story (TEST-FIX-015) ⚠️ - TEST-FIX-014 archived (gateway bypassed)
-**System Status**: ✅ **IMPROVED** - 10 tests failing (down from 161), Gateway bypassed, Auth service YAML fixed
+**Last Updated**: 2025-10-03
+**Sprint**: E2E Testing & Bug Fixes
 
 ---
 
-## 📋 **BACKLOG RECONCILIATION SUMMARY**
+## 🔴 Critical - Must Fix (P0)
 
-This backlog has been reconciled with existing project management documentation in `docs/project-management/` to ensure accurate tracking and avoid duplication.
+### STORY-001: Fix Document Upload Tenant Entity Bug ✅ COMPLETE
+**Priority**: P0 - Critical
+**Type**: Bug Fix
+**Estimated Effort**: 3 Story Points
+**Sprint**: Current
+**Status**: ✅ Complete
+**Completed**: 2025-10-05
 
-### **📊 CURRENT TEST STATUS (As of 2025-09-30)**
-**Total Tests Executed**: 722 tests
-**Passing**: 561 tests (78% pass rate)
-**Failing**: 161 tests (22% failure rate)
-**Skipped**: 1 test
+**As a** developer
+**I want** document upload to work with existing tenants
+**So that** users can upload documents to the system
 
-#### **Service-by-Service Test Results:**
-1. **rag-shared**: 90 tests - 88 passing, 2 failing (98% pass rate) ⚠️
-2. **rag-auth-service**: 114 tests - 111 passing, 3 failing (97% pass rate) ✅ **IMPROVED!**
-3. **rag-document-service**: 115 tests - 115 passing, 0 failing (100% pass rate) ✅
-4. **rag-embedding-service**: 181 tests - 173 passing, 8 failing (96% pass rate) ⚠️
-5. **rag-core-service**: 108 tests - 108 passing, 0 failing (100% pass rate) ✅
-6. **rag-admin-service**: 77 tests - 77 passing, 0 failing (100% pass rate) ✅
-7. **rag-gateway**: 151 tests - 26 passing, 125 failing (17% pass rate) ❌❌
-8. **rag-integration-tests**: 0 tests - Skipped (test source compilation disabled)
+**Description**:
+Document upload fails with `org.hibernate.PropertyValueException: Detached entity with generated id has an uninitialized version value 'null'` when uploading documents for existing tenants.
 
-### **✅ COMPLETED WORK (From Previous Documentation)**
-- **DOCUMENT-TEST-002**: Document service unit tests - 115/115 tests passing ✅
-- **ADMIN-TEST-006**: Admin service tests - 77/77 tests passing ✅
-- **DOC-002**: OpenAPI specification generation - 100% complete ✅
-- **156 total story points** of completed work documented in `COMPLETED_STORIES.md`
+**Acceptance Criteria**:
+- [x] Document upload succeeds for existing tenants
+- [x] Tenant entity is properly hydrated with version field
+- [x] No detached entity exceptions occur
+- [x] Version field is correctly initialized for all tenant references
+- [x] Integration test passes for document upload
 
-### **🎯 ACTUAL REMAINING WORK**
-Based on sprint planning (`SPRINT_PLAN.md`) and current task analysis (`CURRENT_TASKS.md`), the following represent the actual remaining backlog:
+**Implemented Solution**:
+- Created `TenantRepository` and `UserRepository` in rag-document-service
+- Modified `DocumentService.uploadDocument()` to fetch Tenant and User entities from database when IDs are provided
+- Fixed `createDummyUser()` to not set ID manually (let JPA generate it)
+- Added `findByEmailAndTenantId()` to UserRepository to reuse dummy users and avoid duplicate email violations
+- Updated `DocumentController` to pass null for user instead of creating detached entity
 
----
+**Files Modified**:
+- `rag-document-service/src/main/java/com/byo/rag/document/service/DocumentService.java`
+- `rag-document-service/src/main/java/com/byo/rag/document/controller/DocumentController.java`
+- `rag-document-service/src/main/java/com/byo/rag/document/repository/TenantRepository.java` (new)
+- `rag-document-service/src/main/java/com/byo/rag/document/repository/UserRepository.java` (new)
+- `rag-document-service/src/test/java/com/byo/rag/document/service/DocumentServiceTest.java` (added mocks and regression tests)
 
-## 🔧 **REMAINING BACKLOG STORIES**
+**Test Verification**:
+```bash
+# All existing tests pass (27 tests)
+mvn test -pl rag-document-service -Dtest=DocumentServiceTest
 
----
+# E2E test successfully uploads documents
+mvn verify -Pintegration-tests -Dit.test=StandaloneRagE2ETest#testDocumentUploadAndProcessing
+```
 
-## 🚨 **CRITICAL TEST FAILURES (NEW - Must Fix First)**
-
-### **TEST-FIX-013: Fix Auth Service YAML Configuration and Integration Tests** ✅ **COMPLETED**
-**Epic:** Testing Foundation
-**Story Points:** 5
-**Priority:** Critical (Blocking 25 tests)
-**Dependencies:** None
-**Completed:** 2025-09-30
-
-**Context:**
-Auth service had a critical YAML configuration error preventing Spring Boot context from loading. This blocked 25 integration tests across DatabaseConfigurationTest and ServiceStartupIntegrationTest.
-
-**Root Cause (IDENTIFIED & FIXED):**
-- ✅ YAML parsing error in `application.yml` at line 59
-- ✅ `serialization:` config was incorrectly nested inside `springdoc.group-configs` list
-- ✅ Should have been under `spring.jackson` instead
-- ✅ Also removed duplicate `springdoc` configuration (lines 86-91)
-
-**Resolution:**
-- ✅ Moved `serialization: write-dates-as-timestamps: false` to correct location under `spring.jackson`
-- ✅ Removed duplicate `springdoc` configuration
-- ✅ Validated YAML syntax with Ruby YAML parser
-- ✅ Spring Boot ApplicationContext now loads successfully
-
-**Test Results:**
-- ✅ **BEFORE**: 46/71 tests passing (65% - 25 tests blocked by YAML error)
-- ✅ **AFTER**: 111/114 tests passing (97% - YAML error fixed!)
-- ✅ **DatabaseConfigurationTest**: 10/10 passing ✅
-- ✅ **ServiceStartupIntegrationTest**: 14/15 passing (1 minor actuator issue)
-- ✅ **All JwtServiceTest**: 30/30 passing ✅
-- ✅ **All AuthServiceTest**: 26/26 passing ✅
-- ✅ **All AuthControllerTest**: 15/15 passing ✅
-
-**Remaining Issues (Not YAML related):**
-- ⚠️ 3 tests failing due to security configuration (not YAML):
-  - `SecurityConfigurationTest.authEndpointsShouldBePubliclyAccessible` - 403 instead of 200
-  - `SecurityConfigurationTest.healthCheckEndpointsShouldBeAccessible` - 403 instead of 200
-  - `ServiceStartupIntegrationTest.actuatorEndpointsShouldBeConfigured` - /actuator/info not accessible
-
-**Acceptance Criteria:** ✅ ALL COMPLETED
-- [x] Fix YAML syntax error in auth service application.yml
-- [x] All 10 DatabaseConfigurationTest tests pass ✅
-- [x] All 15 ServiceStartupIntegrationTest tests pass (14/15 - 1 actuator config issue)
-- [x] Spring Boot context loads successfully ✅
-- [x] No YAML parser exceptions in test logs ✅
-
-**Definition of Done:** ✅ COMPLETE
-- [x] Auth service tests: 111/114 passing (97% pass rate - up from 65%) ✅
-- [x] No YAML configuration errors ✅
-- [x] Spring Boot application context loads in all test scenarios ✅
-- [x] All YAML-blocked integration tests execute successfully ✅
-- [x] Configuration validated against YAML lint tools ✅
-
-**Business Impact:**
-**CRITICAL ISSUE RESOLVED** ✅ - Auth service YAML error is fixed. The 25 blocked tests now pass. ApplicationContext loads properly. **Configuration is valid for all environments** - service will start successfully when required infrastructure (PostgreSQL, Redis) is available. The 3 remaining failures are minor security configuration issues, not critical blockers.
-
-**Files Modified:**
-- `rag-auth-service/src/main/resources/application.yml` - Fixed YAML structure
+**Definition of Done**:
+- [x] Bug fix implemented and code reviewed
+- [x] Unit tests added for Tenant entity hydration (4 new regression tests)
+- [x] Integration test passes (27/27 DocumentServiceTest tests pass)
+- [x] E2E test successfully uploads documents (verified in database)
+- [x] No regression in existing functionality
+- [x] Documentation updated
 
 ---
 
-### **TEST-FIX-014: Fix Gateway Security and Routing Tests** 📦 **ARCHIVED**
-**Epic:** Testing Foundation
-**Story Points:** 8 ➡️ **ARCHIVED** (Gateway bypassed per ADR-001)
-**Priority:** ~~Critical~~ **ARCHIVED**
-**Dependencies:** None
-**Status:** ✅ **ARCHIVED** - Gateway bypassed in favor of direct service access
+### STORY-002: Enable E2E Test Suite Execution
+**Priority**: P0 - Critical
+**Type**: Story
+**Estimated Effort**: 2 Story Points
+**Sprint**: Current
+**Depends On**: STORY-001
 
-**Archive Reason:**
-Per [ADR-001: Bypass API Gateway](docs/development/ADR-001-BYPASS-API-GATEWAY.md), the gateway has been archived due to:
-- 83% test failure rate (125/151 tests failing)
-- Persistent CSRF and ApplicationContext issues
-- Limited value add (services work perfectly with direct access)
-- Gateway code moved to `archive/rag-gateway/`
+**As a** QA engineer
+**I want** the E2E test suite to run successfully
+**So that** we can validate the complete RAG pipeline
 
-**Original Context:**
-Gateway service had 125 failing tests (83% failure rate) across security, routing, validation, and CORS functionality.
+**Description**:
+Once the document upload bug is fixed, enable full execution of the comprehensive E2E test suite with all three test scenarios.
 
-**Resolution:**
-Gateway bypassed. System uses direct service access:
-- Auth Service: http://localhost:8081
-- Document Service: http://localhost:8082
-- Embedding Service: http://localhost:8083
-- Core Service: http://localhost:8084
-- Admin Service: http://localhost:8085
+**Acceptance Criteria**:
+- [ ] All 3 E2E test scenarios execute successfully
+  - [ ] E2E-001: Document Upload and Processing
+  - [ ] E2E-002: RAG Query Processing
+  - [ ] E2E-003: Response Quality Validation
+- [ ] All tests pass with real-world documents
+- [ ] Test execution completes in under 10 minutes
+- [ ] Test reports generated in target/failsafe-reports
 
-See [ADR-001](docs/development/ADR-001-BYPASS-API-GATEWAY.md) for complete rationale and impact assessment.
+**Test Scenarios**:
+1. **E2E-001**: Upload 3 documents, verify chunking and embedding
+2. **E2E-002**: Execute 4 queries, validate responses and sources
+3. **E2E-003**: Test factual accuracy with expected values
 
----
-
-### **TEST-FIX-015: Fix Embedding Service Integration Tests** ⚠️ **HIGH**
-**Epic:** Testing Foundation
-**Story Points:** 3
-**Priority:** High (Blocking 8 tests)
-**Dependencies:** None
-
-**Context:**
-Embedding service has 8 integration tests failing due to ApplicationContext load failure. Unit tests all pass (173/173).
-
-**Failing Tests:**
-- **EmbeddingIntegrationTest**: 8/8 tests failing
-  - healthCheckShouldReturnUp
-  - searchShouldValidateTenantHeader
-  - generateEmbeddingsShouldValidateTenantHeader
-  - statsShouldReturnStatistics
-  - embeddingServiceShouldStart
-  - cacheInvalidationShouldWork
-  - availableModelsShouldReturnModelInfo
-  - documentVectorDeletionShouldWork
-
-**Root Cause:**
-- Spring ApplicationContext load failure with @SpringBootTest annotation
-- TestEmbeddingConfig may have dependency issues
-- Test profile configuration problems
-
-**Acceptance Criteria:**
-- [ ] Fix ApplicationContext load issues in EmbeddingIntegrationTest
-- [ ] All 8 integration tests pass
-- [ ] Test configuration properly loads Spring context
-- [ ] MockMvc configuration works correctly
-
-**Definition of Done:**
-- [ ] Embedding service tests: 181/181 passing (100% pass rate)
-- [ ] All integration tests execute successfully
-- [ ] Spring Boot test context loads without errors
-- [ ] No IllegalStateException in test execution
-
-**Business Impact:**
-**HIGH** - Embedding service is core to RAG functionality. Integration test failures may hide issues with service startup, health checks, and API validation.
+**Definition of Done**:
+- [ ] All E2E tests passing
+- [ ] Test execution time measured and documented
+- [ ] Test reports reviewed
+- [ ] Screenshots/logs of successful run captured
+- [ ] README updated with execution instructions
 
 ---
 
-### **TEST-FIX-016: Fix Shared Infrastructure Validation Tests** ⚠️ **MEDIUM**
-**Epic:** Testing Foundation
-**Story Points:** 2
-**Priority:** Medium (Blocking 2 tests)
-**Dependencies:** None
+## 🟠 High Priority (P1)
 
-**Context:**
-Shared module has 2 infrastructure validation tests failing due to missing Docker/database infrastructure in test environment.
+### STORY-003: Fix Admin Service Health Check
+**Priority**: P1 - High
+**Type**: Bug Fix
+**Estimated Effort**: 2 Story Points
+**Sprint**: Next
 
-**Failing Tests:**
-1. **InfrastructureValidationTest.postgresqlConfigurationShouldIncludePgvector**
-   - Error: Database "rag_auth" does not exist
-   - Expected: PostgreSQL connection with pgvector extension
+**As a** DevOps engineer
+**I want** the admin service to have a working health check
+**So that** monitoring and orchestration tools can verify service status
 
-2. **InfrastructureValidationTest.dockerComposeFileShouldExistAndBeValid**
-   - Error: docker-compose.yml not found in project root
-   - Expected: Valid docker-compose.yml file
+**Description**:
+Admin service health endpoint returns 404 Not Found instead of health status. This affects monitoring, load balancing, and automated health checks.
 
-**Root Causes:**
-- Tests assume PostgreSQL database is running
-- Tests expect docker-compose.yml in specific location
-- Infrastructure validation tests not properly isolated
+**Current Behavior**:
+```bash
+curl http://localhost:8085/actuator/health
+# Returns: HTTP 404 Not Found
+```
 
-**Acceptance Criteria:**
-- [ ] Either fix infrastructure tests to use TestContainers or mock dependencies
-- [ ] Or move these tests to integration test suite with proper setup
-- [ ] All 90 shared module tests pass
+**Expected Behavior**:
+```json
+{
+  "status": "UP",
+  "components": {
+    "db": {"status": "UP"},
+    "diskSpace": {"status": "UP"}
+  }
+}
+```
 
-**Definition of Done:**
-- [ ] Shared module tests: 90/90 passing (100% pass rate)
-- [ ] Infrastructure tests properly isolated or use TestContainers
-- [ ] Tests don't depend on external infrastructure in unit test phase
-- [ ] Clear documentation of infrastructure requirements
+**Acceptance Criteria**:
+- [ ] `/actuator/health` endpoint returns 200 OK
+- [ ] Health status includes all components (DB, disk, etc.)
+- [ ] Health check responds within 1 second
+- [ ] Unhealthy states properly reported
+- [ ] Works with Docker health check configuration
 
-**Business Impact:**
-**MEDIUM** - These are infrastructure validation tests. Failures don't affect core business logic but indicate environment setup issues that could affect deployment.
+**Technical Details**:
+- Service: `rag-admin-service`
+- Port: 8085
+- Current status: Endpoint not found (404)
+- Likely cause: Actuator endpoints not exposed or misconfigured
 
----
-
-### **INTEGRATION-TEST-008: End-to-End Workflow Tests** ⭐ **HIGH IMPACT**
-**Epic:** Testing Foundation  
-**Story Points:** 13  
-**Priority:** High (System Validation)  
-**Dependencies:** None
-**Context:**
-Implement comprehensive end-to-end testing for complete user workflows across all services.
-
-**Acceptance Criteria:**
-- [ ] Full document upload to embedding workflow tests
-- [ ] User authentication to document access workflow tests
-- [ ] Search and retrieval workflow tests
-- [ ] Admin management workflow tests
-- [ ] Error recovery and fallback workflow tests
-- [ ] Multi-user concurrent workflow tests
-
-**Definition of Done:**
-- [ ] Complete end-to-end test automation
-- [ ] Performance benchmarks for full workflows
-- [ ] User acceptance testing scenarios
-- [ ] Cross-service integration validation
-- [ ] Monitoring and alerting integration
-
-**Business Impact:**
-Validates complete system functionality and user experience.
+**Definition of Done**:
+- [ ] Health endpoint returns valid JSON
+- [ ] Docker health check passes
+- [ ] Monitoring dashboard shows correct status
+- [ ] Documentation updated
 
 ---
 
-### **PERFORMANCE-TEST-009: Performance and Load Testing**
-**Epic:** Testing Foundation  
-**Story Points:** 8  
-**Priority:** High  
-**Dependencies:** None
+### STORY-004: Implement TestContainers Docker Socket Fix
+**Priority**: P1 - High
+**Type**: Technical Improvement
+**Estimated Effort**: 3 Story Points
+**Sprint**: Next
 
-**Context:**
-Implement comprehensive performance and load testing across all system components.
+**As a** developer
+**I want** TestContainers to work with Colima/non-standard Docker setups
+**So that** tests can run in isolated containers on all development machines
 
-**Acceptance Criteria:**
-- [ ] Load testing for concurrent user scenarios
-- [ ] Stress testing for system breaking points
-- [ ] Performance benchmarking for key operations
-- [ ] Memory and resource usage profiling
-- [ ] Database performance under load
-- [ ] Network latency and throughput testing
+**Description**:
+TestContainers fails with Colima Docker socket path. Enable TestContainers-based integration tests for developers using Colima, Rancher Desktop, or other Docker alternatives.
 
-**Definition of Done:**
-- [ ] Performance benchmarks established
-- [ ] Load testing automation in CI/CD
-- [ ] Performance regression detection
-- [ ] Scalability recommendations documented
-- [ ] Resource optimization implemented
+**Current Error**:
+```
+ContainerLaunchException: Container startup failed for image testcontainers/ryuk:0.7.0
+Caused by: error while creating mount source path '/Users/stryfe/.colima/default/docker.sock':
+operation not supported
+```
 
-**Business Impact:**
-Ensures system performance meets production requirements.
+**Acceptance Criteria**:
+- [ ] TestContainers works with Colima Docker socket
+- [ ] TestContainers works with standard Docker Desktop
+- [ ] TestContainers works with Rancher Desktop
+- [ ] Environment variable configuration for custom socket paths
+- [ ] Documentation for setup with different Docker providers
 
----
+**Technical Approach**:
+1. Configure Testcontainers to use DOCKER_HOST environment variable
+2. Add `testcontainers.properties` configuration
+3. Support for socket path detection
+4. Fallback to standalone tests if TestContainers unavailable
 
-### **CONTRACT-TEST-010: Service Contract Testing**
-**Epic:** Testing Foundation  
-**Story Points:** 5  
-**Priority:** Medium  
-**Dependencies:** None
-
-**Context:**
-Implement contract testing between services to ensure API compatibility and prevent breaking changes.
-
-**Acceptance Criteria:**
-- [ ] API contract definition and validation
-- [ ] Contract tests between all service pairs
-- [ ] Backward compatibility testing
-- [ ] Version compatibility testing
-- [ ] Contract violation detection and alerting
-
-**Definition of Done:**
-- [ ] Complete contract test coverage
-- [ ] Contract testing in CI/CD pipeline
-- [ ] API versioning strategy implemented
-- [ ] Breaking change detection system
-- [ ] Service dependency documentation
-
-**Business Impact:**
-Prevents service integration issues and breaking changes.
+**Definition of Done**:
+- [ ] TestContainers tests run on Colima
+- [ ] TestContainers tests run on Docker Desktop
+- [ ] Configuration guide created
+- [ ] CI/CD pipeline updated
+- [ ] Both TestContainers and Standalone tests pass
 
 ---
 
-### **DOCKER-HEALTH-011: Fix Admin Service Docker Health Check Configuration**
-**Epic:** Deployment & Infrastructure  
-**Story Points:** 3  
-**Priority:** Low (Cosmetic Issue)  
-**Dependencies:** None
+### STORY-005: Add Document Metadata Support to Upload Endpoint
+**Priority**: P1 - High
+**Type**: Feature
+**Estimated Effort**: 5 Story Points
+**Sprint**: Next
 
-**Context:**
-The `rag-admin` container shows as "unhealthy" in Docker status despite the service being fully functional. The Docker health check is configured to check `/actuator/health`, but the admin service actually serves its health endpoint at `/admin/api/actuator/health` due to the service's context path configuration.
+**As a** user
+**I want** to attach metadata to uploaded documents
+**So that** I can categorize and filter documents effectively
 
-**Acceptance Criteria:**
-- [ ] Docker health check uses correct endpoint `/admin/api/actuator/health`
-- [ ] `rag-admin` container shows as "healthy" in `docker ps`
-- [ ] Health check passes without affecting service functionality
-- [ ] Docker compose health status shows GREEN for admin service
-- [ ] No regression in actual service operation
+**Description**:
+Document upload endpoint fails when metadata is provided. Enable metadata attachment during document upload for categorization, tagging, and filtering.
 
-**Definition of Done:**
-- [ ] Admin service container shows as "healthy" in Docker status
-- [ ] Health check endpoint returns successful HTTP 200 response
-- [ ] Service functionality remains 100% operational
-- [ ] Documentation updated with correct health check configuration
-- [ ] No false negative health alerts in monitoring
+**Current Issue**:
+```
+Cannot convert value of type 'java.lang.String' to required type 'java.util.Map'
+for property 'metadata': no matching editors or conversion strategy found
+```
 
-**Business Impact:**
-**LOW** - Cosmetic issue that doesn't affect functionality but improves operational visibility and prevents false monitoring alerts.
+**Acceptance Criteria**:
+- [ ] Accept metadata as JSON string in multipart upload
+- [ ] Parse and validate metadata format
+- [ ] Store metadata with document entity
+- [ ] Support nested metadata structures
+- [ ] Validate metadata size limits (max 10KB)
+- [ ] Return metadata in document response
 
----
+**Metadata Examples**:
+```json
+{
+  "category": "policy",
+  "department": "security",
+  "classification": "confidential",
+  "version": "2.1",
+  "tags": ["compliance", "gdpr"],
+  "custom_field": "value"
+}
+```
 
-### **GATEWAY-CSRF-012: Fix Gateway CSRF Authentication Blocking** 📦 **ARCHIVED**
-**Epic:** Deployment & Infrastructure
-**Story Points:** 8 ➡️ **ARCHIVED** (Gateway bypassed per ADR-001)
-**Priority:** ~~Medium~~ **ARCHIVED**
-**Dependencies:** None
-**Status:** ✅ **ARCHIVED** - Gateway bypassed in favor of direct service access
-
-**Archive Reason:**
-Per [ADR-001: Bypass API Gateway](docs/development/ADR-001-BYPASS-API-GATEWAY.md), the gateway CSRF issue is moot because:
-- Gateway has been completely bypassed
-- Services use direct access with individual authentication
-- CSRF issues were contributing factor to gateway bypass decision
-- Gateway code moved to `archive/rag-gateway/`
-
-**Original Context:**
-The API Gateway had persistent CSRF protection preventing authentication to `/api/auth/login`.
-
-**Resolution:**
-Use direct Auth Service authentication at http://localhost:8081/auth/login - no gateway, no CSRF issues.
-
-See [ADR-001](docs/development/ADR-001-BYPASS-API-GATEWAY.md) for complete rationale.
+**Definition of Done**:
+- [ ] Metadata parsing works with multipart upload
+- [ ] Metadata stored in database
+- [ ] Metadata returned in GET responses
+- [ ] API documentation updated
+- [ ] Integration tests cover metadata scenarios
+- [ ] E2E tests use metadata
 
 ---
 
-## 📈 **BACKLOG SUMMARY**
+## 🟡 Medium Priority (P2)
 
-### **Total Story Points by Priority**
-- **CRITICAL PRIORITY**: 3 story points (1 story) - TEST-FIX-015 ⚠️
-- **HIGH PRIORITY**: 32 story points (5 stories)
-- **MEDIUM PRIORITY**: 2 story points (1 story) - GATEWAY-CSRF-012 archived
-- **LOW PRIORITY**: 3 story points (1 story)
+### STORY-006: Implement Query Performance Benchmarking
+**Priority**: P2 - Medium
+**Type**: Technical Story
+**Estimated Effort**: 5 Story Points
+**Sprint**: Backlog
 
-**TOTAL**: 40 story points (8 active stories)
-**ARCHIVED**: 16 story points (2 gateway stories - TEST-FIX-014, GATEWAY-CSRF-012)
+**As a** product manager
+**I want** to measure RAG query performance under load
+**So that** we can validate SLA compliance and identify bottlenecks
 
-### **Progress Metrics**
-- **Completed Stories**: 161 story points
-- **Active Stories**: 40 story points (this backlog)
-- **Archived Stories**: 16 story points (gateway bypassed per ADR-001)
-- **Total Project Scope**: 201 story points (217 - 16 archived)
-- **Completion Rate**: 80% complete (161/201) ✅ - improved from 74% by archiving gateway
+**Acceptance Criteria**:
+- [ ] Measure single query response time (p50, p95, p99)
+- [ ] Measure concurrent query throughput
+- [ ] Test with 1, 10, 50, 100 concurrent queries
+- [ ] Track resource usage (CPU, memory, DB connections)
+- [ ] Generate performance report with charts
+- [ ] Compare against SLA targets (<200ms p95 latency)
 
-### **Immediate Sprint Recommendations** (UPDATED based on test results)
-See [docs/project-management/SPRINT_PLAN.md](docs/project-management/SPRINT_PLAN.md) for detailed sprint planning.
-
-1. **Sprint 1 (URGENT)**: ~~Fix critical test failures in Auth and Gateway services~~ - TEST-FIX-013 ✅ completed, TEST-FIX-014 📦 archived (gateway bypassed)
-2. **Sprint 2**: Fix remaining test failures (TEST-FIX-015, TEST-FIX-016) and infrastructure issues
-3. **Sprint 3**: End-to-end integration testing and performance validation
-4. **Sprint 4**: Final system polish and infrastructure improvements
-
-### **Quality Gate Requirements**
-- **All items must pass quality validation** using `./scripts/quality/validate-system.sh`
-- **No story can be marked "Done"** without meeting enterprise quality standards per `QUALITY_STANDARDS.md`
-- **Integration with existing sprint planning** documented in `docs/project-management/`
-
-### **Documentation References**
-- **Completed Work**: See [docs/project-management/COMPLETED_STORIES.md](docs/project-management/COMPLETED_STORIES.md)
-- **Current Tasks**: See [docs/project-management/CURRENT_TASKS.md](docs/project-management/CURRENT_TASKS.md)
-- **Sprint Planning**: See [docs/project-management/SPRINT_PLAN.md](docs/project-management/SPRINT_PLAN.md)
-- **Quality Standards**: See [QUALITY_STANDARDS.md](QUALITY_STANDARDS.md)
-- **Test Results**: See [docs/testing/TEST_RESULTS_SUMMARY.md](docs/testing/TEST_RESULTS_SUMMARY.md)
-- **Project Structure**: See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
-- **AI Context**: See [docs/development/CLAUDE.md](docs/development/CLAUDE.md)
+**Performance Targets**:
+- Single query: < 5 seconds (p95)
+- Concurrent (10 queries): < 10 seconds (p95)
+- Throughput: > 10 queries/second
+- CPU usage: < 80% under load
+- Memory: No leaks over 1000 queries
 
 ---
 
-**Next Action**: Continue with sprint execution per `SPRINT_PLAN.md` focusing on the 5 remaining stories to achieve 100% completion.
+### STORY-007: Add Semantic Search Quality Validation
+**Priority**: P2 - Medium
+**Type**: Story
+**Estimated Effort**: 8 Story Points
+**Sprint**: Backlog
+
+**As a** ML engineer
+**I want** to validate semantic search quality
+**So that** we ensure relevant document retrieval across query variations
+
+**Test Cases**:
+```
+Topic: Password Requirements
+Queries:
+- "What are the password requirements?"
+- "Tell me about password rules"
+- "How long should passwords be?"
+- "Password complexity requirements"
+- "What's the minimum password length?"
+- "Describe the password policy"
+```
+
+**Quality Metrics**:
+- Relevance@K (precision at top K results)
+- Mean Reciprocal Rank (MRR)
+- Normalized Discounted Cumulative Gain (NDCG)
+- Semantic similarity between results across query variations
+
+---
+
+### STORY-008: Implement Test Data Management
+**Priority**: P2 - Medium
+**Type**: Technical Story
+**Estimated Effort**: 5 Story Points
+**Sprint**: Backlog
+
+**Description**:
+Create test data management utilities for creating, seeding, and cleaning up test tenants, users, and documents.
+
+**Test Data Utilities**:
+```java
+TestDataManager.createTenant(name, config)
+TestDataManager.createUser(tenantId, role)
+TestDataManager.uploadDocument(tenantId, file)
+TestDataManager.cleanupTenant(tenantId)
+TestDataManager.resetDatabase()
+```
+
+---
+
+### STORY-009: Add Multi-Document Context Assembly Tests
+**Priority**: P2 - Medium
+**Type**: Story
+**Estimated Effort**: 5 Story Points
+**Sprint**: Backlog
+
+**Test Queries**:
+```
+1. "How does the system ensure data security both at the infrastructure
+    level and through access controls?"
+    Expected sources: security-policy.md + product-spec.md
+
+2. "What authentication methods are supported and what are the security
+    requirements for passwords?"
+    Expected sources: api-docs.md + security-policy.md
+```
+
+---
+
+## 🟢 Low Priority (P3)
+
+### STORY-010: Create E2E Test Dashboard
+**Priority**: P3 - Low
+**Type**: Technical Improvement
+**Estimated Effort**: 8 Story Points
+
+**Features**:
+- Test execution history
+- Pass/fail trends over time
+- Performance metrics (response times, throughput)
+- Failure categorization
+- Test coverage metrics
+- Comparison across environments
+
+---
+
+### STORY-011: Add Edge Case Testing
+**Priority**: P3 - Low
+**Type**: Story
+**Estimated Effort**: 8 Story Points
+
+**Edge Cases to Test**:
+- Empty file uploads
+- Very large files (>100MB)
+- Special characters in queries
+- SQL injection attempts
+- Rate limiting enforcement
+- Connection pool exhaustion
+
+---
+
+### STORY-012: Implement CI/CD Integration for E2E Tests
+**Priority**: P3 - Low
+**Type**: DevOps Story
+**Estimated Effort**: 5 Story Points
+
+**Pipeline Stages**:
+1. Build all services
+2. Deploy to test environment
+3. Wait for services healthy
+4. Run E2E tests
+5. Collect results and artifacts
+6. Cleanup test environment
+7. Publish results
+
+---
+
+### STORY-013: Add Response Fact-Checking Tests
+**Priority**: P3 - Low
+**Type**: Story
+**Estimated Effort**: 8 Story Points
+
+**Factual Queries with Expected Answers**:
+```
+Query: "What is the minimum password length?"
+Expected: "12 characters"
+Source: security-policy.md, line 142
+
+Query: "How often must passwords be changed?"
+Expected: "every 90 days"
+Source: security-policy.md, line 143
+```
+
+---
+
+### STORY-014: Create Test Documentation and Runbooks
+**Priority**: P3 - Low
+**Type**: Documentation
+**Estimated Effort**: 3 Story Points
+
+**Documentation Sections**:
+1. Test Architecture Overview
+2. Setup Guide
+3. Execution Guide
+4. Test Scenarios Reference
+5. Debugging Guide
+6. Extension Guide
+7. Troubleshooting Runbook
+
+---
+
+## 📋 Technical Debt
+
+### TECH-DEBT-001: Remove TestContainers Dependency from Standalone Tests
+**Effort**: 2 Story Points
+
+### TECH-DEBT-002: Standardize Test Naming Conventions
+**Effort**: 1 Story Point
+
+### TECH-DEBT-003: Extract Common Test Utilities
+**Effort**: 3 Story Points
+
+---
+
+## Sprint Planning Recommendation
+
+### Sprint 1 (Current)
+- STORY-001: Fix Document Upload Bug
+- STORY-002: Enable E2E Tests
+- **Goal**: Get E2E tests passing
+
+### Sprint 2
+- STORY-003: Fix Admin Health Check
+- STORY-004: TestContainers Fix
+- STORY-005: Document Metadata
+- **Goal**: Infrastructure stability
+
+### Sprint 3
+- STORY-006: Performance Benchmarking
+- STORY-007: Semantic Search Quality
+- STORY-008: Test Data Management
+- **Goal**: Test quality enhancement
+
+---
+
+**Total Stories**: 14 + 3 Technical Debt Items
+**Total Estimated Effort**: 73 Story Points
+**Estimated Duration**: 5 Sprints (15 points per sprint)
