@@ -62,12 +62,13 @@ mvn verify -Pintegration-tests -Dit.test=StandaloneRagE2ETest#testDocumentUpload
 
 ---
 
-### STORY-002: Enable E2E Test Suite Execution
+### STORY-002: Enable E2E Test Suite Execution ⚠️ BLOCKED
 **Priority**: P0 - Critical
 **Type**: Story
 **Estimated Effort**: 2 Story Points
 **Sprint**: Current
-**Depends On**: STORY-001
+**Status**: ⚠️ **BLOCKED** by STORY-015
+**Depends On**: STORY-001 ✅, **STORY-015** (NEW - embedding service)
 
 **As a** QA engineer
 **I want** the E2E test suite to run successfully
@@ -75,6 +76,16 @@ mvn verify -Pintegration-tests -Dit.test=StandaloneRagE2ETest#testDocumentUpload
 
 **Description**:
 Once the document upload bug is fixed, enable full execution of the comprehensive E2E test suite with all three test scenarios.
+
+**Current Status** (2025-10-05):
+E2E tests are executing but **failing due to embedding service configuration issue**. Test execution attempted, results:
+- ❌ E2E-001: Document Upload and Processing - ERROR (embedding timeout after 5 min)
+- ❌ E2E-002: RAG Query Processing - FAILURE (no embeddings = no results)
+- ❌ E2E-003: Response Quality Validation - FAILURE (no embeddings = no results)
+
+**Blocker**: Embedding service configured to use OpenAI with invalid API key (`your-openai-api-key`). Spring AI Ollama integration does not support embeddings out of the box. See [E2E_TEST_BLOCKER_ANALYSIS.md](docs/testing/E2E_TEST_BLOCKER_ANALYSIS.md) for details.
+
+**Resolution**: STORY-015 must be completed to implement Ollama embedding support.
 
 **Acceptance Criteria**:
 - [ ] All 3 E2E test scenarios execute successfully
@@ -90,12 +101,104 @@ Once the document upload bug is fixed, enable full execution of the comprehensiv
 2. **E2E-002**: Execute 4 queries, validate responses and sources
 3. **E2E-003**: Test factual accuracy with expected values
 
+**Test Execution Log** (2025-10-05):
+- Duration: 8 min 3 sec
+- Tests Run: 3, Failures: 2, Errors: 1
+- Document uploads: ✅ Successful (3/3 documents)
+- Embedding generation: ❌ Failed (401 OpenAI error)
+- Query processing: ❌ Failed (no embeddings available)
+
 **Definition of Done**:
 - [ ] All E2E tests passing
 - [ ] Test execution time measured and documented
 - [ ] Test reports reviewed
 - [ ] Screenshots/logs of successful run captured
 - [ ] README updated with execution instructions
+
+---
+
+### STORY-015: Implement Ollama Embedding Support
+**Priority**: P0 - Critical (blocks STORY-002)
+**Type**: Feature
+**Estimated Effort**: 3-5 Story Points
+**Sprint**: Current
+**Blocks**: STORY-002
+
+**As a** developer
+**I want** the embedding service to use Ollama for generating embeddings
+**So that** the RAG system can process documents without external API dependencies
+
+**Description**:
+The embedding service is currently configured to use OpenAI embeddings, but no valid API key is provided. Spring AI's Ollama integration does not include built-in embedding support. We need to implement a custom Ollama embedding integration using the `mxbai-embed-large` model to enable local, cost-free embedding generation.
+
+**Current Problem**:
+- Embedding service fails with `401 Unauthorized` when trying to use OpenAI
+- Spring AI Ollama integration only supports chat/completion, not embeddings
+- E2E tests blocked because documents cannot be embedded
+- Vector search impossible without embeddings
+
+**Proposed Solution**:
+Implement custom Ollama embedding client that:
+1. Calls Ollama REST API `/api/embeddings` endpoint
+2. Uses `mxbai-embed-large` model (already downloaded)
+3. Integrates with Spring AI's `EmbeddingModel` interface
+4. Stores vectors in Redis for search
+
+**Acceptance Criteria**:
+- [ ] Create `OllamaEmbeddingClient` REST client for Ollama API
+- [ ] Implement `OllamaEmbeddingModel` that implements Spring AI's `EmbeddingModel` interface
+- [ ] Configure Docker profile to use Ollama embeddings instead of OpenAI
+- [ ] Successfully generate embeddings for test documents
+- [ ] Verify embeddings stored correctly in Redis with correct dimensions
+- [ ] Integration test passes for embedding generation
+- [ ] E2E-001 test scenario completes successfully (document processing)
+
+**Technical Details**:
+- **Ollama API Endpoint**: `POST http://ollama:11434/api/embeddings`
+- **Model**: `mxbai-embed-large` (1024 dimensions)
+- **Request Format**:
+  ```json
+  {
+    "model": "mxbai-embed-large",
+    "prompt": "text to embed"
+  }
+  ```
+- **Response Format**:
+  ```json
+  {
+    "embedding": [0.123, -0.456, ...]
+  }
+  ```
+
+**Implementation Tasks**:
+- [ ] Create `com.byo.rag.embedding.client.OllamaEmbeddingClient.java`
+- [ ] Create `com.byo.rag.embedding.model.OllamaEmbeddingModel.java`
+- [ ] Create `com.byo.rag.embedding.config.OllamaEmbeddingConfig.java`
+- [ ] Update `application.yml` Docker profile with Ollama embedding config
+- [ ] Add integration test for Ollama embedding generation
+- [ ] Update Redis vector storage to handle 1024-dim vectors (update from 1536 for OpenAI)
+- [ ] Test end-to-end document processing flow
+
+**Definition of Done**:
+- [ ] Code implemented and reviewed
+- [ ] Unit tests pass for embedding client
+- [ ] Integration tests pass for embedding generation
+- [ ] Embeddings successfully stored in Redis
+- [ ] E2E-001 test scenario passes (document processing completes)
+- [ ] Documentation updated (configuration guide)
+- [ ] No OpenAI API dependency in production
+
+**Files to Create/Modify**:
+- `rag-embedding-service/src/main/java/com/byo/rag/embedding/client/OllamaEmbeddingClient.java` (NEW)
+- `rag-embedding-service/src/main/java/com/byo/rag/embedding/model/OllamaEmbeddingModel.java` (NEW)
+- `rag-embedding-service/src/main/java/com/byo/rag/embedding/config/OllamaEmbeddingConfig.java` (NEW)
+- `rag-embedding-service/src/main/resources/application.yml` (UPDATE)
+- `rag-embedding-service/src/test/java/com/byo/rag/embedding/OllamaEmbeddingIT.java` (NEW)
+
+**Related Documentation**:
+- [E2E Test Blocker Analysis](docs/testing/E2E_TEST_BLOCKER_ANALYSIS.md)
+- [Ollama API Documentation](https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings)
+- [mxbai-embed-large Model](https://ollama.com/library/mxbai-embed-large)
 
 ---
 
