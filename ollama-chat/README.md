@@ -21,7 +21,7 @@ A lightweight, responsive web interface for chatting with your local Ollama AI m
 # Navigate to the chat directory
 cd ollama-chat
 
-# Use the enhanced startup script
+# Start the server
 ./start-chat.sh
 
 # The script will:
@@ -29,6 +29,9 @@ cd ollama-chat
 # - Check for available models
 # - Start the server with optimal configuration
 # - Open browser automatically
+
+# Stop the server when done
+./stop-chat.sh
 ```
 
 ### Option 2: Python Server (Manual)
@@ -231,13 +234,17 @@ python3 server.py
 ```
 
 ### Port Already in Use
-Change the port in `server.py` or kill the process:
+Use the stop script or manually kill the process:
 ```bash
-# Find process using port 8888
-lsof -i :8888
+# Use stop script
+./stop-chat.sh
 
-# Kill the process
+# Or find and kill manually
+lsof -i :8888
 kill -9 <PID>
+
+# Or kill all Python servers
+pkill -f 'python.*server.py'
 ```
 
 ## 🛠 Development
@@ -245,9 +252,15 @@ kill -9 <PID>
 ### File Structure
 ```
 ollama-chat/
-├── index.html      # Main chat interface
-├── server.py       # Python server with CORS handling
-└── README.md       # This file
+├── index.html                   # Main chat interface
+├── rag-integration-example.html # RAG vs Ollama comparison demo
+├── server.py                    # Python server with CORS handling
+├── config.js                    # Configuration for RAG integration
+├── start-chat.sh                # Start script with health checks
+├── stop-chat.sh                 # Stop script with cleanup
+├── README.md                    # This file
+├── INTEGRATION_NOTES.md         # RAG integration guide
+└── CHANGELOG.md                 # Version history
 ```
 
 ### Customization
@@ -367,12 +380,127 @@ Content-Type: application/json
 
 ## 🔗 Enterprise RAG Integration
 
-This chat frontend is part of the Enterprise RAG System:
-- **RAG API**: Access the full RAG pipeline at `http://localhost:8080/api/rag`
-- **Document Processing**: Upload documents through `http://localhost:8080/api/documents`
-- **Admin Interface**: Manage tenants at `http://localhost:8080/api/admin`
-- **Monitoring**: View system metrics at `http://localhost:3000` (Grafana)
+This chat frontend is part of the Enterprise RAG System and can integrate with the full RAG pipeline:
 
-**Status**: ✅ **Production Ready** - Enhanced Ollama Chat frontend fully operational with BYO RAG Docker environment
+### Available Services
+- **Auth Service** (Port 8081): User authentication and JWT token management
+  - `http://localhost:8081/api/v1/auth/login`
+  - `http://localhost:8081/api/v1/auth/register`
+
+- **Document Service** (Port 8082): Document upload and processing
+  - `http://localhost:8082/api/v1/documents/upload`
+  - `http://localhost:8082/api/v1/documents`
+
+- **Embedding Service** (Port 8083): Vector embeddings and semantic search
+  - `http://localhost:8083/api/v1/embeddings/search`
+  - `http://localhost:8083/api/v1/embeddings/generate`
+
+- **RAG Core Service** (Port 8084): RAG query processing with context
+  - `http://localhost:8084/api/v1/rag/query`
+  - `http://localhost:8084/api/v1/rag/query/stream`
+
+- **Admin Service** (Port 8085): System administration
+  - `http://localhost:8085/admin/api/tenants`
+  - `http://localhost:8085/admin/api/auth/login`
+
+- **Ollama** (Port 11434): Direct LLM access (current mode)
+  - `http://localhost:11434/api/chat`
+  - `http://localhost:11434/api/tags`
+
+- **Monitoring** (Port 3000): Grafana dashboards
+  - `http://localhost:3000`
+
+### Integration Modes
+
+The ollama-chat supports two modes:
+
+#### 1. Direct Ollama Mode (Current Default)
+- Direct connection to Ollama for simple chat
+- No authentication required
+- No document context
+- Fast responses
+- Good for: Testing models, general chat, development
+
+#### 2. RAG-Enhanced Mode (Coming Soon)
+- Integration with RAG Core Service
+- Document-aware responses with citations
+- Authentication via Auth Service
+- Semantic search context
+- Good for: Enterprise use, document Q&A, production
+
+### Switching Between Modes
+
+To enable RAG mode, set environment variable:
+```bash
+export RAG_MODE=enabled
+export RAG_CORE_URL=http://localhost:8084
+export RAG_AUTH_URL=http://localhost:8081
+
+./start-chat.sh
+```
+
+### Full System Architecture
+
+```
+┌─────────────────┐
+│  Ollama Chat    │
+│   (Port 8888)   │
+└────────┬────────┘
+         │
+         ├──────────────────┬──────────────────┬──────────────────┐
+         │                  │                  │                  │
+         ▼                  ▼                  ▼                  ▼
+┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+│  RAG Core      │  │  Ollama        │  │  Auth Service  │  │  Document Svc  │
+│  (Port 8084)   │  │  (Port 11434)  │  │  (Port 8081)   │  │  (Port 8082)   │
+└────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘
+         │                                        │                  │
+         ▼                                        ▼                  ▼
+┌────────────────┐                      ┌────────────────┐  ┌────────────────┐
+│  Embedding     │                      │   PostgreSQL   │  │  Kafka         │
+│  (Port 8083)   │                      │   (Port 5432)  │  │  (Port 9092)   │
+└────────────────┘                      └────────────────┘  └────────────────┘
+         │
+         ▼
+┌────────────────┐
+│     Redis      │
+│  (Port 6379)   │
+└────────────────┘
+```
+
+### Quick Integration Guide
+
+For frontend developers looking to integrate with the RAG services:
+- [Frontend Integration Guide](../FRONTEND_INTEGRATION_GUIDE.md) - Complete API documentation
+- [RAG Integration Example](rag-integration-example.html) - Interactive demo comparing Ollama vs RAG modes
+- [Configuration File](config.js) - Settings for RAG integration
+
+### Testing RAG Integration
+
+To test the RAG-enhanced chat:
+
+1. **Start all RAG services**:
+   ```bash
+   cd ..
+   docker-compose up -d
+   ```
+
+2. **Open the integration example**:
+   ```bash
+   cd ollama-chat
+   python3 server.py
+   # Open http://localhost:8888/rag-integration-example.html
+   ```
+
+3. **Login with test credentials** (if you have a user):
+   - Email: `demo@example.com`
+   - Password: `demo123`
+
+4. **Compare responses**:
+   - Ask the same question to both Ollama and RAG
+   - Notice how RAG provides context from your documents
+   - See document citations and relevance scores
+
+**Status**: ✅ **Production Ready** - Enhanced Ollama Chat frontend fully operational with BYO RAG Docker environment. RAG integration features available for advanced use cases.
 
 Enjoy chatting with your local AI! 🚀
