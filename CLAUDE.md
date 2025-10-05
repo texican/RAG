@@ -1,6 +1,6 @@
 # Claude Context - RAG Project Current State
 
-Last Updated: 2025-10-01
+Last Updated: 2025-10-05
 
 ## Tool Choice: Why Make?
 
@@ -255,6 +255,53 @@ The following files have been modified and should be committed:
 - `README.md`
 - `CLAUDE.md` (this file - new)
 
+## Recent Updates (2025-10-05)
+
+### TECH-DEBT-002: Standardize Test Naming Conventions ✅ COMPLETE
+
+**Objective:** Establish comprehensive test naming standards to ensure consistency across the codebase and proper test execution with Maven Surefire/Failsafe.
+
+**What Was Done:**
+
+1. **Analyzed Test Patterns** (58 unit tests, 13 integration tests, 2 E2E tests)
+   - Identified inconsistent naming: some use `IT.java`, others `IntegrationTest.java`
+   - Found E2E test `StandaloneRagE2ETest.java` wasn't included in Failsafe configuration
+
+2. **Defined Standard Naming Conventions:**
+   - **Unit Tests**: `{ClassName}Test.java` (Surefire - `mvn test`)
+   - **Integration Tests**: `{Feature}IT.java` preferred, or `{Component}IntegrationTest.java` (legacy)
+   - **E2E Tests**: `{Scenario}E2ETest.java` or `{Feature}EndToEndIT.java`
+   - **Specialized**: Validation, Security, Performance, Smoke tests with descriptive patterns
+
+3. **Updated Documentation:**
+   - Enhanced [docs/development/TESTING_BEST_PRACTICES.md](docs/development/TESTING_BEST_PRACTICES.md) with file naming standards section
+   - Created comprehensive [docs/development/TEST_NAMING_MIGRATION_GUIDE.md](docs/development/TEST_NAMING_MIGRATION_GUIDE.md)
+
+4. **Fixed Maven Configuration:**
+   - Updated `rag-integration-tests/pom.xml` Failsafe plugin to include:
+     - `**/*IT.java`
+     - `**/*IntegrationTest.java`
+     - `**/*E2ETest.java` ⬅️ **NEW**
+     - `**/*EndToEndIT.java` ⬅️ **NEW**
+
+5. **Migration Strategy:**
+   - Phase 1: ✅ Configuration (Failsafe includes all patterns)
+   - Phase 2: ✅ Documentation (Standards defined)
+   - Phase 3: 📋 New Test Compliance (All new tests must follow standards)
+   - Phase 4: 🔄 Gradual Migration (Opportunistic renaming during refactoring)
+
+**Files Modified:**
+- `docs/development/TESTING_BEST_PRACTICES.md` - Added file naming standards
+- `docs/development/TEST_NAMING_MIGRATION_GUIDE.md` - **NEW** migration guide
+- `rag-integration-tests/pom.xml` - Updated Failsafe includes
+- `BACKLOG.md` - Marked TECH-DEBT-002 as complete
+
+**Impact:**
+- ✅ Clear test categorization from filename
+- ✅ Predictable Maven execution behavior (`mvn test` vs `mvn verify`)
+- ✅ All E2E tests now properly detected by Failsafe
+- ✅ Foundation for automated naming validation in CI/CD
+
 ## Next Steps / TODO
 
 ### Potential Future Work
@@ -269,6 +316,8 @@ The following files have been modified and should be committed:
 - ✅ Docker development guide
 - ✅ README updated with new commands
 - ✅ Scripts are documented and working
+- ✅ Test naming standards documented
+- ✅ Test naming migration guide created
 - [ ] Consider adding troubleshooting section to README
 
 ## Important Notes for Future Sessions

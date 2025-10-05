@@ -427,12 +427,47 @@ Source: security-policy.md, line 143
 
 ### TECH-DEBT-001: Remove TestContainers Dependency from Standalone Tests
 **Effort**: 2 Story Points
+**Status**: Pending
 
-### TECH-DEBT-002: Standardize Test Naming Conventions
+### TECH-DEBT-002: Standardize Test Naming Conventions ✅ COMPLETE
 **Effort**: 1 Story Point
+**Status**: ✅ Complete
+**Completed**: 2025-10-05
+
+**Description**:
+Established comprehensive test naming standards to ensure consistency across the codebase and proper test execution with Maven Surefire/Failsafe.
+
+**Implementation**:
+1. ✅ Analyzed existing test naming patterns across all modules
+2. ✅ Defined standard naming conventions for:
+   - Unit Tests: `{ClassName}Test.java` (Surefire)
+   - Integration Tests: `{Feature}IT.java` (Failsafe - preferred) or `{Component}IntegrationTest.java` (legacy)
+   - E2E Tests: `{Scenario}E2ETest.java` or `{Feature}EndToEndIT.java` (Failsafe)
+   - Specialized Tests: Validation, Security, Performance, Smoke tests
+3. ✅ Updated `TESTING_BEST_PRACTICES.md` with comprehensive file naming standards
+4. ✅ Created `TEST_NAMING_MIGRATION_GUIDE.md` with migration strategy
+5. ✅ Verified Maven Failsafe configuration includes all test patterns
+
+**Deliverables**:
+- [docs/development/TESTING_BEST_PRACTICES.md](docs/development/TESTING_BEST_PRACTICES.md#test-categories--naming-conventions) - Updated with file naming standards
+- [docs/development/TEST_NAMING_MIGRATION_GUIDE.md](docs/development/TEST_NAMING_MIGRATION_GUIDE.md) - Complete migration guide
+- Maven configuration validation for Surefire/Failsafe test discovery
+
+**Migration Strategy**:
+- Phase 1: ✅ Configuration (Failsafe includes all patterns)
+- Phase 2: ✅ Documentation (Standards defined)
+- Phase 3: 📋 New Test Compliance (All new tests must follow standards)
+- Phase 4: 🔄 Gradual Migration (Opportunistic renaming during refactoring)
+
+**Impact**:
+- Clear test categorization from filename
+- Predictable Maven execution behavior
+- Improved developer experience and test discovery
+- Foundation for automated naming validation
 
 ### TECH-DEBT-003: Extract Common Test Utilities
 **Effort**: 3 Story Points
+**Status**: Pending
 
 ---
 
