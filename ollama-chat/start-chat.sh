@@ -1,14 +1,21 @@
 #!/bin/bash
 
 # Ollama Chat Frontend Startup Script
+# Supports both Direct Ollama mode and RAG-Enhanced mode
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_PORT=${CHAT_PORT:-8888}
+RAG_MODE=${RAG_MODE:-disabled}
+RAG_CORE_URL=${RAG_CORE_URL:-http://localhost:8084}
+RAG_AUTH_URL=${RAG_AUTH_URL:-http://localhost:8081}
 
 echo "🦙 Starting Ollama Chat Frontend..."
-echo "=================================="
+echo "===================================="
+echo "Mode: ${RAG_MODE}"
+echo "Port: ${SERVER_PORT}"
+echo ""
 
 # Function to check Ollama connection with multiple URLs
 check_ollama_connection() {
@@ -28,7 +35,12 @@ check_ollama_connection() {
                 echo "📊 Found $model_count available model(s)"
             else
                 echo "⚠️  No models found - you'll need to pull some models"
-                echo "   Try: docker-compose exec ollama ollama pull llama2:7b-chat"
+                echo ""
+                echo "   Quick recommendations:"
+                echo "   • Small & Fast (1.3GB):  docker-compose exec ollama ollama pull llama3.2:1b"
+                echo "   • Balanced (4.7GB):      docker-compose exec ollama ollama pull llama3.2:3b"
+                echo "   • High Quality (4.7GB):  docker-compose exec ollama ollama pull llama2:7b-chat"
+                echo "   • Code Focused (3.8GB):  docker-compose exec ollama ollama pull codellama:7b"
             fi
             
             export OLLAMA_URL="$url"
@@ -59,9 +71,71 @@ check_ollama_connection() {
     return 0
 }
 
+# Check RAG services if RAG mode is enabled
+check_rag_services() {
+    echo "🎯 Checking RAG SpecKit services..."
+
+    local all_ok=true
+
+    # Check Auth Service
+    if curl -s "${RAG_AUTH_URL}/actuator/health" > /dev/null 2>&1; then
+        echo "   ✅ Auth Service (8081)"
+    else
+        echo "   ❌ Auth Service (8081) - Not available"
+        all_ok=false
+    fi
+
+    # Check Core Service
+    if curl -s "${RAG_CORE_URL}/actuator/health" > /dev/null 2>&1; then
+        echo "   ✅ RAG Core Service (8084)"
+    else
+        echo "   ❌ RAG Core Service (8084) - Not available"
+        all_ok=false
+    fi
+
+    # Check Document Service
+    if curl -s "http://localhost:8082/actuator/health" > /dev/null 2>&1; then
+        echo "   ✅ Document Service (8082)"
+    else
+        echo "   ⚠️  Document Service (8082) - Optional"
+    fi
+
+    # Check Embedding Service
+    if curl -s "http://localhost:8083/actuator/health" > /dev/null 2>&1; then
+        echo "   ✅ Embedding Service (8083)"
+    else
+        echo "   ⚠️  Embedding Service (8083) - Optional"
+    fi
+
+    if [ "$all_ok" = false ]; then
+        echo ""
+        echo "❌ Required RAG services are not available"
+        echo ""
+        echo "🔧 To start RAG services:"
+        echo "   cd .. && docker-compose up -d"
+        echo ""
+        echo "Or disable RAG mode:"
+        echo "   unset RAG_MODE"
+        echo "   ./start-chat.sh"
+        return 1
+    fi
+
+    echo ""
+    echo "✅ All required RAG services are available"
+    return 0
+}
+
 # Check Ollama connection before proceeding
 if ! check_ollama_connection; then
     exit 1
+fi
+
+# Check RAG services if enabled
+if [ "$RAG_MODE" = "enabled" ]; then
+    echo ""
+    if ! check_rag_services; then
+        exit 1
+    fi
 fi
 
 # Check if server is already running
@@ -93,23 +167,50 @@ sleep 3
 if kill -0 $SERVER_PID 2>/dev/null; then
     echo "✅ Chat server started successfully!"
     echo ""
-    echo "🌐 Access your Ollama Chat at:"
-    echo "   👉 http://localhost:$SERVER_PORT"
+    echo "🌐 Access your Ollama Chat:"
+    echo "   👉 Direct Chat:      http://localhost:$SERVER_PORT/index.html"
+    if [ "$RAG_MODE" = "enabled" ]; then
+        echo "   👉 RAG Integration:  http://localhost:$SERVER_PORT/rag-integration-example.html"
+    else
+        echo "   👉 RAG Demo:         http://localhost:$SERVER_PORT/rag-integration-example.html"
+    fi
     echo ""
-    echo "📋 Enhanced Features:"
-    echo "   ✅ Automatic Docker/localhost Ollama detection"
-    echo "   ✅ Real-time model discovery and loading"
-    echo "   ✅ Enhanced error handling and retry logic"
-    echo "   ✅ Connection health monitoring"
-    echo "   ✅ Helpful troubleshooting messages"
-    echo "   ✅ Mobile-friendly responsive design"
-    echo ""
+
+    if [ "$RAG_MODE" = "enabled" ]; then
+        echo "🎯 RAG Mode Features:"
+        echo "   ✅ Document-aware responses"
+        echo "   ✅ Source citations"
+        echo "   ✅ Multi-tenant support"
+        echo "   ✅ Authentication integration"
+        echo ""
+    else
+        echo "📋 Direct Ollama Features:"
+        echo "   ✅ Automatic Docker/localhost Ollama detection"
+        echo "   ✅ Real-time model discovery and loading"
+        echo "   ✅ Enhanced error handling and retry logic"
+        echo "   ✅ Connection health monitoring"
+        echo "   ✅ Mobile-friendly responsive design"
+        echo ""
+        echo "💡 To enable RAG mode:"
+        echo "   export RAG_MODE=enabled"
+        echo "   export RAG_CORE_URL=http://localhost:8084"
+        echo "   export RAG_AUTH_URL=http://localhost:8081"
+        echo "   ./start-chat.sh"
+        echo ""
+    fi
+
     echo "🛑 To stop the server later:"
     echo "   kill $SERVER_PID"
     echo "   or use: pkill -f 'python.*server.py'"
     echo ""
     echo "📝 Server logs: $SCRIPT_DIR/chat-server.log"
-    echo "📊 Environment: OLLAMA_URL=${OLLAMA_URL:-auto-detect}"
+    echo "📊 Environment:"
+    echo "   OLLAMA_URL:    ${OLLAMA_URL:-auto-detect}"
+    echo "   RAG_MODE:      ${RAG_MODE}"
+    if [ "$RAG_MODE" = "enabled" ]; then
+        echo "   RAG_CORE_URL:  ${RAG_CORE_URL}"
+        echo "   RAG_AUTH_URL:  ${RAG_AUTH_URL}"
+    fi
     
     # Try to open browser (optional)
     if command -v open >/dev/null 2>&1; then
