@@ -1,6 +1,5 @@
 package com.byo.rag.embedding.config;
 
-import io.github.resilience4j.common.circuitbreaker.configuration.CircuitBreakerConfigCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
@@ -8,7 +7,6 @@ import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
-import java.time.Duration;
 import java.util.Collections;
 
 /**
@@ -44,33 +42,17 @@ public class ErrorHandlingConfig {
 
     /**
      * Circuit breaker configuration for embedding service calls.
+     * NOTE: Configuration moved to application.yml to avoid conflicts with YAML-based config.
+     * See resilience4j.circuitbreaker.instances.embeddingService in application.yml
      */
-    @Bean
-    public CircuitBreakerConfigCustomizer embeddingServiceCircuitBreakerCustomizer() {
-        return CircuitBreakerConfigCustomizer
-            .of("embeddingService", builder -> builder
-                .failureRateThreshold(50) // Open circuit if 50% of calls fail
-                .waitDurationInOpenState(Duration.ofSeconds(30)) // Wait 30s before transitioning to half-open
-                .slidingWindowSize(20) // Consider last 20 calls for failure rate
-                .minimumNumberOfCalls(5) // Need at least 5 calls before calculating failure rate
-                .permittedNumberOfCallsInHalfOpenState(3) // Allow 3 test calls in half-open state
-                .slowCallRateThreshold(50) // Consider slow calls in failure rate
-                .slowCallDurationThreshold(Duration.ofSeconds(10)) // Calls slower than 10s are considered slow
-                .build());
-    }
+    // REMOVED: Caused "waitIntervalFunction was configured multiple times" error
+    // The circuit breaker configuration is now fully managed via application.yml
 
     /**
      * Circuit breaker configuration for Kafka operations.
+     * NOTE: Configuration moved to application.yml to avoid conflicts with YAML-based config.
+     * See resilience4j.circuitbreaker.instances.kafka in application.yml
      */
-    @Bean
-    public CircuitBreakerConfigCustomizer kafkaCircuitBreakerCustomizer() {
-        return CircuitBreakerConfigCustomizer
-            .of("kafka", builder -> builder
-                .failureRateThreshold(60) // More tolerant for Kafka operations
-                .waitDurationInOpenState(Duration.ofSeconds(15)) // Shorter wait for Kafka
-                .slidingWindowSize(10)
-                .minimumNumberOfCalls(3)
-                .permittedNumberOfCallsInHalfOpenState(2)
-                .build());
-    }
+    // REMOVED: Caused "waitIntervalFunction was configured multiple times" error
+    // The circuit breaker configuration is now fully managed via application.yml
 }
