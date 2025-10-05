@@ -1,4 +1,4 @@
-.PHONY: help build rebuild clean test start stop restart logs status
+.PHONY: help build rebuild clean test start stop restart logs status create-admin-user
 
 # Color output
 BLUE := \033[0;34m
@@ -23,6 +23,9 @@ help:
 	@echo "  make stop                        - Stop all services"
 	@echo "  make restart-all                 - Restart all services"
 	@echo "  make build-all                   - Build all JARs"
+	@echo ""
+	@echo "$(GREEN)Database:$(NC)"
+	@echo "  make create-admin-user           - Create initial admin user"
 	@echo ""
 	@echo "$(GREEN)Cleanup:$(NC)"
 	@echo "  make clean                       - Clean Maven builds"
@@ -143,3 +146,58 @@ dev-embedding:
 
 dev-core:
 	@make rebuild SERVICE=rag-core
+
+# Create admin user via Docker (doesn't require local psql)
+create-admin-user:
+	@echo "$(BLUE)🔐 Creating Initial Admin User$(NC)"
+	@echo "================================="
+	@echo ""
+	@docker exec rag-postgres psql -U rag_user -d rag_enterprise -c " \
+		INSERT INTO tenants (id, created_at, updated_at, version, name, slug, description, status, max_documents, max_storage_mb) \
+		VALUES ( \
+			gen_random_uuid(), \
+			NOW(), \
+			NOW(), \
+			0, \
+			'System Administration', \
+			'admin', \
+			'System administration tenant for managing the RAG platform', \
+			'ACTIVE', \
+			10000, \
+			10000 \
+		) ON CONFLICT (slug) DO UPDATE SET \
+			updated_at = NOW(), \
+			version = tenants.version + 1 \
+		RETURNING id;" 2>&1 | grep -v "INSERT" || true
+	@docker exec rag-postgres psql -U rag_user -d rag_enterprise -c " \
+		INSERT INTO users (id, created_at, updated_at, version, email, first_name, last_name, password_hash, role, status, email_verified, tenant_id) \
+		VALUES ( \
+			gen_random_uuid(), \
+			NOW(), \
+			NOW(), \
+			0, \
+			'$${ADMIN_EMAIL:-admin@enterprise-rag.com}', \
+			'$${ADMIN_FIRST_NAME:-System}', \
+			'$${ADMIN_LAST_NAME:-Administrator}', \
+			'\$$2a\$$10\$$4ruqE8FlnERNCuIW/6pI6.1rlZmJiG/plwFwif5KPGxjwbM9Sm6je', \
+			'ADMIN', \
+			'ACTIVE', \
+			true, \
+			(SELECT id FROM tenants WHERE slug = 'admin') \
+		) ON CONFLICT (email) DO UPDATE SET \
+			password_hash = '\$$2a\$$10\$$4ruqE8FlnERNCuIW/6pI6.1rlZmJiG/plwFwif5KPGxjwbM9Sm6je', \
+			updated_at = NOW(), \
+			version = users.version + 1, \
+			status = 'ACTIVE' \
+		RETURNING id;" 2>&1 | grep -v "INSERT" || true
+	@echo ""
+	@echo "$(GREEN)✅ Admin user created successfully!$(NC)"
+	@echo ""
+	@echo "📋 Admin Credentials:"
+	@echo "   Email: $${ADMIN_EMAIL:-admin@enterprise-rag.com}"
+	@echo "   Password: $${ADMIN_PASSWORD:-admin123}"
+	@echo "   Tenant: System Administration (admin)"
+	@echo ""
+	@echo "🌐 Login URL: http://localhost:8085/admin/api/auth/login"
+	@echo ""
+	@echo "$(YELLOW)⚠️  Change the default password after first login!$(NC)"
