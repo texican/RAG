@@ -196,6 +196,15 @@ spring.ai:
   ollama:
     base-url: ${OLLAMA_URL:http://ollama:11434}
 
+# Ollama Embedding Model Configuration
+embedding:
+  models:
+    ollama: mxbai-embed-large
+  # Override vector dimensions for Ollama embeddings (1024 vs 1536 for OpenAI)
+  vector:
+    redis:
+      dimension: 1024
+
 logging:
   level:
     com.byo.rag: INFO

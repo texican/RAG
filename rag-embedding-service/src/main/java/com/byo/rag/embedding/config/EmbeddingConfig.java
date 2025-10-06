@@ -1,14 +1,18 @@
 package com.byo.rag.embedding.config;
 
+import com.byo.rag.embedding.client.OllamaEmbeddingClient;
+import com.byo.rag.embedding.model.OllamaEmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.transformers.TransformersEmbeddingModel;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,13 +23,33 @@ import java.util.concurrent.ConcurrentHashMap;
 @Configuration
 @EnableConfigurationProperties(EmbeddingConfig.EmbeddingModelProperties.class)
 public class EmbeddingConfig {
-    
+
     /**
-     * Primary embedding client (OpenAI).
+     * RestTemplate for HTTP client operations (used by OllamaEmbeddingClient).
      */
     @Bean
+    @ConditionalOnProperty(name = "spring.profiles.active", havingValue = "docker")
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    /**
+     * Primary embedding client (Ollama) - Active when Docker profile is enabled.
+     */
+    @Bean("primaryEmbeddingModel")
     @Primary
-    public EmbeddingModel primaryEmbeddingModel(EmbeddingModelProperties properties) {
+    @ConditionalOnProperty(name = "spring.profiles.active", havingValue = "docker")
+    public EmbeddingModel ollamaEmbeddingModel(OllamaEmbeddingClient ollamaClient) {
+        return new OllamaEmbeddingModel(ollamaClient);
+    }
+
+    /**
+     * Primary embedding client (OpenAI) - Active when Docker profile is NOT enabled.
+     */
+    @Bean("primaryEmbeddingModel")
+    @Primary
+    @ConditionalOnProperty(name = "spring.profiles.active", havingValue = "docker", matchIfMissing = false)
+    public EmbeddingModel openAiEmbeddingModel(EmbeddingModelProperties properties) {
         // Note: For Spring AI 1.0.0-M1, the constructor signature has changed
         // Using a simplified initialization for now
         var openAiApi = new OpenAiApi(properties.openai().apiKey());

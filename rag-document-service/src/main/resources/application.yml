@@ -13,7 +13,7 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update  # Changed from create-drop to prevent data loss on restart
     show-sql: false
     properties:
       hibernate:
@@ -98,7 +98,7 @@ spring:
       password: ${REDIS_PASSWORD:redis_password}
   
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: kafka:29092
 
 ---
 spring:

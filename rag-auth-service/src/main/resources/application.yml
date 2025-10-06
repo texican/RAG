@@ -13,7 +13,7 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update  # Changed from create-drop to prevent data loss on restart
     show-sql: false
     properties:
       hibernate:
