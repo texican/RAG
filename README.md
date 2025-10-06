@@ -529,6 +529,8 @@ The project documentation is organized into the following categories:
 - **[docs/development/CLAUDE.md](docs/development/CLAUDE.md)** - Detailed project status and technical context
 - **[docs/development/METHODOLOGY.md](docs/development/METHODOLOGY.md)** - Development methodology and completed stories management process
 - **[docs/development/TESTING_BEST_PRACTICES.md](docs/development/TESTING_BEST_PRACTICES.md)** - Comprehensive testing guidelines and standards
+- **[docs/development/DOCKER_BEST_PRACTICES.md](docs/development/DOCKER_BEST_PRACTICES.md)** - Docker image optimization, Spring Boot configuration, and security best practices
+- **[docs/development/DOCKER_DEVELOPMENT.md](docs/development/DOCKER_DEVELOPMENT.md)** - Docker development workflow and troubleshooting
 - **[docs/development/KAFKA_ERROR_HANDLING.md](docs/development/KAFKA_ERROR_HANDLING.md)** - Comprehensive Kafka error handling implementation guide
 
 ### 📋 Project Management

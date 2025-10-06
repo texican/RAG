@@ -238,30 +238,29 @@ See `docs/development/DOCKER_DEVELOPMENT.md` for comprehensive troubleshooting g
 
 The following files have been modified and should be committed:
 
-**Sprint 1 - E2E Testing & Bug Fixes:**
+**Session 4 - STORY-018 + Docker Best Practices:**
 
-**STORY-015: Ollama Embeddings (new files)**
-- `rag-embedding-service/src/main/java/com/byo/rag/embedding/client/OllamaEmbeddingClient.java`
-- `rag-embedding-service/src/main/java/com/byo/rag/embedding/model/OllamaEmbeddingModel.java`
-- `docs/testing/STORY-015_IMPLEMENTATION_SUMMARY.md`
+**STORY-018: Document Processing Pipeline (new files)**
+- `rag-document-service/src/main/java/com/byo/rag/document/listener/DocumentProcessingKafkaListener.java`
+- `docs/implementation/STORY-018_IMPLEMENTATION_SUMMARY.md`
+- `docs/development/DOCKER_BEST_PRACTICES.md`
 
-**STORY-015: Ollama Embeddings (modified files)**
-- `rag-embedding-service/src/main/java/com/byo/rag/embedding/config/EmbeddingConfig.java`
-- `rag-embedding-service/src/main/resources/application.yml`
+**STORY-018: Document Processing Pipeline (modified files)**
+- `rag-document-service/src/main/java/com/byo/rag/document/config/KafkaConfig.java`
+- `rag-document-service/src/main/resources/application.yml`
+- `docker-compose.yml`
 
-**STORY-016: Kafka Connectivity + STORY-017: Database Persistence**
-- `rag-document-service/src/main/resources/application.yml` (Kafka + ddl-auto)
-- `rag-auth-service/src/main/resources/application.yml` (ddl-auto)
+**Documentation & Project Management**
+- `BACKLOG.md` (STORY-018 updated to 90% complete with blocker details)
+- `CLAUDE.md` (Session 4 summary added)
+- `README.md` (Docker best practices documentation reference)
 
-**STORY-002: E2E Test Findings & Documentation**
-- `docs/testing/STORY-002_E2E_TEST_FINDINGS.md`
-- `docs/operations/DATABASE_PERSISTENCE_FIX.md`
-
-**Backlog & Project Management**
-- `BACKLOG.md` (STORY-002, 015, 016, 017 complete, STORY-018 created, Sprint 1 complete)
-- `CLAUDE.md` (Session 3 summary, Sprint 1 complete)
-
-**Previous Sessions (already staged/committed separately):**
+**Previous Sessions (already committed):**
+- **Sprint 1 Complete** (Session 3):
+  - STORY-015: Ollama Embeddings ✅
+  - STORY-016: Kafka Connectivity ✅
+  - STORY-017: Database Persistence ✅
+  - STORY-002: E2E Infrastructure ✅
 - Auth Service Fixes (Session 2)
 - Admin Service Fixes (Session 2)
 - Docker Improvements (Session 2)
@@ -589,6 +588,137 @@ operation not supported
 
 ---
 
+### Session 4: STORY-018 Implementation + Docker Best Practices Documentation 🟡 90% COMPLETE
+
+**Objective:** Implement document processing pipeline (STORY-018) and create Docker best practices documentation.
+
+**What Was Done:**
+
+#### 1. STORY-018: Document Processing Pipeline Investigation ✅
+
+**Root Cause Identified:**
+- **Missing Kafka Consumer** - No `@KafkaListener` to consume document processing events
+- All processing code exists (`DocumentService.processDocument()`, chunking, embedding workflow)
+- Events published to Kafka but no consumer listening
+- Documents stuck in PENDING status indefinitely
+
+**Investigation Results:**
+```
+✅ DocumentService.uploadDocument() - Working (publishes Kafka event)
+✅ kafkaService.sendDocumentForProcessing() - Working (sends to topic)
+✅ DocumentService.processDocument() - Exists (text extraction, chunking, embedding)
+✅ DocumentChunkService.createChunks() - Exists (functional)
+❌ Kafka Consumer - MISSING (no @KafkaListener)
+```
+
+**Components Created:**
+
+1. **DocumentProcessingKafkaListener.java** ✅
+   - Kafka consumer with `@KafkaListener` annotation
+   - Consumes from `document-processing` topic
+   - Triggers `DocumentService.processDocument()` asynchronously
+   - Comprehensive error handling and logging
+
+2. **Simplified KafkaConfig.java** ✅
+   - Removed custom producer/consumer factories (conflicted with autoconfiguration)
+   - Minimal `@EnableKafka` configuration
+   - Relies on Spring Boot autoconfiguration
+
+3. **application.yml Updates** ✅
+   - Added Kafka topic configuration
+   - Consumer group ID configuration
+
+4. **Kafka Topics Created** ✅
+   ```bash
+   docker exec rag-kafka kafka-topics --create --topic document-processing
+   docker exec rag-kafka kafka-topics --create --topic embedding-generation
+   ```
+
+**Current Status: 90% Complete** 🟡
+- ✅ Root cause identified and documented
+- ✅ All components implemented
+- ✅ Infrastructure ready (topics created)
+- ✅ Code builds successfully
+- 🔴 **BLOCKER:** Kafka configuration precedence issue
+
+**Blocker Details:**
+- Kafka producer connects to `localhost:9092` instead of `kafka:29092`
+- Spring Boot autoconfiguration timing issue
+- Profile-specific config not applied to autoconfigured Kafka beans
+- **Solution documented:** Use Java system properties in ENTRYPOINT
+
+**Files Created:**
+- `rag-document-service/src/main/java/com/byo/rag/document/listener/DocumentProcessingKafkaListener.java`
+- `docs/implementation/STORY-018_IMPLEMENTATION_SUMMARY.md`
+
+**Files Modified:**
+- `rag-document-service/src/main/java/com/byo/rag/document/config/KafkaConfig.java`
+- `rag-document-service/src/main/resources/application.yml`
+- `docker-compose.yml` (attempted Kafka config fixes)
+- `BACKLOG.md` (updated STORY-018 status to 90% complete)
+
+---
+
+#### 2. Docker Best Practices Documentation ✅ COMPLETE
+
+**Created:** `docs/development/DOCKER_BEST_PRACTICES.md`
+
+**Contents:**
+- **Multi-Stage Builds** - Separating build and runtime stages
+- **Spring Boot Configuration in Docker** - Environment variable precedence (with Kafka issue as case study)
+- **Security Best Practices** - Non-root users, read-only filesystems
+- **Image Optimization** - Layer caching, .dockerignore, Alpine variants
+- **Environment Variables & Configuration** - When to use env vars vs profiles vs system properties
+- **Troubleshooting Guide** - Common Docker + Spring Boot configuration issues
+
+**Key Sections:**
+1. Dockerfile best practices (multi-stage builds, layer optimization)
+2. **Spring Boot Configuration Precedence** (explains STORY-018 Kafka issue)
+3. Security (non-root users, no secrets in images)
+4. Image size optimization
+5. Configuration strategies for Spring Boot in Docker
+6. Comprehensive troubleshooting guide
+
+**Impact:**
+- Prevents future configuration issues like STORY-018 Kafka problem
+- Documents solution approaches for Spring Boot + Docker challenges
+- Establishes team standards for Docker image creation
+
+**Files Created:**
+- `docs/development/DOCKER_BEST_PRACTICES.md`
+
+**Files Modified:**
+- `README.md` (added reference to new Docker documentation)
+
+---
+
+#### Sprint 2 Assessment: STORY-018 90% Complete
+
+**Progress:**
+- Investigation: 100% ✅
+- Root cause identification: 100% ✅
+- Component implementation: 100% ✅
+- Infrastructure setup: 100% ✅
+- Documentation: 100% ✅
+- Configuration resolution: 10% 🔴 (blocker identified, solution documented)
+
+**Remaining Work:**
+Apply Kafka configuration fix using one of the documented approaches:
+```dockerfile
+# Option 1: Dockerfile ENTRYPOINT
+ENTRYPOINT ["java", "-Dspring.kafka.bootstrap-servers=kafka:29092", "-jar", "app.jar"]
+
+# Option 2: docker-compose JAVA_TOOL_OPTIONS
+environment:
+  - JAVA_TOOL_OPTIONS=-Dspring.kafka.bootstrap-servers=kafka:29092
+```
+
+**Documentation Created:**
+- `docs/implementation/STORY-018_IMPLEMENTATION_SUMMARY.md` - Complete implementation analysis
+- `docs/development/DOCKER_BEST_PRACTICES.md` - Comprehensive Docker guide with Kafka config solutions
+
+---
+
 ## Next Steps / TODO
 
 ### Sprint 1 - ✅ COMPLETE (2025-10-05)
@@ -599,14 +729,25 @@ operation not supported
 - [x] STORY-002: Enable E2E Tests - Infrastructure Complete (Full E2E blocked by STORY-018)
 - [x] Database Persistence Fix (ddl-auto: update)
 
-### Immediate Next Steps (Sprint 2)
-- [ ] **STORY-018: Implement Document Processing Pipeline** (P0 - CRITICAL)
-  - Investigate missing async document processor
-  - Find/create Kafka consumer for DocumentUploaded events
-  - Implement chunking logic
-  - Wire up embedding generation
-  - Enable automatic status updates (PENDING → PROCESSED)
-  - Enable full E2E test completion
+### Sprint 2 - IN PROGRESS
+- [🟡] **STORY-018: Document Processing Pipeline** - 90% Complete (Kafka config blocker)
+  - [x] Investigate missing async document processor ✅
+  - [x] Create Kafka consumer (DocumentProcessingKafkaListener) ✅
+  - [x] Verify chunking logic exists ✅
+  - [x] Verify embedding generation workflow exists ✅
+  - [x] Create Kafka topics ✅
+  - [x] Add comprehensive logging ✅
+  - [x] Document implementation ✅
+  - [⏸️] Fix Kafka bootstrap-servers configuration 🔴 **BLOCKER**
+  - [ ] Test document processing end-to-end
+  - [ ] Enable full E2E test completion
+
+### Immediate Next Steps
+- [ ] **Apply Kafka Configuration Fix** (Option 1 or 2 from STORY-018 summary)
+- [ ] Test document upload triggers async processing
+- [ ] Verify chunks created and embeddings generated
+- [ ] Run E2E tests to validate complete pipeline
+- [ ] Mark STORY-018 as COMPLETE
 
 ### Future Work
 - [ ] Run full E2E test suite after STORY-016

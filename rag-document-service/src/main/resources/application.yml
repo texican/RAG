@@ -53,6 +53,14 @@ document-processing:
   chunk-overlap: ${CHUNK_OVERLAP:200}
   max-chunks-per-document: ${MAX_CHUNKS:1000}
 
+# Kafka Topics Configuration
+kafka:
+  topics:
+    document-processing: document-processing
+    embedding-generation: embedding-generation
+  consumer:
+    group-id: document-service-group
+
 # Management and Monitoring
 management:
   endpoints:
