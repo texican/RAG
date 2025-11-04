@@ -284,10 +284,10 @@ graph TB
     Core[RAG Core Service<br/>Port 8084]
     Admin[Admin Service<br/>Port 8085]
 
-    PG[(PostgreSQL<br/>Port 5432]
-    Redis[(Redis Stack<br/>Port 6379]
-    Kafka[(Apache Kafka<br/>Port 9092]
-    Ollama[(Ollama LLM<br/>Port 11434]
+    PG[(PostgreSQL<br/>Port 5432)]
+    Redis[(Redis Stack<br/>Port 6379)]
+    Kafka[(Apache Kafka<br/>Port 9092)]
+    Ollama[(Ollama LLM<br/>Port 11434)]
 
     Client --> Auth
     Client --> Doc
