@@ -308,8 +308,8 @@ graph TB
     Core --> Ollama
     Embed --> Ollama
 
-    classDef working fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#FFFFFF;
-    class Client,Auth,Doc,Embed,Core,Admin,PG,Redis,Kafka,Ollama working;
+    classDef fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#FFFFFF;
+    class Client,Auth,Doc,Embed,Core,Admin,PG,Redis,Kafka,Ollama;
 ```
 
 > **Note**: Gateway bypassed per [ADR-001](docs/development/ADR-001-BYPASS-API-GATEWAY.md) - clients access services directly
