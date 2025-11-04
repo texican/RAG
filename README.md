@@ -278,16 +278,16 @@ All 6 microservices operational with comprehensive testing, API documentation, a
 ```mermaid
 graph TB
     Client[Client Applications<br/>Direct Access]
-    Auth[Auth Service<br/>Port 8081<br/>✅ WORKING]
-    Doc[Document Service<br/>Port 8082<br/>✅ WORKING]
-    Embed[Embedding Service<br/>Port 8083<br/>✅ WORKING]
-    Core[RAG Core Service<br/>Port 8084<br/>✅ WORKING]
-    Admin[Admin Service<br/>Port 8085<br/>✅ WORKING]
+    Auth[Auth Service<br/>Port 8081]
+    Doc[Document Service<br/>Port 8082]
+    Embed[Embedding Service<br/>Port 8083]
+    Core[RAG Core Service<br/>Port 8084]
+    Admin[Admin Service<br/>Port 8085]
 
-    PG[(PostgreSQL<br/>Port 5432<br/>✅ WORKING)]
-    Redis[(Redis Stack<br/>Port 6379<br/>✅ WORKING)]
-    Kafka[(Apache Kafka<br/>Port 9092<br/>✅ WORKING)]
-    Ollama[(Ollama LLM<br/>Port 11434<br/>✅ WORKING)]
+    PG[(PostgreSQL<br/>Port 5432)]
+    Redis[(Redis Stack<br/>Port 6379)]
+    Kafka[(Apache Kafka<br/>Port 9092)]
+    Ollama[(Ollama LLM<br/>Port 11434)]
 
     Client --> Auth
     Client --> Doc
