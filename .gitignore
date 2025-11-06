@@ -20,9 +20,19 @@ logs/
 # Coverage reports
 coverage/
 
-# Environment variables
+# Environment variables and secrets (GCP-SECRETS-002)
 .env
-.env.local
+.env.*
+!.env.template
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+*-credentials.json
+service-account-key.json
+*-sa-key.json
+client_secret*.json
 
 # Storage
 storage/
@@ -80,3 +90,5 @@ backups/
 # Service logs
 rag-*/logs/*.log
 rag-*/logs/*.gz
+# GCP Service Account Keys (DO NOT COMMIT)
+scripts/gcp/config/service-account-keys/

@@ -31,12 +31,7 @@ scrape_configs:
     static_configs:
       - targets: ['rag-core:8084']
 
-  - job_name: 'rag-gateway'
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['rag-gateway:8080']
-
   - job_name: 'rag-admin-service'
-    metrics_path: '/actuator/prometheus'
+    metrics_path: '/admin/api/actuator/prometheus'
     static_configs:
       - targets: ['rag-admin:8085']
