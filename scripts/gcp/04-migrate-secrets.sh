@@ -106,10 +106,10 @@ if [ -z "$OPENAI_API_KEY" ]; then
   exit 1
 fi
 
-# Validate key format
-if [[ ! "$OPENAI_API_KEY" =~ ^sk-[a-zA-Z0-9\-_]{20,}$ ]]; then
+# Validate key format (supports both user keys sk-proj-* and service account keys sk-svcacct-*)
+if [[ ! "$OPENAI_API_KEY" =~ ^sk-(proj-|svcacct-)[a-zA-Z0-9_-]{20,}$ ]]; then
   echo -e "${RED}✗ Invalid OpenAI API key format${NC}"
-  echo "Expected format: sk-..."
+  echo "Expected format: sk-proj-... or sk-svcacct-..."
   exit 1
 fi
 
