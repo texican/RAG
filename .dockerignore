@@ -3,8 +3,10 @@
 
 # If someone tries to build from service directory, it will fail
 # because dependencies won't be in context
-**/target/
-!rag-*/target/*.jar
+
+# Exclude target directories but keep JAR files
+**/target/*
+!**/target/*.jar
 
 # IDE files
 .idea/

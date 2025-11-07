@@ -551,3 +551,36 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **🔥 Ready to contribute?** Check out our [Contributing Guidelines](#contributing) and start building the future of enterprise RAG systems!
+
+## GCP Artifact Registry: Container Images
+
+All RAG service images are published to Google Artifact Registry with vulnerability scanning enabled.
+
+**Registry:**
+`us-central1-docker.pkg.dev/byo-rag-dev/rag-system`
+
+**Images:**
+- rag-core-service
+- rag-auth-service
+- rag-admin-service
+- rag-document-service
+- rag-embedding-service
+
+**Tags:**
+- `0.8.0` (version)
+- `latest`
+- `<git-sha>`
+- `0.8.0-<git-sha>`
+
+**Pull Example:**
+```sh
+docker pull us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:0.8.0
+```
+
+**Kubernetes Example:**
+```yaml
+image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:0.8.0
+```
+
+**Console:**
+https://console.cloud.google.com/artifacts/docker/byo-rag-dev/us-central1/rag-system

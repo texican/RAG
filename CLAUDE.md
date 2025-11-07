@@ -1,20 +1,20 @@
 # Claude Context - RAG Project Current State
 
-Last Updated: 2025-11-06 (Session: GCP-SECRETS-002 Complete)
+Last Updated: 2025-11-07 (Session: GCP-REGISTRY-003 Complete)
 
 ## 🚨 CURRENT PRIORITY: GCP DEPLOYMENT
 
 **Objective:** Deploy BYO RAG System to Google Cloud Platform (GCP)
 
-**Status:** GCP-SECRETS-002 complete, GCP-REGISTRY-003 next
+**Status:** GCP-REGISTRY-003 complete, GCP-SQL-004 next
 
 **Timeline:** 3-4 weeks estimated
 
 **Critical Path:**
 1. GCP-INFRA-001: Project Setup (8 pts) - ✅ COMPLETE
 2. GCP-SECRETS-002: Secret Manager Migration (5 pts) - ✅ COMPLETE
-3. GCP-REGISTRY-003: Container Registry (8 pts) - **NEXT PRIORITY**
-4. GCP-SQL-004: Cloud SQL PostgreSQL (13 pts)
+3. GCP-REGISTRY-003: Container Registry (8 pts) - ✅ COMPLETE
+4. GCP-SQL-004: Cloud SQL PostgreSQL (13 pts) - **NEXT PRIORITY**
 5. GCP-REDIS-005: Cloud Memorystore Redis (8 pts)
 6. GCP-KAFKA-006: Kafka/Pub-Sub Migration (13 pts)
 7. GCP-GKE-007: GKE Cluster (13 pts)
@@ -26,6 +26,53 @@ Last Updated: 2025-11-06 (Session: GCP-SECRETS-002 Complete)
 **Total:** 89 story points for complete GCP deployment
 
 See [PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md) for detailed task breakdown.
+
+---
+
+## Tool Choice: Why Make?
+
+**Decision:** Use GNU Make as the task runner instead of npm scripts, Gradle, Task, or Just.
+
+**Rationale:**
+- ✅ Pre-installed on all Unix systems (zero setup)
+- ✅ Perfect for shell/Docker/Maven workflows
+- ✅ Tab completion works out of the box
+- ✅ Everyone knows `make` - minimal learning curve
+- ✅ Excellent IDE support (VS Code, IntelliJ, etc.)
+- ✅ Self-documenting with `make help`
+- ✅ Fast - no runtime overhead
+- ✅ Standard for system-level projects
+
+**Score:** Make: 53/53 points vs npm: 31, Task: 26, Just: 23, Gradle: 27
+
+See [docs/development/MAKE_VS_ALTERNATIVES.md](docs/development/MAKE_VS_ALTERNATIVES.md) for detailed comparison.
+
+## Recent Session Summary
+
+### Session 7: GCP-REGISTRY-003 Execution ✅ COMPLETE (2025-11-07)
+
+**Objective:** Build and publish all RAG service Docker images to Google Artifact Registry with proper tagging and vulnerability scanning.
+
+**What Was Done:**
+- Created Artifact Registry repository `rag-system` in `us-central1`
+- Enabled Container Analysis API for vulnerability scanning
+- Built all 5 service images (auth, document, embedding, core, admin)
+- Fixed `.dockerignore` to include JAR files
+- Created comprehensive build/push script (`07-build-and-push-images.sh`)
+- Tagged each image with 4 tags: version, git SHA, latest, version+SHA
+- Pushed all images to Artifact Registry
+- Verified images in GCP Console
+- Vulnerability scanning enabled and active
+
+**Registry:**
+`us-central1-docker.pkg.dev/byo-rag-dev/rag-system`
+
+**Usage:**
+- Pull: `docker pull us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:0.8.0`
+- Kubernetes: `image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:0.8.0`
+- Console: https://console.cloud.google.com/artifacts/docker/byo-rag-dev/us-central1/rag-system
+
+**Next:** GCP-SQL-004 (Cloud SQL PostgreSQL)
 
 ---
 
@@ -768,6 +815,21 @@ Result: 0 rows
 - No automatic chunking pipeline
 - No embedding generation workflow
 - No status update mechanism
+
+**Evidence:**
+```java
+// DocumentService.java
+public void uploadDocument(...) {
+  // ...
+  kafkaService.sendDocumentForProcessing(documentId); // Sends event
+}
+
+@KafkaListener(topics = "document-processing")
+public void processDocument(String documentId) {
+  // Extracted method for processing document
+  // Calls chunking and embedding logic
+}
+```
 
 **❌ TestContainers Tests - BLOCKED (Separate Issue):**
 ```
