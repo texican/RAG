@@ -18,9 +18,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <!-- Spring versions -->
-        <spring-boot.version>3.2.8</spring-boot.version>
-        <spring-cloud.version>2023.0.2</spring-cloud.version>
+        <spring-boot.version>3.2.11</spring-boot.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
         <spring-ai.version>1.0.0-M1</spring-ai.version>
+        <spring-security.version>6.2.8</spring-security.version>
+        <spring-framework.version>6.1.21</spring-framework.version>
+        
+        <!-- Security patches -->
+        <tomcat.version>10.1.35</tomcat.version>
+        <netty.version>4.1.124.Final</netty.version>
+        <commons-fileupload.version>1.6.0</commons-fileupload.version>
         
         <!-- Database versions -->
         <postgresql.version>42.7.3</postgresql.version>
@@ -85,6 +92,77 @@
                 <version>${spring-ai.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            
+            <!-- Security patches - CVE fixes -->
+            
+            <!-- CVE-2025-24813: Tomcat (CVSS 9.8) -->
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            
+            <!-- CVE-2025-22228: Spring Security Crypto -->
+            <!-- CVE-2024-38821: Spring Security Web -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-bom</artifactId>
+                <version>${spring-security.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            
+            <!-- CVE-2024-38816: Spring WebFlux -->
+            <!-- CVE-2025-41249: Spring Core (monitoring) -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>${spring-framework.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webflux</artifactId>
+                <version>${spring-framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring-framework.version}</version>
+            </dependency>
+            
+            <!-- CVE-2025-55163: Netty HTTP/2 (CVSS 7.5) -->
+            <!-- CVE-2025-24970: Netty Handler -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-http2</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            
+            <!-- CVE-2025-48976: Commons FileUpload (CVSS 7.5) -->
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>${commons-fileupload.version}</version>
             </dependency>
             
             <!-- Internal modules -->
