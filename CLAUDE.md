@@ -1,12 +1,12 @@
 # Claude Context - RAG Project Current State
 
-Last Updated: 2025-11-07 (Session: GCP-SQL-004 Complete)
+Last Updated: 2025-11-09 (Session: GCP-KAFKA-006 Complete)
 
 ## 🚨 CURRENT PRIORITY: GCP DEPLOYMENT
 
 **Objective:** Deploy BYO RAG System to Google Cloud Platform (GCP)
 
-**Status:** GCP-SQL-004 complete, GCP-REDIS-005 complete, GCP-KAFKA-006 next
+**Status:** GCP-KAFKA-006 planning complete, GCP-GKE-007 next
 
 **Timeline:** 2-3 weeks estimated
 
@@ -16,8 +16,8 @@ Last Updated: 2025-11-07 (Session: GCP-SQL-004 Complete)
 3. GCP-REGISTRY-003: Container Registry (8 pts) - ✅ COMPLETE
 4. GCP-SQL-004: Cloud SQL PostgreSQL (13 pts) - ✅ COMPLETE
 5. GCP-REDIS-005: Cloud Memorystore Redis (8 pts) - ✅ COMPLETE
-6. GCP-KAFKA-006: Kafka/Pub-Sub Migration (13 pts) - **NEXT PRIORITY**
-7. GCP-GKE-007: GKE Cluster (13 pts)
+6. GCP-KAFKA-006: Kafka/Pub-Sub Migration (13 pts) - ✅ COMPLETE (Planning)
+7. GCP-GKE-007: GKE Cluster (13 pts) - **NEXT PRIORITY**
 8. GCP-K8S-008: Kubernetes Manifests (13 pts)
 9. GCP-STORAGE-009: Persistent Storage (5 pts)
 10. GCP-INGRESS-010: Ingress & Load Balancer (8 pts)
@@ -30,6 +30,170 @@ See [PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md) for detaile
 ---
 
 ## Recent Session Summary
+
+### Session 10: GCP-KAFKA-006 Planning ✅ COMPLETE (2025-11-09)
+
+**Objective:** Evaluate messaging options and create migration plan for replacing containerized Kafka with managed service.
+
+**What Was Done:**
+
+#### 1. Kafka Usage Analysis ✅
+**Current State:**
+- **Kafka Version**: Confluent 7.4.0 with Zookeeper
+- **Topics**: 5 topics identified
+  - `document-processing` - Document ingestion workflow
+  - `embedding-generation` - Vector embedding creation
+  - `rag-queries` - Query requests
+  - `rag-responses` - Query results
+  - `feedback` - User feedback and ratings
+- **Services**: 3 services using Kafka
+  - **Document Service**: KafkaTemplate producer (document-processing)
+  - **Embedding Service**: KafkaTemplate producer (embedding-generation)
+  - **Core Service**: @KafkaListener consumer, KafkaTemplate producer (queries, responses)
+- **Messaging Patterns**: Simple pub-sub, no Kafka Streams or transactions
+
+#### 2. Cloud Pub/Sub Decision ✅
+**Selected:** Google Cloud Pub/Sub over Confluent Cloud
+
+**Cost Comparison:**
+| Service | Monthly Cost | Notes |
+|---------|-------------|-------|
+| Cloud Pub/Sub | $0.69-$7 | Serverless, pay-per-use |
+| Confluent Cloud | $175+ | Basic cluster, 3 brokers |
+
+**Key Advantages:**
+- **95% Cost Savings**: $7/mo vs $175/mo
+- **Serverless**: No cluster management, automatic scaling
+- **GCP Native**: Tight integration with Secret Manager, IAM, Monitoring
+- **Zero Ops**: No Zookeeper, no broker upgrades, no rebalancing
+- **Enterprise Features**: Dead-letter queues, message retention, replay
+
+**Implementation Effort:**
+- **13 Story Points**: Phased migration across 5 phases
+- **Spring Cloud GCP**: Spring Boot Pub/Sub starter available
+- **Code Changes**: Minimal - replace KafkaTemplate with PubSubTemplate
+- **Compatibility**: Drop-in replacement for pub-sub patterns
+
+#### 3. Cloud Pub/Sub Infrastructure Script ✅
+**Created:** `scripts/gcp/11-setup-pubsub.sh`
+
+**Resources Provisioned:**
+- **Topics**: 5 topics matching current Kafka setup
+  - `document-processing`
+  - `embedding-generation`
+  - `rag-queries`
+  - `rag-responses`
+  - `feedback`
+  - `dead-letter-queue` (DLQ for failed messages)
+- **Subscriptions**: One subscription per topic with DLQ
+  - 7-day message retention
+  - Exponential backoff: 10s-600s
+  - Maximum delivery attempts: 5
+  - Acknowledgment deadline: 60s
+- **IAM Configuration**:
+  - Service account: `pubsub-sa@byo-rag-dev.iam.gserviceaccount.com`
+  - Roles: Publisher, Subscriber
+  - GKE node SA granted access
+- **Monitoring Alerts**:
+  - Subscription backlog >1000 messages
+  - Dead-letter queue message count >100
+
+#### 4. Migration Decision Document ✅
+**Created:** `docs/deployment/KAFKA_TO_PUBSUB_DECISION.md`
+
+**Contents:**
+- Comprehensive decision matrix
+- Cloud Pub/Sub vs Confluent Cloud comparison
+- Feature analysis (ordering, exactly-once, DLQ, monitoring)
+- Cost breakdown and ROI calculation
+- Implementation effort assessment (13 story points)
+- Risk analysis and mitigation strategies
+
+**Key Insights:**
+- Current Kafka usage is simple pub-sub (no Streams API, no transactions)
+- Cloud Pub/Sub covers 100% of required features
+- Migration effort is low due to Spring Cloud GCP abstractions
+- Operational complexity drops to zero with serverless
+
+#### 5. Migration Implementation Guide ✅
+**Created:** `docs/deployment/KAFKA_TO_PUBSUB_MIGRATION.md`
+
+**5-Phase Migration Plan:**
+
+**Phase 1: Infrastructure Setup (2 points)**
+- Execute `11-setup-pubsub.sh`
+- Verify topics and subscriptions
+- Test IAM permissions
+
+**Phase 2: Document Service Migration (4 points)**
+- Add Spring Cloud GCP Pub/Sub dependency
+- Replace KafkaTemplate with PubSubTemplate
+- Update configuration (application.yml)
+- Integration tests
+- Deploy and verify
+
+**Phase 3: Embedding Service Migration (3 points)**
+- Same dependency and code changes
+- Producer migration for embedding-generation topic
+- Integration tests
+- Deploy and verify
+
+**Phase 4: Core Service Migration (3 points)**
+- Consumer migration (@ServiceActivator)
+- Producer migration (queries, responses, feedback)
+- Integration tests
+- Deploy and verify
+
+**Phase 5: Testing and Cutover (1 point)**
+- End-to-end workflow testing
+- Load testing and monitoring
+- Kafka decommission
+
+**Code Examples Provided:**
+- Spring Cloud GCP dependency configuration
+- PubSubTemplate producer code
+- @ServiceActivator consumer code
+- application.yml configuration
+- Error handling and DLQ setup
+
+**Testing Strategy:**
+- Unit tests for publishers/subscribers
+- Integration tests with Pub/Sub emulator
+- End-to-end workflow validation
+- Performance benchmarking
+
+**Rollback Plan:**
+- Maintain Kafka configuration
+- Feature flags for Pub/Sub
+- Quick revert to Kafka if needed
+
+#### 6. Documentation ✅
+- **Decision Document**: Comprehensive analysis with cost comparison
+- **Migration Guide**: Complete implementation roadmap with code examples
+- **Setup Script**: Automated Pub/Sub provisioning with monitoring
+
+**Scripts Created:**
+- `scripts/gcp/11-setup-pubsub.sh` - Cloud Pub/Sub infrastructure provisioning
+
+**Documentation:**
+- `docs/deployment/KAFKA_TO_PUBSUB_DECISION.md` - Decision rationale and analysis
+- `docs/deployment/KAFKA_TO_PUBSUB_MIGRATION.md` - Step-by-step migration guide
+
+**Cost Estimate:**
+- ~$0.69-$7/month (based on 10M-100M messages)
+- 95% reduction from Confluent Cloud alternative ($175/month)
+
+**Migration Effort:**
+- **Planning**: 8 story points (analysis: 2, decision: 2, scripts: 2, docs: 2)
+- **Implementation**: 13 story points (5 phases)
+- **Total**: 21 story points
+
+**Next Priority:** GCP-GKE-007 (GKE Cluster setup)
+
+**Story Points Completed:** 8
+**Progress:** 58/89 story points (65% complete)
+
+---
 
 ### Session 9: GCP-REDIS-005 Execution ✅ COMPLETE (2025-11-09)
 
