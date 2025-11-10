@@ -589,7 +589,7 @@ Required Arguments:
 
 Optional Arguments:
   --project <project-id>    GCP project ID (default: byo-rag-{env})
-  --cluster <cluster-name>  GKE cluster name (default: rag-cluster-{env})
+  --cluster <cluster-name>  GKE cluster name (default: rag-gke-{env})
   --region <region>         GCP region (default: us-central1)
   --service <service-name>  Deploy single service only
   --skip-health-check       Skip health check validation
@@ -666,7 +666,7 @@ if [[ -z "$PROJECT_ID" ]]; then
 fi
 
 if [[ -z "$CLUSTER_NAME" ]]; then
-    CLUSTER_NAME="rag-cluster-${ENVIRONMENT}"
+    CLUSTER_NAME="rag-gke-${ENVIRONMENT}"
 fi
 
 ################################################################################
