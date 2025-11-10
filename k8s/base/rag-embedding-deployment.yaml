@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-embedding
+  namespace: rag-system
+  labels:
+    app: rag-embedding
+    app.kubernetes.io/name: rag-embedding
+    app.kubernetes.io/component: embedding-generation
+    app.kubernetes.io/part-of: rag-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rag-embedding
+  template:
+    metadata:
+      labels:
+        app: rag-embedding
+        app.kubernetes.io/name: rag-embedding
+        app.kubernetes.io/component: embedding-generation
+        app.kubernetes.io/part-of: rag-system
+    spec:
+      serviceAccountName: rag-embedding
+      containers:
+      - name: rag-embedding
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-embedding:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+          name: http
+          protocol: TCP
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        - name: REDIS_DATABASE
+          value: "2"  # Embedding service uses database 2
+        # Kafka will be migrated to Pub/Sub in GCP-KAFKA-006 implementation
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"  # TODO: Replace with Pub/Sub
+        - name: OLLAMA_URL
+          value: "http://ollama:11434"  # TODO: Replace with managed Ollama or Vertex AI
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8083
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-embedding
+  namespace: rag-system
+  labels:
+    app: rag-embedding
+    app.kubernetes.io/name: rag-embedding
+    app.kubernetes.io/component: embedding-generation
+    app.kubernetes.io/part-of: rag-system
+spec:
+  type: ClusterIP
+  selector:
+    app: rag-embedding
+  ports:
+  - port: 8083
+    targetPort: 8083
+    protocol: TCP
+    name: http

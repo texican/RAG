@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-core
+  namespace: rag-system
+  labels:
+    app: rag-core
+    app.kubernetes.io/name: rag-core
+    app.kubernetes.io/component: query-processing
+    app.kubernetes.io/part-of: rag-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rag-core
+  template:
+    metadata:
+      labels:
+        app: rag-core
+        app.kubernetes.io/name: rag-core
+        app.kubernetes.io/component: query-processing
+        app.kubernetes.io/part-of: rag-system
+    spec:
+      serviceAccountName: rag-core
+      containers:
+      - name: rag-core
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8084
+          name: http
+          protocol: TCP
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        - name: REDIS_DATABASE
+          value: "1"  # Core service uses database 1
+        - name: EMBEDDING_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: RAG_EMBEDDING_URL
+        # Kafka will be migrated to Pub/Sub in GCP-KAFKA-006 implementation
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"  # TODO: Replace with Pub/Sub
+        - name: OLLAMA_URL
+          value: "http://ollama:11434"  # TODO: Replace with managed Ollama or Vertex AI
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1000m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8084
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8084
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-core
+  namespace: rag-system
+  labels:
+    app: rag-core
+    app.kubernetes.io/name: rag-core
+    app.kubernetes.io/component: query-processing
+    app.kubernetes.io/part-of: rag-system
+spec:
+  type: ClusterIP
+  selector:
+    app: rag-core
+  ports:
+  - port: 8084
+    targetPort: 8084
+    protocol: TCP
+    name: http

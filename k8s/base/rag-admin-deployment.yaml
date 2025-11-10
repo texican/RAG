@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-admin
+  namespace: rag-system
+  labels:
+    app: rag-admin
+    app.kubernetes.io/name: rag-admin
+    app.kubernetes.io/component: administration
+    app.kubernetes.io/part-of: rag-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-admin
+  template:
+    metadata:
+      labels:
+        app: rag-admin
+        app.kubernetes.io/name: rag-admin
+        app.kubernetes.io/component: administration
+        app.kubernetes.io/part-of: rag-system
+    spec:
+      serviceAccountName: rag-admin
+      containers:
+      # Main application container
+      - name: rag-admin
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-admin:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8085
+          name: http
+          protocol: TCP
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: DB_NAME
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: cloud-sql-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloud-sql-credentials
+              key: password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8085
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8085
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      
+      # Cloud SQL Proxy sidecar
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+        args:
+        - "--structured-logs"
+        - "--port=5432"
+        - "byo-rag-dev:us-central1:rag-postgres"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-admin
+  namespace: rag-system
+  labels:
+    app: rag-admin
+    app.kubernetes.io/name: rag-admin
+    app.kubernetes.io/component: administration
+    app.kubernetes.io/part-of: rag-system
+spec:
+  type: ClusterIP
+  selector:
+    app: rag-admin
+  ports:
+  - port: 8085
+    targetPort: 8085
+    protocol: TCP
+    name: http

@@ -1,0 +1,98 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rag-system
+
+resources:
+- ../../base
+
+patches:
+# Patch ConfigMap for dev environment
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: gcp-config
+      namespace: rag-system
+    data:
+      PROJECT_ID: "byo-rag-dev"
+      REGION: "us-central1"
+      CLOUD_SQL_INSTANCE_CONNECTION_NAME: "byo-rag-dev:us-central1:rag-postgres"
+  target:
+    kind: ConfigMap
+    name: gcp-config
+
+# Scale down replicas for dev
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-auth
+      namespace: rag-system
+    spec:
+      replicas: 1
+  target:
+    kind: Deployment
+    name: rag-auth
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-document
+      namespace: rag-system
+    spec:
+      replicas: 1
+  target:
+    kind: Deployment
+    name: rag-document
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-embedding
+      namespace: rag-system
+    spec:
+      replicas: 1
+  target:
+    kind: Deployment
+    name: rag-embedding
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-core
+      namespace: rag-system
+    spec:
+      replicas: 1
+  target:
+    kind: Deployment
+    name: rag-core
+
+# Lower resource limits for dev
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-auth
+      namespace: rag-system
+    spec:
+      template:
+        spec:
+          containers:
+          - name: rag-auth
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+  target:
+    kind: Deployment
+    name: rag-auth
+
+commonLabels:
+  environment: dev

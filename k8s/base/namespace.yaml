@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rag-system
+  labels:
+    name: rag-system
+    app.kubernetes.io/name: rag-system
+    app.kubernetes.io/part-of: byo-rag

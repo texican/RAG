@@ -1,0 +1,149 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rag-system
+
+resources:
+- ../../base
+
+patches:
+# Patch ConfigMap for prod environment
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: gcp-config
+      namespace: rag-system
+    data:
+      PROJECT_ID: "byo-rag-prod"
+      REGION: "us-central1"
+      CLOUD_SQL_INSTANCE_CONNECTION_NAME: "byo-rag-prod:us-central1:rag-postgres"
+      ARTIFACT_REGISTRY: "us-central1-docker.pkg.dev/byo-rag-prod/rag-system"
+  target:
+    kind: ConfigMap
+    name: gcp-config
+
+# Higher replicas for prod
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-auth
+      namespace: rag-system
+    spec:
+      replicas: 3
+  target:
+    kind: Deployment
+    name: rag-auth
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-document
+      namespace: rag-system
+    spec:
+      replicas: 3
+  target:
+    kind: Deployment
+    name: rag-document
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-embedding
+      namespace: rag-system
+    spec:
+      replicas: 3
+  target:
+    kind: Deployment
+    name: rag-embedding
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-core
+      namespace: rag-system
+    spec:
+      replicas: 3
+  target:
+    kind: Deployment
+    name: rag-core
+
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: rag-admin
+      namespace: rag-system
+    spec:
+      replicas: 2
+  target:
+    kind: Deployment
+    name: rag-admin
+
+# Update ServiceAccount annotations for prod
+- patch: |-
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: rag-auth
+      namespace: rag-system
+      annotations:
+        iam.gke.io/gcp-service-account: cloud-sql-sa@byo-rag-prod.iam.gserviceaccount.com
+  target:
+    kind: ServiceAccount
+    name: rag-auth
+
+- patch: |-
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: rag-document
+      namespace: rag-system
+      annotations:
+        iam.gke.io/gcp-service-account: cloud-sql-sa@byo-rag-prod.iam.gserviceaccount.com
+  target:
+    kind: ServiceAccount
+    name: rag-document
+
+- patch: |-
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: rag-embedding
+      namespace: rag-system
+      annotations:
+        iam.gke.io/gcp-service-account: pubsub-sa@byo-rag-prod.iam.gserviceaccount.com
+  target:
+    kind: ServiceAccount
+    name: rag-embedding
+
+- patch: |-
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: rag-core
+      namespace: rag-system
+      annotations:
+        iam.gke.io/gcp-service-account: pubsub-sa@byo-rag-prod.iam.gserviceaccount.com
+  target:
+    kind: ServiceAccount
+    name: rag-core
+
+- patch: |-
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: rag-admin
+      namespace: rag-system
+      annotations:
+        iam.gke.io/gcp-service-account: cloud-sql-sa@byo-rag-prod.iam.gserviceaccount.com
+  target:
+    kind: ServiceAccount
+    name: rag-admin
+
+commonLabels:
+  environment: prod
