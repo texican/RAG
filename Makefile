@@ -227,7 +227,8 @@ gcp-check-env:
 # Build and push images to Artifact Registry
 gcp-build: gcp-check-env
 	@echo "$(BLUE)Building and pushing images to GCP Artifact Registry...$(NC)"
-	@./scripts/gcp/07-build-and-push-images.sh --env $(ENV)
+	@echo "$(YELLOW)Note: Using current gcloud project configuration$(NC)"
+	@./scripts/gcp/07-build-and-push-images.sh
 
 # Deploy services to GKE
 gcp-deploy: gcp-check-env
