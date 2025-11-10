@@ -230,6 +230,11 @@ gcp-build: gcp-check-env
 	@echo "$(YELLOW)Note: Using current gcloud project configuration$(NC)"
 	@./scripts/gcp/07-build-and-push-images.sh
 
+# Build images using Cloud Build (recommended for GCP)
+gcp-cloud-build: gcp-check-env
+	@echo "$(BLUE)Building images using Google Cloud Build...$(NC)"
+	@./scripts/gcp/07a-cloud-build-images.sh --env $(ENV)
+
 # Deploy services to GKE
 gcp-deploy: gcp-check-env
 	@echo "$(BLUE)Deploying services to GKE...$(NC)"

@@ -1,0 +1,238 @@
+# Cloud Build configuration for RAG System
+# This file defines how to build all microservices using Cloud Build
+#
+# Benefits:
+# - Builds in cloud (correct x86 architecture automatically)
+# - Parallel builds for faster execution
+# - Integrated with Artifact Registry
+# - Built-in vulnerability scanning
+# - No local Docker required
+#
+# Usage:
+#   # Build all services
+#   gcloud builds submit --config=cloudbuild.yaml
+#
+#   # Build specific service
+#   gcloud builds submit --config=cloudbuild.yaml --substitutions=_SERVICE=rag-auth-service
+#
+# Trigger from Git:
+#   gcloud builds triggers create github \
+#     --repo-name=RAG \
+#     --repo-owner=texican \
+#     --branch-pattern="^main$" \
+#     --build-config=cloudbuild.yaml
+
+options:
+  # Use high-performance machine for faster builds
+  machineType: 'E2_HIGHCPU_8'
+  
+  # Enable Kaniko cache for faster subsequent builds
+  substitutionOption: 'ALLOW_LOOSE'
+  
+  # Increase timeout for large builds
+  timeout: '3600s'  # 1 hour
+  
+  # Use default service account with necessary permissions
+  logging: CLOUD_LOGGING_ONLY
+
+# Substitutions allow customization
+substitutions:
+  _SERVICE: 'all'  # Build all services by default
+  _VERSION: 'latest'
+  _REGION: 'us-central1'
+  _REPOSITORY: 'rag-system'
+
+# Build steps
+steps:
+  # Step 1: Build shared library (required by all services)
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'build-shared'
+    args:
+      - 'clean'
+      - 'install'
+      - '-pl'
+      - 'rag-shared'
+      - '-am'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Xmx2g'
+
+  # Step 2: Build rag-auth-service
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'build-auth'
+    waitFor: ['build-shared']
+    args:
+      - 'clean'
+      - 'package'
+      - '-pl'
+      - 'rag-auth-service'
+      - '-am'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Xmx2g'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-auth'
+    waitFor: ['build-auth']
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-auth-service:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-auth-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-auth-service:$BUILD_ID'
+      - '-f'
+      - 'rag-auth-service/Dockerfile'
+      - './rag-auth-service'
+
+  # Step 3: Build rag-document-service
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'build-document'
+    waitFor: ['build-shared']
+    args:
+      - 'clean'
+      - 'package'
+      - '-pl'
+      - 'rag-document-service'
+      - '-am'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Xmx2g'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-document'
+    waitFor: ['build-document']
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-document-service:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-document-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-document-service:$BUILD_ID'
+      - '-f'
+      - 'rag-document-service/Dockerfile'
+      - './rag-document-service'
+
+  # Step 4: Build rag-embedding-service
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'build-embedding'
+    waitFor: ['build-shared']
+    args:
+      - 'clean'
+      - 'package'
+      - '-pl'
+      - 'rag-embedding-service'
+      - '-am'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Xmx2g'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-embedding'
+    waitFor: ['build-embedding']
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-embedding-service:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-embedding-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-embedding-service:$BUILD_ID'
+      - '-f'
+      - 'rag-embedding-service/Dockerfile'
+      - './rag-embedding-service'
+
+  # Step 5: Build rag-core-service
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'build-core'
+    waitFor: ['build-shared']
+    args:
+      - 'clean'
+      - 'package'
+      - '-pl'
+      - 'rag-core-service'
+      - '-am'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Xmx2g'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-core'
+    waitFor: ['build-core']
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-core-service:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-core-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-core-service:$BUILD_ID'
+      - '-f'
+      - 'rag-core-service/Dockerfile'
+      - './rag-core-service'
+
+  # Step 6: Build rag-admin-service
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'build-admin'
+    waitFor: ['build-shared']
+    args:
+      - 'clean'
+      - 'package'
+      - '-pl'
+      - 'rag-admin-service'
+      - '-am'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Xmx2g'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-admin'
+    waitFor: ['build-admin']
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-admin-service:${_VERSION}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-admin-service:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-admin-service:$BUILD_ID'
+      - '-f'
+      - 'rag-admin-service/Dockerfile'
+      - './rag-admin-service'
+
+# Push all images to Artifact Registry
+images:
+  # rag-auth-service
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-auth-service:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-auth-service:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-auth-service:$BUILD_ID'
+  
+  # rag-document-service
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-document-service:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-document-service:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-document-service:$BUILD_ID'
+  
+  # rag-embedding-service
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-embedding-service:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-embedding-service:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-embedding-service:$BUILD_ID'
+  
+  # rag-core-service
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-core-service:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-core-service:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-core-service:$BUILD_ID'
+  
+  # rag-admin-service
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-admin-service:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-admin-service:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rag-admin-service:$BUILD_ID'
+
+# Artifacts to save (build logs, test reports, etc.)
+artifacts:
+  objects:
+    location: 'gs://${PROJECT_ID}_cloudbuild/builds'
+    paths:
+      - 'rag-*/target/*.jar'
+      - 'rag-*/target/site/**'
