@@ -24,7 +24,7 @@ spec:
       serviceAccountName: rag-core
       containers:
       - name: rag-core
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core:latest
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8084

@@ -25,7 +25,7 @@ spec:
       containers:
       # Main application container
       - name: rag-admin
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-admin:latest
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-admin-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8085

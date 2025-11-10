@@ -25,7 +25,7 @@ spec:
       containers:
       # Main application container
       - name: rag-auth
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-auth:latest
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-auth-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8081

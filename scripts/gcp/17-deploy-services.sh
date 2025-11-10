@@ -216,14 +216,14 @@ deploy_service() {
     log_info "Deploying service: $service"
     log_info "========================================="
     
-    # Check if deployment already exists
-    if kubectl get deployment "${service}-service" -n "$NAMESPACE" &> /dev/null; then
-        log_warn "Deployment ${service}-service already exists"
+    # Check if deployment already exists (deployment name is just the service name, not service-name)
+    if kubectl get deployment "${service}" -n "$NAMESPACE" &> /dev/null; then
+        log_warn "Deployment ${service} already exists"
         
         # Check if it's healthy
-        local ready_replicas=$(kubectl get deployment "${service}-service" -n "$NAMESPACE" \
+        local ready_replicas=$(kubectl get deployment "${service}" -n "$NAMESPACE" \
             -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
-        local desired_replicas=$(kubectl get deployment "${service}-service" -n "$NAMESPACE" \
+        local desired_replicas=$(kubectl get deployment "${service}" -n "$NAMESPACE" \
             -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
         
         if [[ "$ready_replicas" == "$desired_replicas" ]] && [[ "$desired_replicas" != "0" ]]; then
@@ -253,7 +253,7 @@ deploy_service() {
     # Wait for rollout to complete
     log_info "Waiting for deployment rollout to complete..."
     
-    if ! kubectl rollout status deployment "${service}-service" \
+    if ! kubectl rollout status deployment "${service}" \
         -n "$NAMESPACE" \
         --timeout="${DEPLOYMENT_TIMEOUT}s"; then
         log_error "Deployment rollout failed for $service"
@@ -261,7 +261,7 @@ deploy_service() {
         # Show recent events
         log_error "Recent events:"
         kubectl get events -n "$NAMESPACE" \
-            --field-selector involvedObject.name="${service}-service" \
+            --field-selector involvedObject.name="${service}" \
             --sort-by='.lastTimestamp' \
             | tail -n 20
         

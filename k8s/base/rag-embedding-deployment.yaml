@@ -24,7 +24,7 @@ spec:
       serviceAccountName: rag-embedding
       containers:
       - name: rag-embedding
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-embedding:latest
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-embedding-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8083

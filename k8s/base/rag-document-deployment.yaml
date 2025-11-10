@@ -25,7 +25,7 @@ spec:
       containers:
       # Main application container
       - name: rag-document
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-document:latest
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-document-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8082
