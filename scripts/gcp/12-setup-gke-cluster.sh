@@ -259,10 +259,37 @@ log_info "Executing cluster creation (this may take 5-10 minutes)..."
 log_success "GKE cluster created successfully"
 
 ################################################################################
-# Step 5: Get Cluster Credentials
+# Step 5: Configure Master Authorized Networks (for dev)
 ################################################################################
 
-log_info "Step 5: Getting cluster credentials..."
+if [[ "$ENVIRONMENT" != "prod" ]]; then
+    log_info "Step 5: Configuring master authorized networks for dev access..."
+    
+    # Get current public IP
+    MY_IP=$(curl -s https://api.ipify.org)
+    
+    if [[ -n "$MY_IP" ]]; then
+        log_info "Adding your IP ($MY_IP) to authorized networks..."
+        
+        gcloud container clusters update "$CLUSTER_NAME" \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --enable-master-authorized-networks \
+            --master-authorized-networks="${MY_IP}/32" \
+            --quiet
+        
+        log_success "Master authorized networks configured"
+    else
+        log_warn "Could not determine public IP. You may need to manually authorize your IP:"
+        log_warn "  gcloud container clusters update $CLUSTER_NAME --region=$REGION --enable-master-authorized-networks --master-authorized-networks=<YOUR_IP>/32"
+    fi
+fi
+
+################################################################################
+# Step 6: Get Cluster Credentials
+################################################################################
+
+log_info "Step 6: Getting cluster credentials..."
 
 gcloud container clusters get-credentials "$CLUSTER_NAME" \
     --region="$REGION" \
@@ -271,10 +298,10 @@ gcloud container clusters get-credentials "$CLUSTER_NAME" \
 log_success "Cluster credentials configured for kubectl"
 
 ################################################################################
-# Step 6: Delete Default Node Pool
+# Step 7: Delete Default Node Pool
 ################################################################################
 
-log_info "Step 6: Deleting default node pool..."
+log_info "Step 7: Deleting default node pool..."
 
 # Wait a bit for cluster to stabilize
 sleep 10
@@ -288,10 +315,10 @@ gcloud container node-pools delete default-pool \
 log_success "Default node pool deleted"
 
 ################################################################################
-# Step 7: Create System Node Pool
+# Step 8: Create System Node Pool
 ################################################################################
 
-log_info "Step 7: Creating system node pool for cluster components..."
+log_info "Step 8: Creating system node pool for cluster components..."
 
 gcloud container node-pools create "system-pool" \
     --cluster="$CLUSTER_NAME" \
@@ -316,10 +343,10 @@ gcloud container node-pools create "system-pool" \
 log_success "System node pool created"
 
 ################################################################################
-# Step 8: Create Workload Node Pool
+# Step 9: Create Workload Node Pool
 ################################################################################
 
-log_info "Step 8: Creating workload node pool for application services..."
+log_info "Step 9: Creating workload node pool for application services..."
 
 # Use pd-ssd for prod, pd-standard for dev to stay within quota limits
 if [[ "$ENVIRONMENT" == "prod" ]]; then
@@ -354,10 +381,10 @@ gcloud container node-pools create "workload-pool" \
 log_success "Workload node pool created"
 
 ################################################################################
-# Step 9: Configure Cluster Autoscaling
+# Step 10: Configure Cluster Autoscaling
 ################################################################################
 
-log_info "Step 9: Configuring cluster autoscaling..."
+log_info "Step 10: Configuring cluster autoscaling..."
 
 gcloud container clusters update "$CLUSTER_NAME" \
     --region="$REGION" \
@@ -370,10 +397,10 @@ gcloud container clusters update "$CLUSTER_NAME" \
 log_success "Cluster autoscaling configured"
 
 ################################################################################
-# Step 10: Install Cluster Add-ons
+# Step 11: Install Cluster Add-ons
 ################################################################################
 
-log_info "Step 10: Installing cluster add-ons..."
+log_info "Step 11: Installing cluster add-ons..."
 
 # Create namespace for system components
 kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
