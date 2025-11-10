@@ -64,6 +64,8 @@ if [[ "$ENVIRONMENT" == "--prod" ]]; then
     CLUSTER_NAME="rag-gke-prod"
     CLUSTER_TYPE="regional"
     ZONES="us-central1-a,us-central1-b,us-central1-c"
+    LOCATION_FLAG="--region"
+    LOCATION_VALUE="$REGION"
     SYSTEM_POOL_MIN=1
     SYSTEM_POOL_MAX=3
     WORKLOAD_POOL_MIN=3
@@ -72,9 +74,12 @@ if [[ "$ENVIRONMENT" == "--prod" ]]; then
     WORKLOAD_MACHINE_TYPE="n1-standard-4"
     ENABLE_BACKUP=true
 else
+    # Dev uses regional cluster but minimal configuration for cost savings
     CLUSTER_NAME="rag-gke-dev"
-    CLUSTER_TYPE="zonal"
-    ZONES="us-central1-a"
+    CLUSTER_TYPE="regional"
+    ZONES="us-central1-a"  # Single zone for dev cost savings
+    LOCATION_FLAG="--region"
+    LOCATION_VALUE="$REGION"
     SYSTEM_POOL_MIN=1
     SYSTEM_POOL_MAX=2
     WORKLOAD_POOL_MIN=2
@@ -242,11 +247,6 @@ GKE_CREATE_CMD=(
     --logging=SYSTEM,WORKLOAD
     --monitoring=SYSTEM
 )
-
-# Add zonal configuration for dev
-if [[ "$CLUSTER_TYPE" == "zonal" ]]; then
-    GKE_CREATE_CMD+=(--zone="${ZONES}")
-fi
 
 # Execute cluster creation
 log_info "Executing cluster creation (this may take 5-10 minutes)..."
