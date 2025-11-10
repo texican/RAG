@@ -1,0 +1,186 @@
+# VolumeSnapshot configuration for automated backups of RAG persistent volumes
+# 
+# Provides:
+# - Daily snapshots of document-storage-pvc
+# - 7-day retention for dev, 30-day for prod
+# - Automatic snapshot scheduling via CronJob
+
+---
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: rag-snapshot-class
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: rag-system
+  annotations:
+    snapshot.storage.kubernetes.io/is-default-class: "true"
+driver: pd.csi.storage.gke.io
+deletionPolicy: Retain  # Keep snapshots after VolumeSnapshot object is deleted
+parameters:
+  storage-locations: us-central1  # Store snapshots in same region as disk
+
+---
+# Manual VolumeSnapshot template (for on-demand backups)
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: document-storage-snapshot
+  namespace: rag-system
+  labels:
+    app: rag-document
+    app.kubernetes.io/name: rag-document
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: rag-system
+spec:
+  volumeSnapshotClassName: rag-snapshot-class
+  source:
+    persistentVolumeClaimName: document-storage-pvc
+
+---
+# ServiceAccount for snapshot CronJob
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: snapshot-scheduler
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: rag-system
+
+---
+# Role for creating snapshots
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: snapshot-creator
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: rag-system
+rules:
+- apiGroups: ["snapshot.storage.k8s.io"]
+  resources: ["volumesnapshots"]
+  verbs: ["create", "get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list"]
+
+---
+# RoleBinding for snapshot ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: snapshot-scheduler-binding
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: rag-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: snapshot-creator
+subjects:
+- kind: ServiceAccount
+  name: snapshot-scheduler
+  namespace: rag-system
+
+---
+# CronJob for daily snapshots (runs at 2 AM UTC)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: snapshot-document-storage
+  namespace: rag-system
+  labels:
+    app: rag-document
+    app.kubernetes.io/name: rag-document
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: rag-system
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  concurrencyPolicy: Forbid  # Don't run multiple jobs concurrently
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: snapshot-job
+        spec:
+          serviceAccountName: snapshot-scheduler
+          restartPolicy: OnFailure
+          containers:
+          - name: snapshot-creator
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              
+              SNAPSHOT_NAME="document-storage-$(date +%Y%m%d-%H%M%S)"
+              NAMESPACE="rag-system"
+              PVC_NAME="document-storage-pvc"
+              RETENTION_DAYS="${SNAPSHOT_RETENTION_DAYS:-7}"
+              
+              echo "Creating snapshot: $SNAPSHOT_NAME"
+              
+              # Create VolumeSnapshot
+              cat <<EOF | kubectl apply -f -
+              apiVersion: snapshot.storage.k8s.io/v1
+              kind: VolumeSnapshot
+              metadata:
+                name: $SNAPSHOT_NAME
+                namespace: $NAMESPACE
+                labels:
+                  app: rag-document
+                  automated: "true"
+                  created-by: cronjob
+              spec:
+                volumeSnapshotClassName: rag-snapshot-class
+                source:
+                  persistentVolumeClaimName: $PVC_NAME
+              EOF
+              
+              echo "Snapshot created: $SNAPSHOT_NAME"
+              
+              # Wait for snapshot to be ready
+              echo "Waiting for snapshot to be ready..."
+              kubectl wait --for=jsonpath='{.status.readyToUse}'=true \
+                volumesnapshot/$SNAPSHOT_NAME \
+                -n $NAMESPACE \
+                --timeout=300s
+              
+              echo "Snapshot ready: $SNAPSHOT_NAME"
+              
+              # Clean up old snapshots
+              echo "Cleaning up snapshots older than $RETENTION_DAYS days..."
+              CUTOFF_DATE=$(date -u -d "$RETENTION_DAYS days ago" +%Y%m%d 2>/dev/null || date -u -v-${RETENTION_DAYS}d +%Y%m%d)
+              
+              kubectl get volumesnapshots -n $NAMESPACE \
+                -l automated=true \
+                -o json | \
+              jq -r ".items[] | select(.metadata.name | split(\"-\")[2] < \"$CUTOFF_DATE\") | .metadata.name" | \
+              while read old_snapshot; do
+                echo "Deleting old snapshot: $old_snapshot"
+                kubectl delete volumesnapshot $old_snapshot -n $NAMESPACE || true
+              done
+              
+              echo "Snapshot job complete"
+            env:
+            - name: SNAPSHOT_RETENTION_DAYS
+              value: "7"  # Override in prod overlay
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "100m"
+              limits:
+                memory: "128Mi"
+                cpu: "200m"

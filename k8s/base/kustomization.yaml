@@ -7,6 +7,8 @@ resources:
 - namespace.yaml
 - serviceaccounts.yaml
 - configmap.yaml
+- storageclass.yaml
+- volumesnapshot.yaml
 - rag-auth-deployment.yaml
 - rag-document-deployment.yaml
 - rag-embedding-deployment.yaml

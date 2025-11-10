@@ -145,5 +145,26 @@ patches:
     kind: ServiceAccount
     name: rag-admin
 
+# Longer snapshot retention for prod (30 days)
+- patch: |-
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: snapshot-document-storage
+      namespace: rag-system
+    spec:
+      jobTemplate:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: snapshot-creator
+                env:
+                - name: SNAPSHOT_RETENTION_DAYS
+                  value: "30"
+  target:
+    kind: CronJob
+    name: snapshot-document-storage
+
 commonLabels:
   environment: prod
