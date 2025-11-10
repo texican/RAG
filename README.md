@@ -246,20 +246,20 @@ curl -X GET http://localhost:8085/admin/api/tenants \
 
 ## 📊 Development Status
 
-### Current Status: Production-Ready RAG System ✅
+### Current Status: Production-Ready RAG System with GCP Deployment ✅
 
-All 6 microservices operational with comprehensive testing, API documentation, and Docker deployment.
+All 6 microservices operational with comprehensive testing, API documentation, Docker deployment, and **GCP cloud deployment ready**.
 
 ### Services Overview
-| Service | Status | Tests | API Docs | Docker |
-|---------|--------|-------|----------|--------|
-| **rag-shared** | ✅ Complete | ✅ Unit Tests | N/A | ✅ Library |
-| **rag-auth-service** | ✅ Complete | ✅ 71/71 | ✅ Swagger UI | ✅ Production |
-| **rag-document-service** | ✅ Complete | ✅ 103/103 | ✅ Swagger UI | ✅ Production |
-| **rag-embedding-service** | ✅ Complete | ✅ 77/77 | ✅ Swagger UI | ✅ Production |
-| **rag-admin-service** | ✅ Complete | ✅ 58/58 | ✅ Swagger UI | ✅ Production |
-| **rag-core-service** | ✅ Complete | ✅ 100% | ✅ Swagger UI | ✅ Production |
-| ~~rag-gateway~~ | 📦 Archived | N/A | N/A | 📦 Bypassed |
+| Service | Status | Tests | API Docs | Docker | GCP |
+|---------|--------|-------|----------|--------|-----|
+| **rag-shared** | ✅ Complete | ✅ Unit Tests | N/A | ✅ Library | N/A |
+| **rag-auth-service** | ✅ Complete | ✅ 71/71 | ✅ Swagger UI | ✅ Production | ✅ Ready |
+| **rag-document-service** | ✅ Complete | ✅ 103/103 | ✅ Swagger UI | ✅ Production | ✅ Ready |
+| **rag-embedding-service** | ✅ Complete | ✅ 77/77 | ✅ Swagger UI | ✅ Production | ✅ Ready |
+| **rag-admin-service** | ✅ Complete | ✅ 58/58 | ✅ Swagger UI | ✅ Production | ✅ Ready |
+| **rag-core-service** | ✅ Complete | ✅ 100% | ✅ Swagger UI | ✅ Production | ✅ Ready |
+| ~~rag-gateway~~ | 📦 Archived | N/A | N/A | 📦 Bypassed | N/A |
 
 ### System Capabilities
 - ✅ **Multi-tenant Architecture**: Complete data isolation with JWT authentication
@@ -269,7 +269,8 @@ All 6 microservices operational with comprehensive testing, API documentation, a
 - ✅ **Admin Operations**: Tenant management, user administration, analytics
 - ✅ **Testing**: 309+ passing tests across all services
 - ✅ **Documentation**: Interactive Swagger UI for all endpoints
-- ✅ **Deployment**: Docker Compose with health monitoring
+- ✅ **Local Deployment**: Docker Compose with health monitoring
+- ✅ **Cloud Deployment**: GCP with GKE, Cloud SQL, Memorystore, Artifact Registry
 
 ## 🛠️ Developer Reference
 
@@ -495,27 +496,34 @@ docker-compose logs testcontainers
 
 ## 🎯 Roadmap
 
-**🚀 All Core Services Complete! Focus on System Integration:**
+**🚀 All Core Services Complete! GCP Deployment Infrastructure Ready!**
 
-### 1. **High Priority**: System Integration & Testing
+### 1. **High Priority**: GCP Cloud Deployment ✅ **COMPLETE**
+- ✅ **GCP Project Setup**: Project `byo-rag-dev` configured
+- ✅ **Secret Management**: Google Secret Manager with credentials
+- ✅ **Container Registry**: Artifact Registry with all service images
+- ✅ **Cloud SQL**: PostgreSQL 15 with pgvector extension
+- ✅ **Cloud Memorystore**: Redis Standard HA tier
+- ✅ **GKE Cluster**: Kubernetes Engine cluster (currently stopped)
+- ✅ **Kubernetes Manifests**: Complete K8s deployment configs with Kustomize
+- ✅ **Persistent Storage**: GCS buckets and PVCs configured
+- ✅ **Deployment Automation**: Scripts for service deployment and validation
+
+### 2. **Medium Priority**: System Integration & Testing
 - ✅ **Docker orchestration**: All services running in containers
 - ✅ **AUTH-TEST-001**: Complete authentication service unit testing
 - ✅ **EMBEDDING-TEST-003**: Complete embedding service advanced testing
 - 🔄 **End-to-end testing**: Complete RAG pipeline validation
 - 🔄 **Load testing**: Performance testing under concurrent load
-- 🔄 **API documentation**: Generate comprehensive OpenAPI/Swagger docs
+- ✅ **API documentation**: Comprehensive Swagger UI for all services
 
-### 2. **Medium Priority**: Production Deployment
-- 🔄 **Kubernetes deployment**: Helm charts and production orchestration
+### 3. **Lower Priority**: Production Features
+- 🔄 **Ingress & Load Balancer**: External access configuration
 - 🔄 **CI/CD pipeline**: Automated testing and deployment
 - 🔄 **Security hardening**: Advanced security features and audit logging
 - 🔄 **Performance optimization**: Database indexing and query optimization
-
-### 3. **Lower Priority**: Advanced Features
-- 🔄 **Redis Search integration**: Advanced vector search features
-- 🔄 **Advanced analytics**: Real-time usage dashboards and reporting
+- 🔄 **Monitoring & Alerting**: Cloud Monitoring dashboards and alerts
 - 🔄 **Multi-model support**: Additional embedding and LLM model integrations
-- 🔄 **Advanced caching**: Distributed caching strategies
 
 ## 📚 Documentation
 
@@ -524,9 +532,11 @@ The project documentation is organized into the following categories:
 ### 🚀 Deployment & Infrastructure
 - **[docs/deployment/DEPLOYMENT.md](docs/deployment/DEPLOYMENT.md)** - Quick deployment guide and setup instructions
 - **[docs/deployment/DOCKER.md](docs/deployment/DOCKER.md)** - Complete Docker setup and management guide
+- **[k8s/README.md](k8s/README.md)** - Kubernetes deployment guide for GCP GKE
+- **[scripts/gcp/](scripts/gcp/)** - Complete GCP deployment automation scripts
 
 ### 🛠️ Development & Testing
-- **[docs/development/CLAUDE.md](docs/development/CLAUDE.md)** - Detailed project status and technical context
+- **[CLAUDE.md](CLAUDE.md)** - Detailed project status and technical context
 - **[docs/development/METHODOLOGY.md](docs/development/METHODOLOGY.md)** - Development methodology and completed stories management process
 - **[docs/development/TESTING_BEST_PRACTICES.md](docs/development/TESTING_BEST_PRACTICES.md)** - Comprehensive testing guidelines and standards
 - **[docs/development/DOCKER_BEST_PRACTICES.md](docs/development/DOCKER_BEST_PRACTICES.md)** - Docker image optimization, Spring Boot configuration, and security best practices
@@ -534,6 +544,7 @@ The project documentation is organized into the following categories:
 - **[docs/development/KAFKA_ERROR_HANDLING.md](docs/development/KAFKA_ERROR_HANDLING.md)** - Comprehensive Kafka error handling implementation guide
 
 ### 📋 Project Management
+- **[BACKLOG.md](BACKLOG.md)** - Active task backlog with GCP deployment tasks
 - **[docs/project-management/PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md)** - Active task backlog (pending stories only)
 - **[docs/project-management/COMPLETED_STORIES.md](docs/project-management/COMPLETED_STORIES.md)** - Completed stories archive with business impact summaries
 - **[docs/project-management/DOCKER-001-SUMMARY.md](docs/project-management/DOCKER-001-SUMMARY.md)** - Docker integration milestone completion details
@@ -552,35 +563,104 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **🔥 Ready to contribute?** Check out our [Contributing Guidelines](#contributing) and start building the future of enterprise RAG systems!
 
-## GCP Artifact Registry: Container Images
+## ☁️ GCP Cloud Deployment
 
-All RAG service images are published to Google Artifact Registry with vulnerability scanning enabled.
+The BYO RAG System is fully configured for deployment on Google Cloud Platform with enterprise-grade infrastructure.
 
-**Registry:**
-`us-central1-docker.pkg.dev/byo-rag-dev/rag-system`
+### Infrastructure Overview
 
-**Images:**
-- rag-core-service
-- rag-auth-service
-- rag-admin-service
-- rag-document-service
-- rag-embedding-service
+**Project:** `byo-rag-dev` (Development Environment)
 
-**Tags:**
-- `0.8.0` (version)
-- `latest`
-- `<git-sha>`
-- `0.8.0-<git-sha>`
+| Component | Service | Status | Configuration |
+|-----------|---------|--------|---------------|
+| **Compute** | Google Kubernetes Engine | ✅ Ready | `rag-gke-dev` cluster, us-central1 |
+| **Database** | Cloud SQL PostgreSQL 15 | ✅ Running | `rag-postgres` with pgvector |
+| **Cache** | Cloud Memorystore Redis | ✅ Running | `rag-redis` Standard HA tier |
+| **Storage** | Cloud Storage | ✅ Ready | Document and backup buckets |
+| **Registry** | Artifact Registry | ✅ Active | `rag-system` repository |
+| **Secrets** | Secret Manager | ✅ Configured | Database, Redis, JWT credentials |
+| **Messaging** | Cloud Pub/Sub | 🔄 Planned | Migration from Kafka |
+
+### Container Images
+
+All service images are published to Google Artifact Registry:
+
+**Registry URL:**
+```
+us-central1-docker.pkg.dev/byo-rag-dev/rag-system
+```
+
+**Available Images:**
+- `rag-auth-service:0.8.0`
+- `rag-document-service:0.8.0`
+- `rag-embedding-service:0.8.0`
+- `rag-core-service:0.8.0`
+- `rag-admin-service:0.8.0`
 
 **Pull Example:**
-```sh
+```bash
 docker pull us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:0.8.0
 ```
 
-**Kubernetes Example:**
-```yaml
-image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:0.8.0
+**Tags:** `0.8.0`, `latest`, `<git-sha>`, `0.8.0-<git-sha>`
+
+### Deployment Scripts
+
+Complete automation for GCP deployment:
+
+```bash
+# Setup scripts (scripts/gcp/)
+./00-setup-project.sh          # Initialize GCP project
+./01-setup-network.sh          # Configure VPC and networking
+./02-setup-service-accounts.sh # Create GCP service accounts
+./04-migrate-secrets.sh        # Migrate to Secret Manager
+./07-build-and-push-images.sh  # Build and push to Artifact Registry
+./08-setup-cloud-sql.sh        # Provision Cloud SQL
+./09-enable-pgvector.sh        # Enable pgvector extension
+./10-setup-memorystore.sh      # Provision Cloud Memorystore
+./12-setup-gke-cluster.sh      # Create GKE cluster
+./13-sync-secrets-to-k8s.sh    # Sync secrets to Kubernetes
+./14-setup-storage.sh          # Configure Cloud Storage
+./16-setup-ingress.sh          # Configure ingress and load balancing
+./17-deploy-services.sh        # Deploy services to GKE
+./18-init-database.sh          # Initialize database schema
+./19-validate-deployment.sh    # Validate deployment health
 ```
 
-**Console:**
-https://console.cloud.google.com/artifacts/docker/byo-rag-dev/us-central1/rag-system
+### Kubernetes Deployment
+
+Kubernetes manifests with Kustomize overlays for dev/prod:
+
+```bash
+# Deploy to development
+kubectl apply -k k8s/overlays/dev
+
+# Deploy to production
+kubectl apply -k k8s/overlays/prod
+```
+
+See [k8s/README.md](k8s/README.md) for detailed Kubernetes deployment documentation.
+
+### Infrastructure Costs (Estimated)
+
+**Development Environment:**
+- GKE Cluster (n1-standard-2, 3 nodes): ~$150/month
+- Cloud SQL (db-custom-2-7680): ~$120/month
+- Cloud Memorystore Redis (Standard, 5GB): ~$80/month
+- Artifact Registry: ~$5/month (storage only)
+- Cloud Storage: ~$5/month (minimal usage)
+
+**Total:** ~$360/month for development environment
+
+**Note:** Costs can be reduced by:
+- Stopping GKE cluster when not in use
+- Using smaller Cloud SQL instances
+- Switching to Basic tier Redis for development
+
+### GCP Console Links
+
+- **Project Dashboard:** https://console.cloud.google.com/home/dashboard?project=byo-rag-dev
+- **Artifact Registry:** https://console.cloud.google.com/artifacts/docker/byo-rag-dev/us-central1/rag-system
+- **GKE Clusters:** https://console.cloud.google.com/kubernetes/list?project=byo-rag-dev
+- **Cloud SQL:** https://console.cloud.google.com/sql/instances?project=byo-rag-dev
+- **Secret Manager:** https://console.cloud.google.com/security/secret-manager?project=byo-rag-dev
