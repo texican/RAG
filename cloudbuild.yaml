@@ -29,11 +29,11 @@ options:
   # Enable Kaniko cache for faster subsequent builds
   substitutionOption: 'ALLOW_LOOSE'
   
-  # Increase timeout for large builds
-  timeout: '3600s'  # 1 hour
-  
   # Use default service account with necessary permissions
   logging: CLOUD_LOGGING_ONLY
+
+# Increase timeout for large builds
+timeout: '3600s'  # 1 hour
 
 # Substitutions allow customization
 substitutions:
