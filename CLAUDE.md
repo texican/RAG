@@ -1,12 +1,12 @@
 # Claude Context - RAG Project Current State
 
-Last Updated: 2025-11-09 (Session: GCP-GKE-007 Complete)
+Last Updated: 2025-11-09 (Session: GCP-K8S-008 Complete)
 
 ## 🚨 CURRENT PRIORITY: GCP DEPLOYMENT
 
 **Objective:** Deploy BYO RAG System to Google Cloud Platform (GCP)
 
-**Status:** GCP-GKE-007 complete, GCP-K8S-008 next
+**Status:** GCP-K8S-008 complete, GCP-STORAGE-009 next
 
 **Timeline:** 2-3 weeks estimated
 
@@ -18,8 +18,8 @@ Last Updated: 2025-11-09 (Session: GCP-GKE-007 Complete)
 5. GCP-REDIS-005: Cloud Memorystore Redis (8 pts) - ✅ COMPLETE
 6. GCP-KAFKA-006: Kafka/Pub-Sub Migration (13 pts) - ✅ COMPLETE (Planning)
 7. GCP-GKE-007: GKE Cluster (13 pts) - ✅ COMPLETE
-8. GCP-K8S-008: Kubernetes Manifests (13 pts) - **NEXT PRIORITY**
-9. GCP-STORAGE-009: Persistent Storage (5 pts)
+8. GCP-K8S-008: Kubernetes Manifests (13 pts) - ✅ COMPLETE
+9. GCP-STORAGE-009: Persistent Storage (5 pts) - **NEXT PRIORITY**
 10. GCP-INGRESS-010: Ingress & Load Balancer (8 pts)
 11. GCP-DEPLOY-011: Initial Deployment (8 pts)
 
@@ -30,6 +30,311 @@ See [PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md) for detaile
 ---
 
 ## Recent Session Summary
+
+### Session 12: GCP-K8S-008 Execution ✅ COMPLETE (2025-11-09)
+
+**Objective:** Create comprehensive Kubernetes manifests for deploying RAG microservices to GKE with production-ready configurations.
+
+**What Was Done:**
+
+#### 1. Kubernetes Directory Structure ✅
+**Created:** Complete `k8s/` directory with base manifests and environment overlays
+
+**Directory Structure:**
+```
+k8s/
+├── README.md                    # Complete deployment guide
+├── base/                        # Base Kubernetes manifests
+│   ├── namespace.yaml           # rag-system namespace
+│   ├── configmap.yaml           # GCP resource configuration
+│   ├── serviceaccounts.yaml     # 5 service accounts with Workload Identity
+│   ├── rag-auth-deployment.yaml
+│   ├── rag-document-deployment.yaml
+│   ├── rag-embedding-deployment.yaml
+│   ├── rag-core-deployment.yaml
+│   ├── rag-admin-deployment.yaml
+│   ├── hpa.yaml                 # Horizontal Pod Autoscalers
+│   ├── secrets-template.yaml   # Secret templates (not applied)
+│   └── kustomization.yaml       # Base kustomize config
+├── overlays/
+│   ├── dev/
+│   │   └── kustomization.yaml   # Dev patches (1 replica, lower resources)
+│   └── prod/
+│       └── kustomization.yaml   # Prod patches (3 replicas, full resources)
+scripts/gcp/
+└── 13-sync-secrets-to-k8s.sh   # Secret Manager → K8s sync script
+```
+
+#### 2. Service Deployments with Cloud SQL Proxy ✅
+
+**Auth Service (`rag-auth-deployment.yaml`):**
+- **Replicas:** 2 (base)
+- **Resources:** 512Mi-1Gi RAM, 250m-500m CPU
+- **Cloud SQL Proxy:** Sidecar for `rag-postgres` database access
+- **Health Checks:** Liveness/readiness on `/actuator/health`
+- **Workload Identity:** `rag-auth` → `cloud-sql-sa@byo-rag-dev.iam.gserviceaccount.com`
+
+**Document Service (`rag-document-deployment.yaml`):**
+- **Replicas:** 2 (base)
+- **Resources:** 1Gi-2Gi RAM, 500m-1000m CPU
+- **Cloud SQL Proxy:** Sidecar for document database
+- **Persistent Storage:** 100Gi PVC (`standard-rwo`)
+- **Volume Mount:** `/app/storage` for document files
+- **Environment:** Kafka placeholder for future Pub/Sub migration
+
+**Embedding Service (`rag-embedding-deployment.yaml`):**
+- **Replicas:** 2 (base)
+- **Resources:** 2Gi-4Gi RAM (highest allocation), 1000m-2000m CPU
+- **Redis:** Database 2 for vector cache
+- **No Cloud SQL:** Direct embedding generation service
+- **Environment:** Kafka placeholder for Pub/Sub migration
+
+**Core Service (`rag-core-deployment.yaml`):**
+- **Replicas:** 2 (base)
+- **Resources:** 1Gi-2Gi RAM, 500m-1000m CPU
+- **Redis:** Database 1 for query cache
+- **Service Mesh:** Connects to embedding service via ConfigMap URL
+- **Environment:** Kafka placeholder for Pub/Sub migration
+
+**Admin Service (`rag-admin-deployment.yaml`):**
+- **Replicas:** 1 (base) - Lower traffic service
+- **Resources:** 512Mi-1Gi RAM, 250m-500m CPU
+- **Cloud SQL Proxy:** Sidecar for admin database
+- **Context Path:** `/admin/api`
+
+#### 3. Workload Identity Configuration ✅
+
+**Service Account Mappings:**
+| Kubernetes SA | GCP SA | IAM Role | Purpose |
+|--------------|--------|----------|---------|
+| `rag-auth` | `cloud-sql-sa` | Cloud SQL Client | PostgreSQL access |
+| `rag-document` | `cloud-sql-sa` | Cloud SQL Client, Storage Admin | DB + Cloud Storage |
+| `rag-embedding` | `pubsub-sa` | Pub/Sub Publisher/Subscriber | Async messaging |
+| `rag-core` | `pubsub-sa` | Pub/Sub Publisher/Subscriber | Query processing |
+| `rag-admin` | `cloud-sql-sa` | Cloud SQL Client | Admin database |
+
+**Annotation Pattern:**
+```yaml
+metadata:
+  annotations:
+    iam.gke.io/gcp-service-account: cloud-sql-sa@byo-rag-dev.iam.gserviceaccount.com
+```
+
+#### 4. Horizontal Pod Autoscaling ✅
+
+**HPA Configuration (`hpa.yaml`):**
+
+| Service | Min Pods | Max Pods | CPU Target | Memory Target | Scale-up | Scale-down |
+|---------|----------|----------|------------|---------------|----------|------------|
+| rag-auth | 2 | 5 | 70% | 80% | 100% every 30s | 50% after 5min |
+| rag-document | 2 | 6 | 70% | 80% | 100% every 30s | 50% after 5min |
+| rag-embedding | 2 | 6 | 70% | 75% | 100% every 30s | 50% after 5min |
+| rag-core | 2 | 8 | 70% | 80% | 100% every 30s | 50% after 5min |
+
+**Autoscaling Strategy:**
+- **Aggressive Scale-up:** 100% capacity increase every 30 seconds during load spikes
+- **Conservative Scale-down:** 50% reduction after 5 minute stabilization window
+- **Combined Metrics:** Both CPU and memory must breach threshold to trigger
+- **Admin Service:** No HPA (low traffic, 1 replica sufficient)
+
+#### 5. Environment Overlays with Kustomize ✅
+
+**Development Overlay (`overlays/dev/kustomization.yaml`):**
+```yaml
+patches:
+  - Replicas: 1 (all services)
+  - Resources: Reduced (256Mi-512Mi for auth)
+  - PROJECT_ID: byo-rag-dev
+  - Cloud SQL: byo-rag-dev:us-central1:rag-postgres
+  - Redis: 10.170.252.12:6379
+```
+
+**Production Overlay (`overlays/prod/kustomization.yaml`):**
+```yaml
+patches:
+  - Replicas: 3 (2 for admin)
+  - Resources: Full production allocation
+  - PROJECT_ID: byo-rag-prod
+  - Cloud SQL: byo-rag-prod:us-central1:rag-postgres-prod
+  - Service Account Annotations: Prod GCP SAs
+```
+
+#### 6. ConfigMap for GCP Resources ✅
+
+**ConfigMap (`configmap.yaml`):**
+```yaml
+data:
+  # GCP Project
+  PROJECT_ID: "byo-rag-dev"
+  REGION: "us-central1"
+  
+  # Cloud SQL
+  CLOUD_SQL_INSTANCE_CONNECTION_NAME: "byo-rag-dev:us-central1:rag-postgres"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/rag_enterprise"
+  
+  # Redis
+  REDIS_HOST: "10.170.252.12"
+  REDIS_PORT: "6379"
+  
+  # Artifact Registry
+  ARTIFACT_REGISTRY: "us-central1-docker.pkg.dev/byo-rag-dev/rag-system"
+  
+  # Service URLs
+  RAG_AUTH_SERVICE_URL: "http://rag-auth:8080"
+  RAG_DOCUMENT_SERVICE_URL: "http://rag-document:8080"
+  RAG_EMBEDDING_SERVICE_URL: "http://rag-embedding:8080"
+  RAG_CORE_SERVICE_URL: "http://rag-core:8080"
+  RAG_ADMIN_SERVICE_URL: "http://rag-admin:8080"
+```
+
+#### 7. Secret Management Strategy ✅
+
+**Secret Manager Sync Script (`13-sync-secrets-to-k8s.sh`):**
+```bash
+# Retrieves secrets from GCP Secret Manager:
+- cloud-sql-credentials (username, password)
+- redis-credentials (password)
+- jwt-secret
+
+# Creates Kubernetes secrets:
+kubectl create secret generic cloud-sql-credentials \
+  --from-literal=username=rag_user \
+  --from-literal=password=$CLOUDSQL_PASSWORD
+
+kubectl create secret generic redis-credentials \
+  --from-literal=password=$REDIS_PASSWORD
+
+kubectl create secret generic jwt-secret \
+  --from-literal=secret=$JWT_SECRET
+```
+
+**Secret Template (`secrets-template.yaml`):**
+- NOT applied directly (placeholders only)
+- Use sync script to create secrets from Secret Manager
+- Production approach: Secret Manager CSI Driver (future enhancement)
+
+#### 8. Persistent Storage Configuration ✅
+
+**Document Storage PVC:**
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: document-storage-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce        # Single pod access
+  storageClassName: standard-rwo  # Regional SSD
+  resources:
+    requests:
+      storage: 100Gi       # 100 GB capacity
+```
+
+**Mount in Document Deployment:**
+```yaml
+volumeMounts:
+  - name: document-storage
+    mountPath: /app/storage
+```
+
+#### 9. Security Configuration ✅
+
+**Pod Security Context:**
+```yaml
+securityContext:
+  runAsNonRoot: true        # Prevent root execution
+  runAsUser: 1000           # Specific UID
+  fsGroup: 1000             # File system group
+  seccompProfile:
+    type: RuntimeDefault    # Seccomp filtering
+
+containers:
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL               # Drop all Linux capabilities
+    readOnlyRootFilesystem: false  # Spring Boot needs writable /tmp
+```
+
+#### 10. Comprehensive Documentation ✅
+
+**Created:** `k8s/README.md` (300+ lines)
+
+**Contents:**
+- **Directory Structure:** Complete manifest organization
+- **Prerequisites:** gcloud, kubectl, GKE cluster, Workload Identity
+- **Deployment Instructions:**
+  - Development: `kubectl apply -k overlays/dev`
+  - Production: `kubectl apply -k overlays/prod`
+- **Service Architecture Table:**
+  - Port mappings, replicas, resources, dependencies
+- **Workload Identity Mappings:** K8s SA → GCP SA → IAM roles
+- **Persistent Storage:** PVC configuration and access modes
+- **HPA Configuration:** Autoscaling behavior and thresholds
+- **Secrets Management:** Secret Manager sync workflow
+- **Troubleshooting Guide:**
+  - Cloud SQL Proxy connection issues
+  - Workload Identity authentication
+  - Pod startup failures
+  - HPA not scaling
+  - PVC mounting errors
+- **Monitoring:** Kubectl commands for status checks
+- **Updates:** Rolling update strategy
+
+**Scripts Created:**
+- `scripts/gcp/13-sync-secrets-to-k8s.sh` - Secret Manager synchronization
+
+**Documentation:**
+- `k8s/README.md` - Complete Kubernetes deployment guide
+
+**Manifest Inventory:**
+- **15 files created:** 11 K8s manifests + 3 kustomization files + 1 script + 1 README
+- **Total lines:** 1847 insertions
+- **Configuration:** 5 services fully configured for GKE deployment
+
+**Key Features Implemented:**
+- ✅ Cloud SQL Proxy sidecars for database access
+- ✅ Workload Identity for pod-level GCP authentication
+- ✅ Horizontal Pod Autoscaling for production workloads
+- ✅ Environment-specific overlays (dev/prod)
+- ✅ Persistent storage for document service
+- ✅ Resource requests/limits per service
+- ✅ Health checks (liveness/readiness probes)
+- ✅ Security contexts (non-root, capabilities dropped)
+- ✅ Service mesh configuration (inter-service URLs)
+- ✅ Secret management strategy (Secret Manager sync)
+
+**Cost Estimate (GKE Workload):**
+- **Development:** ~$50-100/month (3-7 pods across services)
+- **Production:** ~$300-600/month (15-30 pods at full scale)
+- **Excludes:** GKE cluster costs ($150-1500/month from GCP-GKE-007)
+
+**Deployment Readiness:**
+- ✅ All service deployments configured
+- ✅ Cloud SQL integration ready
+- ✅ Redis configuration included
+- ✅ Workload Identity bindings defined
+- ✅ HPA autoscaling configured
+- ✅ Persistent storage allocated
+- ✅ Secrets sync automation ready
+- ⏳ Awaiting initial deployment (GCP-DEPLOY-011)
+
+**Next Steps:**
+1. Execute secrets sync script: `scripts/gcp/13-sync-secrets-to-k8s.sh`
+2. Deploy to dev environment: `kubectl apply -k k8s/overlays/dev`
+3. Verify all pods running: `kubectl get pods -n rag-system`
+4. Check Cloud SQL Proxy connections
+5. Test service-to-service communication
+6. Validate HPA metrics collection
+7. Proceed to GCP-STORAGE-009 (Cloud Storage integration)
+
+**Next Priority:** GCP-STORAGE-009 (Persistent Storage - Cloud Storage Buckets)
+
+**Story Points Completed:** 13
+**Progress:** 76/89 story points (85% complete)
+
+---
 
 ### Session 11: GCP-GKE-007 Execution ✅ COMPLETE (2025-11-09)
 
