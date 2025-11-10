@@ -226,7 +226,6 @@ GKE_CREATE_CMD=(
     --shielded-integrity-monitoring
     --enable-network-policy
     --enable-private-nodes
-    --enable-private-endpoint
     --master-ipv4-cidr="172.16.0.0/28"
     
     # Workload Identity
@@ -244,6 +243,14 @@ GKE_CREATE_CMD=(
     --logging=SYSTEM,WORKLOAD
     --monitoring=SYSTEM
 )
+
+# Add private endpoint for production only (dev needs public access for kubectl)
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+    log_info "Enabling private endpoint for production environment..."
+    GKE_CREATE_CMD+=(--enable-private-endpoint)
+else
+    log_info "Using public endpoint for $ENVIRONMENT environment..."
+fi
 
 # Execute cluster creation
 log_info "Executing cluster creation (this may take 5-10 minutes)..."
