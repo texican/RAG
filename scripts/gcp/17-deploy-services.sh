@@ -188,7 +188,8 @@ validate_images_exist() {
     local missing_images=()
     
     for service in "${SERVICES[@]}"; do
-        local image="${registry}/${service}:latest"
+        # Image names use -service suffix (e.g., rag-auth-service)
+        local image="${registry}/${service}-service:latest"
         
         if ! gcloud artifacts docker images describe "$image" &> /dev/null; then
             missing_images+=("$service")
