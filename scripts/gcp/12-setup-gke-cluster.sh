@@ -321,13 +321,24 @@ log_success "System node pool created"
 
 log_info "Step 8: Creating workload node pool for application services..."
 
+# Use pd-ssd for prod, pd-standard for dev to stay within quota limits
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+    DISK_TYPE="pd-ssd"
+    DISK_SIZE=100
+else
+    DISK_TYPE="pd-standard"
+    DISK_SIZE=50
+fi
+
+log_info "Using disk type: $DISK_TYPE with size: ${DISK_SIZE}GB"
+
 gcloud container node-pools create "workload-pool" \
     --cluster="$CLUSTER_NAME" \
     --region="$REGION" \
     --project="$PROJECT_ID" \
     --machine-type="$WORKLOAD_MACHINE_TYPE" \
-    --disk-type="pd-ssd" \
-    --disk-size=100 \
+    --disk-type="$DISK_TYPE" \
+    --disk-size="$DISK_SIZE" \
     --num-nodes="$WORKLOAD_POOL_MIN" \
     --enable-autoscaling \
     --min-nodes="$WORKLOAD_POOL_MIN" \
