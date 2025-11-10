@@ -1,12 +1,12 @@
 # Claude Context - RAG Project Current State
 
-Last Updated: 2025-11-09 (Session: GCP-STORAGE-009 Complete)
+Last Updated: 2025-11-09 (Session: GCP-INGRESS-010 Complete)
 
 ## 🚨 CURRENT PRIORITY: GCP DEPLOYMENT
 
 **Objective:** Deploy BYO RAG System to Google Cloud Platform (GCP)
 
-**Status:** GCP-STORAGE-009 complete, GCP-INGRESS-010 next
+**Status:** GCP-INGRESS-010 complete, GCP-DEPLOY-011 next (FINAL TASK)
 
 **Timeline:** 2-3 weeks estimated
 
@@ -20,8 +20,8 @@ Last Updated: 2025-11-09 (Session: GCP-STORAGE-009 Complete)
 7. GCP-GKE-007: GKE Cluster (13 pts) - ✅ COMPLETE
 8. GCP-K8S-008: Kubernetes Manifests (13 pts) - ✅ COMPLETE
 9. GCP-STORAGE-009: Persistent Storage (5 pts) - ✅ COMPLETE
-10. GCP-INGRESS-010: Ingress & Load Balancer (8 pts) - **NEXT PRIORITY**
-11. GCP-DEPLOY-011: Initial Deployment (8 pts)
+10. GCP-INGRESS-010: Ingress & Load Balancer (8 pts) - ✅ COMPLETE
+11. GCP-DEPLOY-011: Initial Deployment (8 pts) - **NEXT PRIORITY (FINAL TASK)**
 
 **Total:** 89 story points for complete GCP deployment
 
@@ -30,6 +30,185 @@ See [PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md) for detaile
 ---
 
 ## Recent Session Summary
+
+### Session 14: GCP-INGRESS-010 Execution ✅ COMPLETE (2025-11-09)
+
+**Objective:** Configure ingress, load balancer, SSL certificates, and Cloud Armor security for external HTTPS access to RAG microservices.
+
+**What Was Done:**
+
+#### 1. Backend Configuration (BackendConfig) ✅
+**Created:** `k8s/base/backendconfig.yaml`
+
+**Features:**
+- GCP load balancer backend service configuration
+- Health check configuration on Spring Boot actuator endpoints
+- Session affinity with CLIENT_IP sticky sessions
+- Connection draining for graceful shutdowns
+- Cloud Armor security policy attachment
+- Request logging at 100% sample rate
+
+**Two BackendConfig Resources:**
+
+**General Services (`rag-backend-config`)**:
+```yaml
+healthCheck:
+  requestPath: /actuator/health/liveness
+  checkIntervalSec: 10
+  timeoutSec: 5
+sessionAffinity:
+  affinityType: CLIENT_IP
+  affinityCookieTtlSec: 3600  # 1 hour
+timeoutSec: 30
+```
+
+**Admin Service (`rag-admin-backend-config`)**:
+```yaml
+healthCheck:
+  requestPath: /actuator/health/liveness
+  checkIntervalSec: 10
+  timeoutSec: 5
+sessionAffinity:
+  affinityType: CLIENT_IP
+  affinityCookieTtlSec: 7200  # 2 hours
+timeoutSec: 60
+```
+
+#### 2. Ingress Configuration with SSL ✅
+**Created:** `k8s/base/ingress.yaml`
+
+**Components:**
+
+**Certificate Resource (cert-manager)**:
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rag-tls-cert
+spec:
+  secretName: rag-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - rag.example.com
+  - api.rag.example.com
+  - admin.rag.example.com
+```
+
+**ClusterIssuers**:
+- `letsencrypt-prod`: Production Let's Encrypt (acme-v02)
+- `letsencrypt-staging`: Staging for testing (avoids rate limits)
+
+**NGINX Ingress Features**:
+- SSL redirect with TLS 1.2/1.3 only
+- Rate limiting: 100 requests/min + 10 requests/sec per IP
+- 100MB proxy body size for document uploads
+- CORS enabled for cross-origin requests
+- Security headers: X-Frame-Options, CSP, HSTS, XSS-Protection, Referrer-Policy
+
+**Path-Based Routing**:
+
+| Domain | Path | Backend Service | Port |
+|--------|------|-----------------|------|
+| `rag.example.com` | `/` | rag-core-service | 8084 |
+| `api.rag.example.com` | `/api/v1/auth` | rag-auth-service | 8081 |
+| `api.rag.example.com` | `/api/v1/documents` | rag-document-service | 8082 |
+| `api.rag.example.com` | `/api/v1/embeddings` | rag-embedding-service | 8083 |
+| `api.rag.example.com` | `/api/v1/query` | rag-core-service | 8084 |
+| `admin.rag.example.com` | `/` | rag-admin-service | 8085 |
+
+#### 3. Ingress Setup Automation Script ✅
+**Created:** `scripts/gcp/16-setup-ingress.sh`
+
+**Functions:**
+
+**validate_prerequisites**:
+- Check gcloud CLI installed and authenticated
+- Verify kubectl configured with cluster access
+- Confirm NGINX ingress controller running (from GCP-GKE-007)
+- Confirm cert-manager installed (from GCP-GKE-007)
+
+**reserve_static_ip**:
+- Create global static IP address for load balancer
+- Naming: `rag-ingress-ip-{env}` (e.g., rag-ingress-ip-dev)
+- Idempotent: Skip if IP already exists
+
+**setup_cloud_dns**:
+- Create Cloud DNS managed zone
+- Add A records for 3 domains (main, api, admin)
+- Display nameservers for domain registrar configuration
+- Optional: Skip with `--skip-dns` flag
+
+**setup_cloud_armor**:
+- Create security policy with WAF rules:
+  * **Rule 1000**: Block SQL injection (sqli-stable preconfigured rule)
+  * **Rule 1001**: Block XSS attacks (xss-stable preconfigured rule)
+  * **Rule 1002**: Block RCE attempts (rce-stable preconfigured rule)
+  * **Rule 2000**: Rate limiting (10,000 req/min per IP, 10min ban)
+  * **Default Rule**: Allow all (priority 2147483647)
+- Optional: Skip with `--skip-armor` flag
+
+**update_ingress_config**:
+- Replace domain placeholders (`rag.example.com`) with actual domain
+- Update ingress.yaml in-place
+
+**print_summary**:
+- Display configuration summary
+- Show next steps for deployment
+- Estimate monthly costs (~$25-50)
+
+**Execution**:
+```bash
+./scripts/gcp/16-setup-ingress.sh --env dev --domain rag-dev.example.com
+./scripts/gcp/16-setup-ingress.sh --env prod --domain rag.example.com --project byo-rag-prod
+```
+
+#### 4. Production Overlay Configuration ✅
+**Created:** `k8s/overlays/prod/ingress-patch.yaml`
+
+**Production-Specific Settings**:
+- Higher rate limits: 200 req/min + 20 req/sec per IP
+- Stricter security headers with HSTS preload
+- Enhanced Content Security Policy
+- letsencrypt-prod issuer (vs staging in dev)
+
+#### 5. Comprehensive Documentation ✅
+**Created:** `docs/deployment/INGRESS_LOAD_BALANCER_GUIDE.md`
+
+**Sections:**
+1. **Architecture Overview**: Traffic flow diagram, domain structure
+2. **NGINX Ingress Controller**: Configuration, verification, annotations
+3. **SSL/TLS Configuration**: cert-manager setup, certificate lifecycle, troubleshooting
+4. **Cloud Armor Security**: Security policy, WAF rules, custom rules, monitoring
+5. **Cloud DNS Setup**: Zone creation, DNS records, external DNS, propagation
+6. **Backend Configuration**: Health checks, session affinity, connection draining
+7. **Deployment Procedures**: Initial setup, environment-specific deployment, updates
+8. **Monitoring and Logging**: Key metrics, Cloud Monitoring alerts, log analysis
+9. **Troubleshooting**: Common issues and solutions (ingress access, certificates, Cloud Armor, latency)
+10. **Cost Optimization**: Pricing breakdown, cost reduction strategies
+
+#### 6. Configuration Updates ✅
+- `k8s/base/kustomization.yaml`: Added backendconfig.yaml and ingress.yaml
+- `k8s/overlays/prod/kustomization.yaml`: Added ingress-patch.yaml
+
+**Key Deliverables:**
+- ✅ BackendConfig manifest (90 lines, 2 resources)
+- ✅ Ingress manifest (220+ lines, Certificate + ClusterIssuers + Ingress + IngressClass)
+- ✅ Ingress setup script (750+ lines, comprehensive automation)
+- ✅ Production overlay for stricter settings
+- ✅ Comprehensive ingress documentation (500+ lines)
+
+**Total Lines of Code:** ~1,668 lines across 7 files
+
+**Next Steps:**
+1. Execute `./scripts/gcp/16-setup-ingress.sh` to provision infrastructure
+2. Apply ingress manifests: `kubectl apply -f k8s/base/ingress.yaml`
+3. Verify certificate provisioning: `kubectl get certificate -n rag-system`
+4. Test HTTPS access to all services
+5. Proceed to **GCP-DEPLOY-011** (Initial Service Deployment)
+
+---
 
 ### Session 13: GCP-STORAGE-009 Execution ✅ COMPLETE (2025-11-09)
 
