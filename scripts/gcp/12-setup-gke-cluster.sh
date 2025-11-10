@@ -238,9 +238,6 @@ GKE_CREATE_CMD=(
     # Autoscaling and maintenance
     --enable-autoupgrade
     --enable-autorepair
-    --maintenance-window-start="2024-01-01T00:00:00Z"
-    --maintenance-window-end="2024-01-01T04:00:00Z"
-    --maintenance-window-recurrence="FREQ=WEEKLY;BYDAY=SU"
     
     # Addons
     --addons=HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver
