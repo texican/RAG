@@ -5,6 +5,7 @@ namespace: rag-system
 
 resources:
 - ../../base
+- ingress-patch.yaml
 
 patches:
 # Patch ConfigMap for prod environment

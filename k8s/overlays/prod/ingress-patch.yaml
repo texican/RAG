@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rag-ingress
+  namespace: rag-system
+  annotations:
+    # Use production Let's Encrypt issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # Stricter rate limiting for production
+    nginx.ingress.kubernetes.io/rate-limit: "200"  # 200 req/min per IP (increased from dev)
+    nginx.ingress.kubernetes.io/limit-rps: "20"    # 20 req/sec per IP (increased from dev)
+    
+    # Production security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
