@@ -42,6 +42,15 @@ help:
 	@echo "  - rag-embedding (Embedding Generation)"
 	@echo "  - rag-core     (RAG Core)"
 	@echo "  - rag-admin    (Administration)"
+	@echo ""
+	@echo "$(GREEN)GCP Deployment:$(NC)"
+	@echo "  make gcp-build ENV=dev           - Build and push images to GCP"
+	@echo "  make gcp-deploy ENV=dev          - Deploy services to GKE"
+	@echo "  make gcp-init-db ENV=dev         - Initialize database"
+	@echo "  make gcp-validate ENV=dev        - Validate deployment"
+	@echo "  make gcp-deploy-all ENV=dev      - Complete deployment (all steps)"
+	@echo "  make gcp-status ENV=dev          - Show GKE deployment status"
+	@echo "  make gcp-logs ENV=dev SERVICE=rag-auth - View GKE logs"
 
 # Rebuild a single service
 rebuild:
@@ -201,3 +210,129 @@ create-admin-user:
 	@echo "🌐 Login URL: http://localhost:8085/admin/api/auth/login"
 	@echo ""
 	@echo "$(YELLOW)⚠️  Change the default password after first login!$(NC)"
+
+# ==============================================================================
+# GCP Deployment Targets
+# ==============================================================================
+
+# Validate ENV parameter
+gcp-check-env:
+	@if [ -z "$(ENV)" ]; then \
+		echo "$(YELLOW)Error: ENV not specified$(NC)"; \
+		echo "Usage: make gcp-deploy ENV=dev"; \
+		echo "Valid values: dev, staging, prod"; \
+		exit 1; \
+	fi
+
+# Build and push images to Artifact Registry
+gcp-build: gcp-check-env
+	@echo "$(BLUE)Building and pushing images to GCP Artifact Registry...$(NC)"
+	@./scripts/gcp/07-build-and-push-images.sh --env $(ENV)
+
+# Deploy services to GKE
+gcp-deploy: gcp-check-env
+	@echo "$(BLUE)Deploying services to GKE...$(NC)"
+	@./scripts/gcp/17-deploy-services.sh --env $(ENV)
+
+# Initialize database
+gcp-init-db: gcp-check-env
+	@echo "$(BLUE)Initializing database...$(NC)"
+	@./scripts/gcp/18-init-database.sh --env $(ENV)
+
+# Validate deployment
+gcp-validate: gcp-check-env
+	@echo "$(BLUE)Validating deployment...$(NC)"
+	@./scripts/gcp/19-validate-deployment.sh --env $(ENV)
+
+# Quick validation (skip integration tests)
+gcp-validate-quick: gcp-check-env
+	@echo "$(BLUE)Running quick validation...$(NC)"
+	@./scripts/gcp/19-validate-deployment.sh --env $(ENV) --quick
+
+# Complete deployment (all steps)
+gcp-deploy-all: gcp-check-env gcp-build gcp-deploy gcp-init-db gcp-validate
+	@echo ""
+	@echo "$(GREEN)✅ Complete GCP deployment finished successfully!$(NC)"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Configure ingress: make gcp-setup-ingress ENV=$(ENV) DOMAIN=rag-$(ENV).example.com"
+	@echo "  2. Check deployment: make gcp-status ENV=$(ENV)"
+	@echo "  3. View logs: make gcp-logs ENV=$(ENV) SERVICE=rag-auth"
+
+# Show GKE deployment status
+gcp-status: gcp-check-env
+	@echo "$(BLUE)GKE Deployment Status (ENV=$(ENV)):$(NC)"
+	@echo "======================================"
+	@kubectl get all -n rag-system
+	@echo ""
+	@echo "$(BLUE)Pod Details:$(NC)"
+	@kubectl get pods -n rag-system -o wide
+	@echo ""
+	@echo "$(BLUE)Ingress:$(NC)"
+	@kubectl get ingress -n rag-system || echo "No ingress configured"
+
+# View GKE logs
+gcp-logs: gcp-check-env
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "$(YELLOW)Error: SERVICE not specified$(NC)"; \
+		echo "Usage: make gcp-logs ENV=dev SERVICE=rag-auth"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Viewing logs for $(SERVICE) on GKE...$(NC)"
+	@kubectl logs -n rag-system -l app=$(SERVICE) --tail=100 --follow
+
+# Port-forward to service
+gcp-port-forward: gcp-check-env
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "$(YELLOW)Error: SERVICE not specified$(NC)"; \
+		echo "Usage: make gcp-port-forward ENV=dev SERVICE=rag-auth"; \
+		exit 1; \
+	fi
+	@case "$(SERVICE)" in \
+		rag-auth) PORT=8081;; \
+		rag-document) PORT=8082;; \
+		rag-embedding) PORT=8083;; \
+		rag-core) PORT=8084;; \
+		rag-admin) PORT=8085;; \
+		*) echo "$(YELLOW)Unknown service$(NC)"; exit 1;; \
+	esac; \
+	echo "$(BLUE)Port-forwarding $(SERVICE):$$PORT...$(NC)"; \
+	kubectl port-forward -n rag-system svc/$(SERVICE)-service $$PORT:$$PORT
+
+# Restart deployment
+gcp-restart: gcp-check-env
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "$(YELLOW)Restarting all deployments...$(NC)"; \
+		kubectl rollout restart deployment -n rag-system; \
+	else \
+		echo "$(BLUE)Restarting $(SERVICE) deployment...$(NC)"; \
+		kubectl rollout restart deployment $(SERVICE)-service -n rag-system; \
+	fi
+
+# Setup ingress
+gcp-setup-ingress: gcp-check-env
+	@if [ -z "$(DOMAIN)" ]; then \
+		echo "$(YELLOW)Error: DOMAIN not specified$(NC)"; \
+		echo "Usage: make gcp-setup-ingress ENV=dev DOMAIN=rag-dev.example.com"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Setting up ingress for $(DOMAIN)...$(NC)"
+	@./scripts/gcp/16-setup-ingress.sh --env $(ENV) --domain $(DOMAIN)
+
+# Cleanup GKE deployment
+gcp-cleanup: gcp-check-env
+	@echo "$(YELLOW)⚠️  This will delete all resources in rag-system namespace$(NC)"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		kubectl delete all --all -n rag-system; \
+		echo "$(GREEN)✅ GKE deployment cleaned up$(NC)"; \
+	fi
+
+# GCP shortcuts for common workflows
+gcp-dev: ENV=dev
+gcp-dev: gcp-deploy-all
+
+gcp-prod: ENV=prod
+gcp-prod: gcp-deploy-all
+
