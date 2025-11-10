@@ -226,7 +226,6 @@ GKE_CREATE_CMD=(
     
     # Workload Identity
     --workload-pool="${PROJECT_ID}.svc.id.goog"
-    --enable-stackdriver-kubernetes
     
     # Service account
     --service-account="$GKE_NODE_SA"
@@ -235,13 +234,11 @@ GKE_CREATE_CMD=(
     --enable-autoupgrade
     --enable-autorepair
     --maintenance-window-start="2024-01-01T00:00:00Z"
-    --maintenance-window-duration="4h"
+    --maintenance-window-end="2024-01-01T04:00:00Z"
     --maintenance-window-recurrence="FREQ=WEEKLY;BYDAY=SU"
     
     # Addons
     --addons=HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver
-    --enable-cloud-logging
-    --enable-cloud-monitoring
     --logging=SYSTEM,WORKLOAD
     --monitoring=SYSTEM
 )
