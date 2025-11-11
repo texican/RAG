@@ -177,7 +177,8 @@ create_cloud_sql_instance() {
         --database-flags=cloudsql.iam_authentication=on \
         --availability-type="ZONAL" \
         --root-password="$ROOT_PASSWORD" \
-        --authorized-networks="0.0.0.0/0"
+        --network=projects/"$PROJECT_ID"/global/networks/rag-vpc \
+        --no-assign-ip
     
     log_success "Cloud SQL instance created successfully"
     

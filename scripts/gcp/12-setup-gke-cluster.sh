@@ -90,10 +90,10 @@ else
 fi
 
 # Network configuration
-NETWORK="default"
-SUBNET="default"
-CLUSTER_SECONDARY_RANGE_NAME="gke-pods"
-SERVICES_SECONDARY_RANGE_NAME="gke-services"
+NETWORK="rag-vpc"
+SUBNET="rag-gke-subnet"
+CLUSTER_SECONDARY_RANGE_NAME="pods"
+SERVICES_SECONDARY_RANGE_NAME="services"
 
 # Service accounts (from 02-setup-service-accounts.sh)
 GKE_NODE_SA="gke-node-sa@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -259,13 +259,13 @@ log_info "Executing cluster creation (this may take 5-10 minutes)..."
 log_success "GKE cluster created successfully"
 
 ################################################################################
-# Step 5: Configure Master Authorized Networks (for dev)
+# Step 5: Configure Master Authorized Networks
 ################################################################################
 
-if [[ "$ENVIRONMENT" != "prod" ]]; then
-    log_info "Step 5: Configuring master authorized networks for dev access..."
-    
-    # Get current public IP
+log_info "Step 5: Configuring master authorized networks..."
+
+if [[ "$ENVIRONMENT" == "--prod" ]]; then
+    # Production: Restrict to specific IP
     MY_IP=$(curl -s https://api.ipify.org)
     
     if [[ -n "$MY_IP" ]]; then
@@ -280,9 +280,21 @@ if [[ "$ENVIRONMENT" != "prod" ]]; then
         
         log_success "Master authorized networks configured"
     else
-        log_warn "Could not determine public IP. You may need to manually authorize your IP:"
-        log_warn "  gcloud container clusters update $CLUSTER_NAME --region=$REGION --enable-master-authorized-networks --master-authorized-networks=<YOUR_IP>/32"
+        log_warning "Could not determine public IP. You may need to manually authorize your IP:"
+        log_warning "  gcloud container clusters update $CLUSTER_NAME --region=$REGION --enable-master-authorized-networks --master-authorized-networks=<YOUR_IP>/32"
     fi
+else
+    # Development: Allow all IPs for easier access
+    log_info "Allowing all IPs for development environment..."
+    
+    gcloud container clusters update "$CLUSTER_NAME" \
+        --region="$REGION" \
+        --project="$PROJECT_ID" \
+        --enable-master-authorized-networks \
+        --master-authorized-networks="0.0.0.0/0" \
+        --quiet
+    
+    log_success "Master authorized networks configured (all IPs allowed for dev)"
 fi
 
 ################################################################################

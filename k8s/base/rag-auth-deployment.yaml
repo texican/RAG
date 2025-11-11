@@ -84,6 +84,11 @@ spec:
             secretKeyRef:
               name: jwt-secret
               key: secret
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: SPRING_DATASOURCE_URL
         resources:
           requests:
             memory: "512Mi"
@@ -121,6 +126,7 @@ spec:
         args:
         - "--structured-logs"
         - "--port=5432"
+        - "--private-ip"
         - "byo-rag-dev:us-central1:rag-postgres"
         securityContext:
           runAsNonRoot: true
