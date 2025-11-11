@@ -60,11 +60,11 @@ spec:
           value: "http://ollama:11434"  # TODO: Replace with managed Ollama or Vertex AI
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "250m"
-          limits:
             memory: "2Gi"
-            cpu: "500m"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness

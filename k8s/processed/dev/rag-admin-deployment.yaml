@@ -1,34 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rag-document
+  name: rag-admin
   namespace: rag-system
   labels:
-    app: rag-document
-    app.kubernetes.io/name: rag-document
-    app.kubernetes.io/component: document-processing
+    app: rag-admin
+    app.kubernetes.io/name: rag-admin
+    app.kubernetes.io/component: administration
     app.kubernetes.io/part-of: rag-system
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: rag-document
+      app: rag-admin
   template:
     metadata:
       labels:
-        app: rag-document
-        app.kubernetes.io/name: rag-document
-        app.kubernetes.io/component: document-processing
+        app: rag-admin
+        app.kubernetes.io/name: rag-admin
+        app.kubernetes.io/component: administration
         app.kubernetes.io/part-of: rag-system
     spec:
-      serviceAccountName: rag-document
+      serviceAccountName: rag-admin
       containers:
       # Main application container
-      - name: rag-document
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-document-service:latest
+      - name: rag-admin
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-admin-service:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8082
+        - containerPort: 8085
           name: http
           protocol: TCP
         env:
@@ -62,38 +62,17 @@ spec:
             secretKeyRef:
               name: cloud-sql-credentials
               key: password
-        - name: REDIS_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: gcp-config
-              key: REDIS_HOST
-        - name: REDIS_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: gcp-config
-              key: REDIS_PORT
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: redis-credentials
-              key: password
-        # Kafka will be migrated to Pub/Sub in GCP-KAFKA-006 implementation
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          value: "kafka:9092"  # TODO: Replace with Pub/Sub
-        volumeMounts:
-        - name: document-storage
-          mountPath: /app/storage
         resources:
           requests:
             memory: "512Mi"
-            cpu: "250m"
+            cpu: "500m"
           limits:
             memory: "1Gi"
-            cpu: "500m"
+            cpu: "1000m"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
-            port: 8082
+            port: 8085
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
@@ -101,7 +80,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
-            port: 8082
+            port: 8085
           initialDelaySeconds: 30
           periodSeconds: 5
           timeoutSeconds: 3
@@ -135,46 +114,23 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-      
-      volumes:
-      - name: document-storage
-        persistentVolumeClaim:
-          claimName: document-storage-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: rag-document
+  name: rag-admin
   namespace: rag-system
   labels:
-    app: rag-document
-    app.kubernetes.io/name: rag-document
-    app.kubernetes.io/component: document-processing
+    app: rag-admin
+    app.kubernetes.io/name: rag-admin
+    app.kubernetes.io/component: administration
     app.kubernetes.io/part-of: rag-system
 spec:
   type: ClusterIP
   selector:
-    app: rag-document
+    app: rag-admin
   ports:
-  - port: 8082
-    targetPort: 8082
+  - port: 8085
+    targetPort: 8085
     protocol: TCP
     name: http
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: document-storage-pvc
-  namespace: rag-system
-  labels:
-    app: rag-document
-    app.kubernetes.io/name: rag-document
-    app.kubernetes.io/component: document-processing
-    app.kubernetes.io/part-of: rag-system
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: standard

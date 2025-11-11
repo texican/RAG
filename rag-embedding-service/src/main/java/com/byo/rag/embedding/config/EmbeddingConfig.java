@@ -3,9 +3,8 @@ package com.byo.rag.embedding.config;
 import com.byo.rag.embedding.client.OllamaEmbeddingClient;
 import com.byo.rag.embedding.model.OllamaEmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.openai.OpenAiEmbeddingModel;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.transformers.TransformersEmbeddingModel;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -44,16 +43,15 @@ public class EmbeddingConfig {
     }
 
     /**
-     * Primary embedding client (OpenAI) - Active when Docker profile is NOT enabled.
+     * Primary embedding client (Transformers) - Active when Ollama bean is not created.
+     * Default for non-docker profiles (gcp, local, etc).
      */
     @Bean("primaryEmbeddingModel")
     @Primary
-    @ConditionalOnProperty(name = "spring.profiles.active", havingValue = "docker", matchIfMissing = false)
-    public EmbeddingModel openAiEmbeddingModel(EmbeddingModelProperties properties) {
-        // Note: For Spring AI 1.0.0-M1, the constructor signature has changed
-        // Using a simplified initialization for now
-        var openAiApi = new OpenAiApi(properties.openai().apiKey());
-        return new OpenAiEmbeddingModel(openAiApi);
+    @ConditionalOnMissingBean(name = "primaryEmbeddingModel")
+    public EmbeddingModel defaultEmbeddingModel() {
+        // For non-docker profiles (gcp, local), use the transformers model
+        return new TransformersEmbeddingModel();
     }
     
     /**
@@ -69,8 +67,8 @@ public class EmbeddingConfig {
      */
     @Bean
     public EmbeddingModelRegistry embeddingClientRegistry(
-            EmbeddingModel primaryEmbeddingModel,
-            EmbeddingModel fallbackEmbeddingModel,
+            @org.springframework.beans.factory.annotation.Qualifier("primaryEmbeddingModel") EmbeddingModel primaryEmbeddingModel,
+            @org.springframework.beans.factory.annotation.Qualifier("fallbackEmbeddingModel") EmbeddingModel fallbackEmbeddingModel,
             EmbeddingModelProperties properties) {
         
         Map<String, EmbeddingModel> clients = new ConcurrentHashMap<>();

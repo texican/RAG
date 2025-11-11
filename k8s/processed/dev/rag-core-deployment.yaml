@@ -1,33 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rag-embedding
+  name: rag-core
   namespace: rag-system
   labels:
-    app: rag-embedding
-    app.kubernetes.io/name: rag-embedding
-    app.kubernetes.io/component: embedding-generation
+    app: rag-core
+    app.kubernetes.io/name: rag-core
+    app.kubernetes.io/component: query-processing
     app.kubernetes.io/part-of: rag-system
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: rag-embedding
+      app: rag-core
   template:
     metadata:
       labels:
-        app: rag-embedding
-        app.kubernetes.io/name: rag-embedding
-        app.kubernetes.io/component: embedding-generation
+        app: rag-core
+        app.kubernetes.io/name: rag-core
+        app.kubernetes.io/component: query-processing
         app.kubernetes.io/part-of: rag-system
     spec:
-      serviceAccountName: rag-embedding
+      serviceAccountName: rag-core
       containers:
-      - name: rag-embedding
-        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-embedding-service:latest
+      - name: rag-core
+        image: us-central1-docker.pkg.dev/byo-rag-dev/rag-system/rag-core-service:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8083
+        - containerPort: 8084
           name: http
           protocol: TCP
         env:
@@ -52,7 +52,12 @@ spec:
               name: redis-credentials
               key: password
         - name: REDIS_DATABASE
-          value: "2"  # Embedding service uses database 2
+          value: "1"  # Core service uses database 1
+        - name: EMBEDDING_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: RAG_EMBEDDING_URL
         # Kafka will be migrated to Pub/Sub in GCP-KAFKA-006 implementation
         - name: KAFKA_BOOTSTRAP_SERVERS
           value: "kafka:9092"  # TODO: Replace with Pub/Sub
@@ -61,14 +66,14 @@ spec:
         resources:
           requests:
             memory: "1Gi"
-            cpu: "250m"
+            cpu: "1000m"
           limits:
             memory: "2Gi"
-            cpu: "500m"
+            cpu: "2000m"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
-            port: 8083
+            port: 8084
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
@@ -76,7 +81,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
-            port: 8083
+            port: 8084
           initialDelaySeconds: 30
           periodSeconds: 5
           timeoutSeconds: 3
@@ -92,19 +97,19 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rag-embedding
+  name: rag-core
   namespace: rag-system
   labels:
-    app: rag-embedding
-    app.kubernetes.io/name: rag-embedding
-    app.kubernetes.io/component: embedding-generation
+    app: rag-core
+    app.kubernetes.io/name: rag-core
+    app.kubernetes.io/component: query-processing
     app.kubernetes.io/part-of: rag-system
 spec:
   type: ClusterIP
   selector:
-    app: rag-embedding
+    app: rag-core
   ports:
-  - port: 8083
-    targetPort: 8083
+  - port: 8084
+    targetPort: 8084
     protocol: TCP
     name: http

@@ -1,0 +1,95 @@
+# BackendConfig for GCP Cloud Load Balancer backend service configuration
+# 
+# Provides fine-grained control over:
+# - Health checks
+# - Connection draining
+# - Session affinity
+# - Timeout settings
+# - Cloud Armor security policy attachment
+# - CDN configuration
+
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: rag-backend-config
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-backend
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: rag-system
+spec:
+  # Health check configuration
+  healthCheck:
+    checkIntervalSec: 10        # How often to perform health checks
+    timeoutSec: 5               # Health check timeout
+    healthyThreshold: 2         # Consecutive successes before marking healthy
+    unhealthyThreshold: 3       # Consecutive failures before marking unhealthy
+    type: HTTP                  # HTTP health checks
+    requestPath: /actuator/health/liveness  # Spring Boot health endpoint
+    port: 8080                  # Service port
+  
+  # Connection draining during pod termination
+  connectionDraining:
+    drainingTimeoutSec: 60      # Wait up to 60s for existing connections to close
+  
+  # Session affinity (sticky sessions)
+  sessionAffinity:
+    affinityType: "CLIENT_IP"   # Route requests from same IP to same backend
+    affinityCookieTtlSec: 3600  # Cookie valid for 1 hour
+  
+  # Timeout configuration
+  timeoutSec: 30                # Backend service timeout (30 seconds)
+  
+  # Cloud Armor security policy (will be created separately)
+  securityPolicy:
+    name: "rag-security-policy"
+  
+  # Logging configuration
+  logging:
+    enable: true
+    sampleRate: 1.0             # Log 100% of requests (adjust for prod)
+  
+  # IAP (Identity-Aware Proxy) - disabled for public access
+  # Uncomment for internal-only access with Google authentication
+  # iap:
+  #   enabled: true
+  #   oauthclientCredentials:
+  #     secretName: oauth-client-secret
+
+---
+# BackendConfig for admin service (more restrictive)
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: rag-admin-backend-config
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-admin-backend
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: rag-system
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 3
+    type: HTTP
+    requestPath: /admin/api/actuator/health/liveness
+    port: 8080
+  
+  connectionDraining:
+    drainingTimeoutSec: 30
+  
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+    affinityCookieTtlSec: 7200  # 2 hours for admin sessions
+  
+  timeoutSec: 60                # Longer timeout for admin operations
+  
+  securityPolicy:
+    name: "rag-security-policy"
+  
+  logging:
+    enable: true
+    sampleRate: 1.0

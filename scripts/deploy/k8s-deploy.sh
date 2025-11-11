@@ -32,6 +32,7 @@ IMAGE_TAG="latest"
 DRY_RUN=false
 WAIT=true
 ROLLBACK=false
+INIT=false
 
 # Colors for output
 RED='\033[0;31m'
@@ -41,12 +42,36 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 NC='\033[0m'
 
-# Environment configurations
-declare -A env_configs=(
-    ["dev"]="replicas=1 resources_requests_cpu=100m resources_requests_memory=256Mi resources_limits_cpu=500m resources_limits_memory=512Mi"
-    ["staging"]="replicas=2 resources_requests_cpu=200m resources_requests_memory=512Mi resources_limits_cpu=1000m resources_limits_memory=1Gi"
-    ["production"]="replicas=3 resources_requests_cpu=500m resources_requests_memory=1Gi resources_limits_cpu=2000m resources_limits_memory=2Gi"
-)
+# Environment configurations (using case statement for bash 3.2 compatibility)
+get_env_config() {
+    case "$1" in
+        dev)
+            replicas=1
+            resources_requests_cpu=100m
+            resources_requests_memory=256Mi
+            resources_limits_cpu=500m
+            resources_limits_memory=512Mi
+            ;;
+        staging)
+            replicas=2
+            resources_requests_cpu=200m
+            resources_requests_memory=512Mi
+            resources_limits_cpu=1000m
+            resources_limits_memory=1Gi
+            ;;
+        production)
+            replicas=3
+            resources_requests_cpu=500m
+            resources_requests_memory=1Gi
+            resources_limits_cpu=2000m
+            resources_limits_memory=2Gi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    return 0
+}
 
 # Kubernetes resource order
 k8s_resources=(
@@ -136,6 +161,10 @@ parse_args() {
                 ROLLBACK=true
                 shift
                 ;;
+            --init)
+                INIT=true
+                shift
+                ;;
             -h|--help)
                 show_help
                 exit 0
@@ -147,16 +176,8 @@ parse_args() {
     done
     
     # Validate environment
-    if [[ -z "${env_configs[$ENVIRONMENT]:-}" ]]; then
-        error_exit "Invalid environment: $ENVIRONMENT. Valid options: ${!env_configs[*]}"
-    fi
-    
-    # Apply environment configuration
-    eval "${env_configs[$ENVIRONMENT]}"
-    
-    # Override replicas if specified
-    if [[ "$REPLICAS" != "1" ]]; then
-        replicas="$REPLICAS"
+    if ! get_env_config "$ENVIRONMENT"; then
+        error_exit "Invalid environment: $ENVIRONMENT. Valid options: dev, staging, production"
     fi
 }
 
@@ -176,6 +197,7 @@ Options:
   --dry-run            Show what would be deployed without applying changes
   --wait               Wait for rollout to complete (default: true)
   --rollback           Rollback to previous version
+  --init               Initialize and create manifests from scratch
   -h, --help           Show this help message
 
 Environments:
@@ -227,10 +249,17 @@ check_prerequisites() {
         log INFO "Namespace '$NAMESPACE' does not exist. It will be created."
     fi
     
-    # Check if Kubernetes manifests directory exists
+    # Check if Kubernetes manifests directory exists or can be created
     if [[ ! -d "$K8S_MANIFESTS_DIR" ]]; then
         log WARN "Kubernetes manifests directory not found: $K8S_MANIFESTS_DIR"
-        log INFO "Creating Kubernetes manifests..."
+        if [[ "$INIT" == "true" ]]; then
+            log INFO "Creating Kubernetes manifests..."
+            create_k8s_manifests
+        else
+            error_exit "Kubernetes manifests directory not found. Use --init to create them."
+        fi
+    elif [[ "$INIT" == "true" ]]; then
+        log INFO "Recreating Kubernetes manifests..."
         create_k8s_manifests
     fi
     
@@ -472,6 +501,20 @@ EOF
 process_manifests() {
     log INFO "Processing Kubernetes manifests for $ENVIRONMENT environment..."
     
+    # If not using --init, use existing base manifests
+    if [[ "$INIT" == "false" && -d "${K8S_MANIFESTS_DIR}/base" ]]; then
+        log INFO "Using existing manifests from ${K8S_MANIFESTS_DIR}/base"
+        
+        local processed_dir="${K8S_MANIFESTS_DIR}/processed/${ENVIRONMENT}"
+        mkdir -p "$processed_dir"
+        
+        # Copy base manifests to processed directory
+        cp -r "${K8S_MANIFESTS_DIR}/base"/*.yaml "$processed_dir/" 2>/dev/null || true
+        
+        log SUCCESS "Using existing base manifests"
+        return 0
+    fi
+    
     local processed_dir="${K8S_MANIFESTS_DIR}/processed/${ENVIRONMENT}"
     mkdir -p "$processed_dir"
     
@@ -507,38 +550,38 @@ deploy_to_k8s() {
     
     # Apply manifests in order
     for resource_type in "${k8s_resources[@]}"; do
-        local manifest_files=()
+        manifest_files=""
         
         # Find manifest files for this resource type
         case $resource_type in
             namespace)
-                manifest_files=("${processed_dir}/namespace.yaml")
+                manifest_files="${processed_dir}/namespace.yaml"
                 ;;
             configmap)
-                manifest_files=("${processed_dir}/configmap.yaml")
+                manifest_files="${processed_dir}/configmap.yaml"
                 ;;
             secret)
-                manifest_files=("${processed_dir}/secret.yaml")
+                manifest_files="${processed_dir}/secret.yaml"
                 ;;
             pvc)
-                manifest_files=($(find "$processed_dir" -name "*pvc*.yaml" 2>/dev/null || true))
+                manifest_files=$(find "$processed_dir" -name "*pvc*.yaml" 2>/dev/null || true)
                 ;;
             service)
-                manifest_files=($(find "$processed_dir" -name "*service.yaml" 2>/dev/null || true))
+                manifest_files=$(find "$processed_dir" -name "*service.yaml" 2>/dev/null || true)
                 ;;
             deployment)
-                manifest_files=($(find "$processed_dir" -name "*deployment.yaml" 2>/dev/null || true))
+                manifest_files=$(find "$processed_dir" -name "*deployment.yaml" 2>/dev/null || true)
                 ;;
             ingress)
-                manifest_files=("${processed_dir}/ingress.yaml")
+                manifest_files="${processed_dir}/ingress.yaml"
                 ;;
             hpa)
-                manifest_files=($(find "$processed_dir" -name "*hpa.yaml" 2>/dev/null || true))
+                manifest_files=$(find "$processed_dir" -name "*hpa.yaml" 2>/dev/null || true)
                 ;;
         esac
         
         # Apply each manifest file
-        for manifest_file in "${manifest_files[@]}"; do
+        for manifest_file in $manifest_files; do
             if [[ -f "$manifest_file" ]]; then
                 log INFO "Applying $(basename "$manifest_file")..."
                 

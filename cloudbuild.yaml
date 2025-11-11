@@ -16,15 +16,21 @@ steps:
   # Build shared library first
   - name: 'maven:3.9-eclipse-temurin-21'
     id: 'build-shared'
-    args: ['mvn', 'clean', 'install', '-pl', 'rag-shared', '-am', '-Dmaven.test.skip=true']
+    args: ['mvn', 'clean', 'install', '-pl', 'rag-shared', '-am', '-DskipTests']
     env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
 
   # Build and package rag-auth-service
   - name: 'maven:3.9-eclipse-temurin-21'
     id: 'build-auth'
     waitFor: ['build-shared']
-    args: ['mvn', 'clean', 'package', '-pl', 'rag-auth-service', '-am', '-Dmaven.test.skip=true']
+    args: ['mvn', 'clean', 'package', '-pl', 'rag-auth-service', '-am', '-DskipTests']
     env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
   
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-auth'
@@ -41,8 +47,11 @@ steps:
   - name: 'maven:3.9-eclipse-temurin-21'
     id: 'build-document'
     waitFor: ['build-shared']
-    args: ['mvn', 'clean', 'package', '-pl', 'rag-document-service', '-am', '-Dmaven.test.skip=true']
+    args: ['mvn', 'clean', 'package', '-pl', 'rag-document-service', '-am', '-DskipTests']
     env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
   
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-document'
@@ -59,8 +68,11 @@ steps:
   - name: 'maven:3.9-eclipse-temurin-21'
     id: 'build-embedding'
     waitFor: ['build-shared']
-    args: ['mvn', 'clean', 'package', '-pl', 'rag-embedding-service', '-am', '-Dmaven.test.skip=true']
+    args: ['mvn', 'clean', 'package', '-pl', 'rag-embedding-service', '-am', '-DskipTests']
     env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
   
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-embedding'
@@ -77,8 +89,11 @@ steps:
   - name: 'maven:3.9-eclipse-temurin-21'
     id: 'build-core'
     waitFor: ['build-shared']
-    args: ['mvn', 'clean', 'package', '-pl', 'rag-core-service', '-am', '-Dmaven.test.skip=true']
+    args: ['mvn', 'clean', 'package', '-pl', 'rag-core-service', '-am', '-DskipTests']
     env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
   
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-core'
@@ -95,8 +110,11 @@ steps:
   - name: 'maven:3.9-eclipse-temurin-21'
     id: 'build-admin'
     waitFor: ['build-shared']
-    args: ['mvn', 'clean', 'package', '-pl', 'rag-admin-service', '-am', '-Dmaven.test.skip=true']
+    args: ['mvn', 'clean', 'package', '-pl', 'rag-admin-service', '-am', '-DskipTests']
     env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
   
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-admin'

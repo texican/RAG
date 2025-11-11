@@ -1,0 +1,49 @@
+# Conditional Cloud Build configuration for RAG System
+# Builds only the specified service using _SERVICE_NAME substitution
+
+timeout: '1800s'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  substitutionOption: 'ALLOW_LOOSE'
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: 'us-central1'
+  _REPOSITORY: 'rag-system'
+  _SERVICE_NAME: 'rag-embedding'  # Default service name
+
+steps:
+  # Build shared library first (always needed)
+  - name: 'maven:3.9-eclipse-temurin-21'
+    id: 'build-shared'
+    args: ['mvn', 'clean', 'install', '-pl', 'rag-shared', '-am', '-DskipTests']
+    env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
+
+  # Build specified service
+  - name: 'maven:3.9-eclipse-temurin-21'
+    id: 'build-service'
+    waitFor: ['build-shared']
+    args: ['mvn', 'clean', 'package', '-pl', '${_SERVICE_NAME}-service', '-am', '-DskipTests']
+    env: ['MAVEN_OPTS=-Xmx2g']
+    volumes:
+      - name: 'maven-repo'
+        path: '/root/.m2'
+  
+  # Build Docker image for specified service
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-service'
+    waitFor: ['build-service']
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}-service:latest'
+      - '-f'
+      - '${_SERVICE_NAME}-service/Dockerfile'
+      - '.'
+
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}-service:latest'

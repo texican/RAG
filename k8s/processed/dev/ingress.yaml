@@ -1,0 +1,220 @@
+# Ingress configuration for RAG system on GKE
+# 
+# Features:
+# - NGINX Ingress Controller
+# - HTTPS with Let's Encrypt certificates
+# - Path-based routing to microservices
+# - Cloud Armor WAF integration
+# - Rate limiting and DDoS protection
+
+---
+# Certificate for automatic HTTPS provisioning via cert-manager
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rag-tls-cert
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-ingress
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: rag-system
+spec:
+  secretName: rag-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - rag.example.com              # Replace with actual domain
+  - api.rag.example.com          # API subdomain
+  - admin.rag.example.com        # Admin subdomain
+
+---
+# ClusterIssuer for Let's Encrypt production certificates
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    app.kubernetes.io/name: rag-ingress
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: rag-system
+spec:
+  acme:
+    # Let's Encrypt production server
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ops@example.com       # Replace with actual email
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+---
+# ClusterIssuer for Let's Encrypt staging (for testing)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  labels:
+    app.kubernetes.io/name: rag-ingress
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: rag-system
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: ops@example.com
+    privateKeySecretRef:
+      name: letsencrypt-staging-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+---
+# Main Ingress resource for RAG services
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rag-ingress
+  namespace: rag-system
+  labels:
+    app.kubernetes.io/name: rag-ingress
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: rag-system
+  annotations:
+    # Ingress class
+    kubernetes.io/ingress.class: "nginx"
+    
+    # Certificate management
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/acme-challenge-type: "http01"
+    
+    # NGINX-specific annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"
+    
+    # Proxy settings
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"  # Allow large document uploads
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"  # 100 requests per minute per IP
+    nginx.ingress.kubernetes.io/limit-rps: "10"    # 10 requests per second per IP
+    
+    # CORS headers
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"  # Configure for specific domains in prod
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Content-Security-Policy: default-src 'self'";
+    
+    # Backend configuration (for GCP Cloud Armor)
+    cloud.google.com/backend-config: '{"default": "rag-backend-config"}'
+    
+    # Static IP (create with: gcloud compute addresses create)
+    # kubernetes.io/ingress.global-static-ip-name: "rag-ingress-ip"
+
+spec:
+  tls:
+  - hosts:
+    - rag.example.com
+    - api.rag.example.com
+    - admin.rag.example.com
+    secretName: rag-tls-secret
+  
+  rules:
+  # Main domain - redirect to API docs
+  - host: rag.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-core
+            port:
+              number: 8084
+  
+  # API subdomain - all microservices
+  - host: api.rag.example.com
+    http:
+      paths:
+      # Auth service
+      - path: /api/v1/auth
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-auth
+            port:
+              number: 8081
+      
+      # Document service
+      - path: /api/v1/documents
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-document
+            port:
+              number: 8082
+      
+      # Embedding service
+      - path: /api/v1/embeddings
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-embedding
+            port:
+              number: 8083
+      
+      # Core service (RAG queries)
+      - path: /api/v1/query
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-core
+            port:
+              number: 8084
+      
+      # Core service health/swagger
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-core
+            port:
+              number: 8084
+  
+  # Admin subdomain - admin service only
+  - host: admin.rag.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-admin
+            port:
+              number: 8085
+
+---
+# IngressClass for NGINX (if not already defined by cluster)
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: ingress
+spec:
+  controller: k8s.io/ingress-nginx

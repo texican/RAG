@@ -30,7 +30,7 @@ patches:
       name: rag-auth
       namespace: rag-system
     spec:
-      replicas: 1
+      replicas: 2
   target:
     kind: Deployment
     name: rag-auth
@@ -42,7 +42,7 @@ patches:
       name: rag-document
       namespace: rag-system
     spec:
-      replicas: 1
+      replicas: 2
   target:
     kind: Deployment
     name: rag-document
@@ -54,7 +54,7 @@ patches:
       name: rag-embedding
       namespace: rag-system
     spec:
-      replicas: 1
+      replicas: 2
   target:
     kind: Deployment
     name: rag-embedding
@@ -66,7 +66,7 @@ patches:
       name: rag-core
       namespace: rag-system
     spec:
-      replicas: 1
+      replicas: 2
   target:
     kind: Deployment
     name: rag-core

@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rag-system
+
+resources:
+- namespace.yaml
+- serviceaccounts.yaml
+- configmap.yaml
+- storageclass.yaml
+- volumesnapshot.yaml
+- backendconfig.yaml
+- ingress.yaml
+- rag-auth-deployment.yaml
+- rag-document-deployment.yaml
+- rag-embedding-deployment.yaml
+- rag-core-deployment.yaml
+- rag-admin-deployment.yaml
+- hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: rag-system

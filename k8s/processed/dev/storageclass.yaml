@@ -1,0 +1,72 @@
+# StorageClass for RAG system persistent volumes on GKE
+# 
+# Provides regional SSD persistent disks with:
+# - Fast performance (SSD)
+# - Regional replication for high availability
+# - Volume expansion support
+# - Automatic disk provisioning
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rag-regional-ssd
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: rag-system
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    description: "Regional SSD persistent disks for RAG system with high availability"
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-balanced      # Balanced performance SSD
+  replication-type: regional-pd  # Replicated across zones
+  fstype: ext4
+volumeBindingMode: WaitForFirstConsumer  # Delay binding until pod is scheduled
+allowVolumeExpansion: true  # Allow resizing volumes online
+reclaimPolicy: Retain  # Keep data when PVC is deleted
+
+---
+# Alternative: Zonal SSD for development/testing
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rag-zonal-ssd
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: rag-system
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    description: "Zonal SSD persistent disks for development/testing (lower cost)"
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-ssd          # High-performance SSD
+  replication-type: none  # Single zone only
+  fstype: ext4
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Delete  # Delete data when PVC is deleted (dev only)
+
+---
+# Standard storage for archives/backups
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rag-standard
+  labels:
+    app.kubernetes.io/name: rag-storage
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: rag-system
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    description: "Standard persistent disks for archives and backups (lower cost)"
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-standard     # Standard HDD
+  replication-type: none
+  fstype: ext4
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain

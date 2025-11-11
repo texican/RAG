@@ -148,8 +148,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants/register").permitAll()
 
-                // Health check and documentation endpoints
-                .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/error").permitAll()
+                // Health check and documentation endpoints (includes /actuator/health/readiness and /actuator/health/liveness)
+                .requestMatchers("/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/error").permitAll()
                 
                 // Admin only endpoints
                 .requestMatchers("/api/v1/tenants/**").hasRole("ADMIN")
