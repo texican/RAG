@@ -7,9 +7,9 @@ spring:
   
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/rag_db
-    username: rag_user
-    password: rag_password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/rag_db}
+    username: ${DB_USERNAME:rag_user}
+    password: ${DB_PASSWORD:rag_password}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 15
