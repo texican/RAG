@@ -166,7 +166,7 @@ create-admin-user:
 	@echo "$(BLUE)🔐 Creating Initial Admin User$(NC)"
 	@echo "================================="
 	@echo ""
-	@docker exec rag-postgres psql -U rag_user -d rag_enterprise -c " \
+	@docker exec rag-postgres psql -U rag_user -d byo_rag_local -c " \
 		INSERT INTO tenants (id, created_at, updated_at, version, name, slug, description, status, max_documents, max_storage_mb) \
 		VALUES ( \
 			gen_random_uuid(), \
@@ -183,7 +183,7 @@ create-admin-user:
 			updated_at = NOW(), \
 			version = tenants.version + 1 \
 		RETURNING id;" 2>&1 | grep -v "INSERT" || true
-	@docker exec rag-postgres psql -U rag_user -d rag_enterprise -c " \
+	@docker exec rag-postgres psql -U rag_user -d byo_rag_local -c " \
 		INSERT INTO users (id, created_at, updated_at, version, email, first_name, last_name, password_hash, role, status, email_verified, tenant_id) \
 		VALUES ( \
 			gen_random_uuid(), \
