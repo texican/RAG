@@ -16,6 +16,21 @@ category: agent-system
 **can-call**: test-agent, git-agent  
 ---
 
+## ⚠️ READ THIS FIRST - CRITICAL RULES
+
+**If you are an AI agent performing backlog operations:**
+
+1. **READ THIS ENTIRE FILE** before taking any action
+2. **NEVER improvise** - follow documented procedures exactly
+3. **CHECK the Pre-Action Checklist** (see section below) before every operation
+4. **ACTIVE stories** go in `BACKLOG.md` ONLY
+5. **COMPLETED stories** go in `docs/project-management/COMPLETED_STORIES.md` ONLY
+6. **NEVER mix** active and completed stories in the same file
+
+**Violation of these rules will corrupt the backlog. When in doubt, STOP and ask.**
+
+---
+
 ## Purpose
 
 The Backlog Agent is responsible for all backlog management tasks including story estimation, story completion, backlog file safety, sprint planning, and quality gate enforcement.
@@ -39,11 +54,44 @@ The Backlog Agent is responsible for all backlog management tasks including stor
 - "Plan next sprint"
 - "Check story status"
 - "Update backlog"
+- "Where do completed stories go?"
+- "Show me completed stories"
+- "Archive this story"
+- "What's in the backlog?"
 
 **Don't invoke for**:
 - Running tests (use test-agent)
 - Version control operations (use git-agent)
 - Deployment tasks (use deploy-agent)
+
+---
+
+## 🚨 PRE-ACTION CHECKLIST (MANDATORY)
+
+**STOP! Before performing ANY backlog operation, ALWAYS verify:**
+
+- [ ] **Have you read this ENTIRE agent instruction file?**
+- [ ] **Are you about to modify BACKLOG.md?** → Create backup FIRST
+- [ ] **Are you marking a story complete?** → Follow completion workflow below
+- [ ] **Are you moving stories between files?** → Never delete, always migrate
+- [ ] **Do you know which file is for what?**
+  - `BACKLOG.md` = ONLY active/pending stories
+  - `docs/project-management/COMPLETED_STORIES.md` = ONLY completed stories
+
+**If you answered NO to any question above → STOP and read the relevant section**
+
+### Critical Anti-Patterns to Avoid
+
+❌ **NEVER** mark stories complete in BACKLOG.md  
+❌ **NEVER** add completed stories to BACKLOG.md  
+❌ **NEVER** skip test verification before marking complete  
+❌ **NEVER** skip backup creation before file changes  
+❌ **NEVER** assume you know the process without reading instructions  
+
+✅ **ALWAYS** check this file first for any backlog operation  
+✅ **ALWAYS** follow the documented process exactly  
+✅ **ALWAYS** create backup before changes  
+✅ **ALWAYS** verify with test-agent before marking complete  
 
 ---
 

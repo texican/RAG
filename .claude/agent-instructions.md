@@ -53,6 +53,16 @@ Testing:    JUnit 5.10.2, Testcontainers 1.19.8
 
 This agent system uses **specialized sub-agents** for different domains. Each sub-agent is an expert in its area with focused responsibilities.
 
+### 🚨 Critical Rule: Always Check Agent Instructions First
+
+**Before ANY action related to these domains, you MUST:**
+1. Check if `.claude/agents/{domain}-agent.md` exists
+2. Read the agent instructions completely
+3. Follow the documented procedures exactly
+4. Never improvise or assume "standard" practices
+
+**Trigger Reference**: See `.claude/AGENT_TRIGGERS.md` for comprehensive list of phrases and actions that require agent consultation.
+
 ### Available Sub-Agents
 
 | Agent | Domain | File | Purpose |
