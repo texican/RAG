@@ -4,7 +4,7 @@ This file tracks all completed stories that have been successfully implemented a
 
 ## Summary
 
-**Total Completed Story Points:** 167 points  
+**Total Completed Story Points:** 185 points  
 **Completion Date Range:** 2025-08-30 to 2025-11-12
 
 ---
@@ -909,5 +909,285 @@ Authentication service now has enterprise-grade test coverage ensuring reliable 
 - **Authentication Flows**: Login validation, credential verification, user status handling, secure error responses
 - **Token Management**: Access tokens, refresh tokens, claim extraction, validation with proper security checks
 - **API Layer Security**: REST endpoints, input validation, error handling, security headers validation
+
+---
+
+### **STORY-018: Implement Document Processing Pipeline** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Feature  
+**Story Points:** 8  
+**Sprint:** Sprint 1  
+**Completed:** 2025-10-06
+
+**As a** developer  
+**I want** documents to be automatically processed after upload  
+**So that** they can be chunked, embedded, and made searchable
+
+**Business Impact:**
+Implemented the critical async document processing pipeline, enabling end-to-end RAG functionality. Documents now automatically process within ~1 second after upload, with automatic chunking and embedding generation, unblocking full E2E test validation.
+
+**Problem Solved:**
+Documents uploaded successfully but remained in PENDING status indefinitely - no automatic processing occurred despite all processing code being present.
+
+**Root Cause:**
+Missing Kafka consumer - no `@KafkaListener` to consume document processing events. All processing code existed but was never triggered.
+
+**Solution Implemented:**
+1. Created `DocumentProcessingKafkaListener.java` with @KafkaListener
+2. Simplified `KafkaConfig.java` - removed conflicting custom beans
+3. Fixed Kafka configuration using `JAVA_TOOL_OPTIONS=-Dspring.kafka.bootstrap-servers=kafka:29092`
+4. Created Kafka topics: `document-processing`, `embedding-generation`
+
+**Processing Pipeline:**
+Upload → Kafka Event → Consumer → Process → Chunk → Embed → Status Update (PENDING → PROCESSING → COMPLETED)
+
+**Performance:**
+- Processing time: ~1 second for 1-page document
+- Automatic chunking with token counting
+- Async embedding generation via Kafka
+
+**Files Created/Modified:**
+- `rag-document-service/.../DocumentProcessingKafkaListener.java` (NEW)
+- `rag-document-service/.../KafkaConfig.java` (simplified)
+- `rag-document-service/src/main/resources/application.yml`
+- `docs/implementation/STORY-018_IMPLEMENTATION_SUMMARY.md` (NEW)
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ Documents automatically process after upload
+- ✅ Document chunks created and saved to database
+- ✅ Embeddings sent for generation
+- ✅ Document status updates to COMPLETED
+- ✅ Processing completes within 30 seconds (~1s actual)
+- ✅ Kafka events published and consumed correctly
+- ✅ E2E-001 test infrastructure ready
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Root cause identified and documented
+- ✅ Missing components implemented
+- ✅ Document processing pipeline working end-to-end
+- ✅ Kafka configuration resolved
+- ✅ Manual testing passed
+- ✅ Workflow documented
+- ✅ Monitoring/logging added
+
+---
+
+### **STORY-001: Fix Document Upload Tenant Entity Bug** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Bug Fix  
+**Story Points:** 3  
+**Sprint:** Sprint 1  
+**Completed:** 2025-10-05
+
+**As a** developer  
+**I want** document upload to work with existing tenants  
+**So that** users can upload documents to the system
+
+**Business Impact:**
+Fixed critical document upload failure preventing any documents from being uploaded. Users can now successfully upload documents to existing tenants without detached entity exceptions.
+
+**Problem:**
+Document upload failed with `PropertyValueException: Detached entity with generated id has an uninitialized version value 'null'` when uploading for existing tenants.
+
+**Solution:**
+- Created `TenantRepository` and `UserRepository` in rag-document-service
+- Modified `DocumentService.uploadDocument()` to fetch Tenant and User entities from database (hydration)
+- Fixed `createDummyUser()` to let JPA generate ID (no manual setting)
+- Added `findByEmailAndTenantId()` to reuse dummy users and avoid duplicate email violations
+- Updated `DocumentController` to pass null for user instead of detached entity
+
+**Files Modified:**
+- `rag-document-service/src/main/java/com/byo/rag/document/service/DocumentService.java`
+- `rag-document-service/src/main/java/com/byo/rag/document/controller/DocumentController.java`
+- `rag-document-service/src/main/java/com/byo/rag/document/repository/TenantRepository.java` (NEW)
+- `rag-document-service/src/main/java/com/byo/rag/document/repository/UserRepository.java` (NEW)
+- `rag-document-service/src/test/java/.../DocumentServiceTest.java` (4 new regression tests)
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ Document upload succeeds for existing tenants
+- ✅ Tenant entity properly hydrated with version field
+- ✅ No detached entity exceptions
+- ✅ Version field correctly initialized
+- ✅ Integration test passes (27/27 tests)
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Bug fix implemented and reviewed
+- ✅ Unit tests added (4 regression tests)
+- ✅ Integration test passes (27/27)
+- ✅ E2E test successfully uploads documents
+- ✅ No regression in functionality
+- ✅ Documentation updated
+
+---
+
+### **STORY-015: Implement Ollama Embedding Support** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Feature  
+**Story Points:** 4  
+**Sprint:** Sprint 1  
+**Completed:** 2025-10-05
+
+**As a** developer  
+**I want** the embedding service to use Ollama for generating embeddings  
+**So that** the RAG system can process documents without external API dependencies
+
+**Business Impact:**
+Eliminated dependency on OpenAI API (401 Unauthorized failures) and enabled local, cost-free embedding generation using Ollama's `mxbai-embed-large` model. Unblocked E2E tests by providing working embeddings infrastructure.
+
+**Problem:**
+- Embedding service failed with 401 Unauthorized (no OpenAI API key)
+- Spring AI Ollama integration only supports chat, not embeddings
+- E2E tests blocked - documents couldn't be embedded
+- Vector search impossible
+
+**Solution:**
+Implemented custom Ollama embedding client calling `/api/embeddings` endpoint with `mxbai-embed-large` model (1024-dim vectors).
+
+**Components Created:**
+1. `OllamaEmbeddingClient.java` - REST client for Ollama API
+2. `OllamaEmbeddingModel.java` - Spring AI EmbeddingModel implementation
+3. Profile-based configuration in `EmbeddingConfig.java`
+4. Docker profile configuration in `application.yml`
+
+**Technical Details:**
+- Ollama endpoint: `POST http://ollama:11434/api/embeddings`
+- Model: `mxbai-embed-large` (1024 dimensions vs OpenAI's 1536)
+- Performance: ~62ms per embedding
+- Integration: Spring AI `EmbeddingModel` interface
+
+**Files Created/Modified:**
+- `rag-embedding-service/.../OllamaEmbeddingClient.java` (NEW)
+- `rag-embedding-service/.../OllamaEmbeddingModel.java` (NEW)
+- `rag-embedding-service/.../EmbeddingConfig.java` (MODIFIED)
+- `rag-embedding-service/src/main/resources/application.yml` (MODIFIED)
+- `docs/testing/STORY-015_IMPLEMENTATION_SUMMARY.md` (NEW)
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ OllamaEmbeddingClient REST client created
+- ✅ OllamaEmbeddingModel implements EmbeddingModel
+- ✅ Docker profile uses Ollama (not OpenAI)
+- ✅ Embeddings generated successfully (1024-dim vectors verified)
+- ✅ No OpenAI dependency in Docker profile
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Code implemented and reviewed
+- ✅ Unit tests pass
+- ✅ Embeddings successfully generated (API verified)
+- ✅ No OpenAI dependency
+- ✅ Documentation updated (implementation summary)
+
+---
+
+### **STORY-016: Fix Document Service Kafka Connectivity** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Bug Fix  
+**Story Points:** 1  
+**Sprint:** Sprint 1  
+**Completed:** 2025-10-05
+
+**As a** developer  
+**I want** the document service to connect to Kafka correctly  
+**So that** documents can be processed and embedded
+
+**Business Impact:**
+Fixed critical Kafka connectivity issue preventing document processing. Service now connects successfully to Kafka broker, enabling Kafka event publishing for the async processing pipeline.
+
+**Problem:**
+Document service configured to connect to `localhost:9092` (fails in Docker), should connect to `kafka:29092`.
+
+**Error:**
+```
+Connection to node -1 (localhost/127.0.0.1:9092) could not be established
+Bootstrap broker localhost:9092 disconnected
+```
+
+**Impact:**
+- Documents uploaded but Kafka producer failed
+- No Kafka events published
+- No document processing started
+- E2E tests timeout
+
+**Solution:**
+Updated `application.yml` Docker profile: `kafka:9092` → `kafka:29092`
+
+**Results:**
+- Zero Kafka connection errors (previously hundreds)
+- Service starts cleanly
+- Ready to publish Kafka events
+- Configuration correctly applied
+
+**Files Modified:**
+- `rag-document-service/src/main/resources/application.yml` (line 101 fix)
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ Document service connects to Kafka successfully
+- ✅ No connection errors in logs (0 errors vs hundreds)
+- ✅ Configuration updated and applied
+- ✅ Service ready for event publishing
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Configuration updated
+- ✅ Service rebuilt and redeployed
+- ✅ Kafka connectivity verified in logs
+- ✅ No regression in functionality
+
+---
+
+### **STORY-017: Fix Tenant Data Synchronization Across Services** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Bug Fix  
+**Story Points:** 2  
+**Sprint:** Sprint 1  
+**Completed:** 2025-10-05
+
+**As a** developer  
+**I want** tenants to exist in all service databases  
+**So that** cross-service operations (like document upload) work correctly
+
+**Business Impact:**
+Resolved "Tenant not found" errors by verifying shared database architecture. Both auth and document services now access the same tenant data from shared `rag_enterprise` database, enabling seamless cross-service operations.
+
+**Problem:**
+- Tenant created in auth service registration not visible to document service
+- Document upload failed: "TenantNotFoundException"
+- Architecture uses database-per-service pattern without sync
+
+**Root Cause Analysis:**
+**NOT** a configuration problem - architecture was already correct! Both services configured to use shared `rag_enterprise` database. Error occurred because database was reset between sessions, clearing tenant data.
+
+**Solution:**
+- Verified both services already configured with shared database
+- No code changes required
+- Created admin-login.sh script to ensure tenant exists
+- Documented shared database architecture
+
+**Verification:**
+```bash
+# Create tenant via admin-login.sh
+Tenant: 00b8c0e2-fc71-4a55-a5df-f45b4ad44a86
+
+# Verify in shared database
+SELECT id, slug, name FROM tenants;
+# Returns: 00b8c0e2... | default | Default Tenant
+
+# Upload document
+POST /api/v1/documents/upload
+# SUCCESS! Document ID: b5b8b5b9-1ea0-4376-9e05-1e8eecf3fe7f
+```
+
+**Files Modified:**
+None required - services already configured correctly
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ Tenant data accessible from both services
+- ✅ Document upload succeeds with existing tenant
+- ✅ No "Tenant not found" errors
+- ✅ User can upload documents after registration
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Tenant data shared across services (verified)
+- ✅ Document upload succeeds
+- ✅ No regression in auth service
+- ✅ Documentation updated
 
 ---
