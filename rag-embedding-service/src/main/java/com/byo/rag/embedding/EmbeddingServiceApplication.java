@@ -82,7 +82,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
     },
     exclude = {
         org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class
     }
 )
 @EnableRedisRepositories(basePackages = "com.byo.rag.embedding.redis")

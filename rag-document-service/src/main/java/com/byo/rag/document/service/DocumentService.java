@@ -16,6 +16,7 @@ import com.byo.rag.shared.exception.TenantNotFoundException;
 import com.byo.rag.shared.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -107,7 +108,9 @@ public class DocumentService {
     private final DocumentChunkService chunkService;
     private final FileStorageService fileStorageService;
     private final TextExtractionService textExtractionService;
-    private final DocumentProcessingKafkaServiceInterface kafkaService;
+    
+    @Autowired(required = false)
+    private DocumentProcessingKafkaServiceInterface kafkaService;
 
     public DocumentService(
             DocumentRepository documentRepository,
@@ -115,15 +118,13 @@ public class DocumentService {
             UserRepository userRepository,
             DocumentChunkService chunkService,
             FileStorageService fileStorageService,
-            TextExtractionService textExtractionService,
-            DocumentProcessingKafkaServiceInterface kafkaService) {
+            TextExtractionService textExtractionService) {
         this.documentRepository = documentRepository;
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.chunkService = chunkService;
         this.fileStorageService = fileStorageService;
         this.textExtractionService = textExtractionService;
-        this.kafkaService = kafkaService;
     }
 
     public DocumentDto.DocumentResponse uploadDocument(DocumentDto.UploadDocumentRequest request,
@@ -181,8 +182,13 @@ public class DocumentService {
             document.setFilePath(filePath);
             document = documentRepository.save(document);
 
-            // Send for async processing
-            kafkaService.sendDocumentForProcessing(document.getId());
+            // Send for async processing if Kafka is available
+            if (kafkaService != null) {
+                kafkaService.sendDocumentForProcessing(document.getId());
+            } else {
+                // If Kafka is not available, trigger direct processing
+                processDocument(document.getId());
+            }
 
             logger.info("Successfully uploaded document with ID: {}", document.getId());
 
@@ -227,10 +233,16 @@ public class DocumentService {
 
             document = documentRepository.save(document);
 
-            // Send chunks for embedding generation
-            kafkaService.sendChunksForEmbedding(chunks);
-
-            logger.info("Successfully processed document: {} with {} chunks", documentId, chunks.size());
+            // Send chunks for embedding generation if Kafka is available
+            if (kafkaService != null) {
+                kafkaService.sendChunksForEmbedding(chunks);
+                logger.info("Successfully processed document: {} with {} chunks (sent to Kafka)", documentId, chunks.size());
+            } else {
+                // Without Kafka, document processing is complete here
+                // Embeddings would need to be generated synchronously or via REST API
+                logger.info("Successfully processed document: {} with {} chunks (Kafka disabled - embeddings need manual trigger)", 
+                           documentId, chunks.size());
+            }
 
         } catch (Exception e) {
             logger.error("Failed to process document: {}", documentId, e);

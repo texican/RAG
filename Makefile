@@ -1,4 +1,9 @@
-.PHONY: help build rebuild clean test start stop restart logs status create-admin-user
+.PHONY: help build rebuild rebuild-nc clean test start stop restart restart-all logs status create-admin-user \
+	build-all clean-docker clean-all \
+	dev-auth dev-admin dev-document dev-embedding dev-core \
+	gcp-check-env gcp-build gcp-cloud-build gcp-deploy gcp-init-db gcp-validate gcp-validate-quick \
+	gcp-deploy-all gcp-status gcp-logs gcp-port-forward gcp-restart gcp-setup-ingress gcp-cleanup \
+	gcp-dev gcp-prod
 
 # Color output
 BLUE := \033[0;34m
@@ -336,9 +341,9 @@ gcp-cleanup: gcp-check-env
 	fi
 
 # GCP shortcuts for common workflows
-gcp-dev: ENV=dev
-gcp-dev: gcp-deploy-all
+gcp-dev:
+	@$(MAKE) gcp-deploy-all ENV=dev
 
-gcp-prod: ENV=prod
-gcp-prod: gcp-deploy-all
+gcp-prod:
+	@$(MAKE) gcp-deploy-all ENV=prod
 

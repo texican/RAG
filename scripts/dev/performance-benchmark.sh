@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Enterprise RAG System - Performance Benchmark Suite
 # This script runs comprehensive performance tests across all services
+#
+# Requirements: Bash 4.0+ (for associative arrays)
 #
 # Usage: ./scripts/dev/performance-benchmark.sh [options]
 #
@@ -13,6 +15,18 @@
 #   --output <dir>       Output directory for reports
 #   --profile <name>     Performance profile: light|standard|heavy
 #   --monitor-resources  Monitor system resources during tests
+
+# Check Bash version (requires 4.0+ for associative arrays)
+if ((BASH_VERSINFO[0] < 4)); then
+    echo "Error: This script requires Bash 4.0 or higher (current: ${BASH_VERSION})"
+    echo ""
+    echo "On macOS, install Bash 4+ with Homebrew:"
+    echo "  brew install bash"
+    echo ""
+    echo "Then run the script with:"
+    echo "  /opt/homebrew/bin/bash $0 $*"
+    exit 1
+fi
 
 set -euo pipefail
 
@@ -228,9 +242,19 @@ setup_benchmark_environment() {
     mkdir -p "${OUTPUT_DIR}" "${LOGS_DIR}"
     
     # Create benchmark configuration
+    # Detect OS for platform-specific commands
+    local cpu_cores memory_gb
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        cpu_cores=$(sysctl -n hw.ncpu)
+        memory_gb=$(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 ))
+    else
+        cpu_cores=$(nproc)
+        memory_gb=$(free -g | awk '/^Mem:/{print $2}')
+    fi
+
     cat > "${OUTPUT_DIR}/benchmark_config.json" << EOF
 {
-    "timestamp": "$(date -Iseconds)",
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%S%z")",
     "configuration": {
         "duration": $DURATION,
         "users": $USERS,
@@ -243,8 +267,8 @@ setup_benchmark_environment() {
         "hostname": "$(hostname)",
         "os": "$(uname -s)",
         "arch": "$(uname -m)",
-        "cpu_cores": $(nproc),
-        "memory_gb": $(free -g | awk '/^Mem:/{print $2}')
+        "cpu_cores": $cpu_cores,
+        "memory_gb": $memory_gb
     }
 }
 EOF
@@ -258,9 +282,31 @@ EOF
 # Start resource monitoring
 start_resource_monitoring() {
     log INFO "Starting resource monitoring..."
-    
+
     local monitor_script="${OUTPUT_DIR}/resource_monitor.sh"
-    cat > "$monitor_script" << 'EOF'
+
+    # Create platform-specific monitoring script
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        # macOS version
+        cat > "$monitor_script" << 'EOF'
+#!/bin/bash
+INTERVAL=5
+OUTPUT_FILE="$1"
+
+echo "timestamp,cpu_percent,memory_percent" > "$OUTPUT_FILE"
+
+while true; do
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S%z")
+    cpu=$(ps -A -o %cpu | awk '{s+=$1} END {print s}')
+    memory=$(vm_stat | awk '/Pages active/ {active=$3} /Pages wired/ {wired=$4} /Pages inactive/ {inactive=$3} /Pages free/ {free=$3} END {total=active+wired+inactive+free; used=active+wired; print (used/total)*100}')
+
+    echo "$timestamp,$cpu,$memory" >> "$OUTPUT_FILE"
+    sleep $INTERVAL
+done
+EOF
+    else
+        # Linux version
+        cat > "$monitor_script" << 'EOF'
 #!/bin/bash
 INTERVAL=5
 OUTPUT_FILE="$1"
@@ -268,23 +314,24 @@ OUTPUT_FILE="$1"
 echo "timestamp,cpu_percent,memory_percent,disk_io_read,disk_io_write,network_rx,network_tx" > "$OUTPUT_FILE"
 
 while true; do
-    timestamp=$(date -Iseconds)
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S%z")
     cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | sed 's/%us,//')
     memory=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
     disk_io=$(iostat -d 1 1 | awk '/^[a-z]/ {read+=$3; write+=$4} END {print read","write}')
     network=$(cat /proc/net/dev | awk 'BEGIN{rx=0;tx=0} NR>2{rx+=$2;tx+=$10} END{print rx","tx}')
-    
+
     echo "$timestamp,$cpu,$memory,$disk_io,$network" >> "$OUTPUT_FILE"
     sleep $INTERVAL
 done
 EOF
+    fi
 
     chmod +x "$monitor_script"
-    
+
     # Start monitoring in background
     "$monitor_script" "${OUTPUT_DIR}/resource_usage.csv" &
     echo $! > "${OUTPUT_DIR}/monitor.pid"
-    
+
     log INFO "Resource monitoring started (PID: $(cat ${OUTPUT_DIR}/monitor.pid))"
 }
 
@@ -597,7 +644,7 @@ EOF
     "test_name": "$test_name",
     "method": "$method",
     "url": "$url",
-    "timestamp": "$(date -Iseconds)",
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%S%z")",
     "duration_seconds": $total_time,
     "total_requests": $total_requests,
     "successful_requests": $success_count,
@@ -707,7 +754,7 @@ EOF
     cat > "$summary_file" << EOF
 {
     "benchmark_id": "$(basename "$OUTPUT_DIR")",
-    "timestamp": "$(date -Iseconds)",
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%S%z")",
     "configuration": {
         "profile": "$PROFILE",
         "duration": $DURATION,

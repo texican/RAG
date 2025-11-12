@@ -4,8 +4,10 @@ import com.byo.rag.document.service.DocumentService;
 import com.byo.rag.shared.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -42,6 +44,7 @@ import java.util.UUID;
  */
 @Component
 @Profile("!test")
+@ConditionalOnBean(KafkaTemplate.class)
 public class DocumentProcessingKafkaListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentProcessingKafkaListener.class);

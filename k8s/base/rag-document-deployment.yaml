@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: document-processing
     app.kubernetes.io/part-of: rag-system
 spec:
-  replicas: 2
+  replicas: 1  # Temporarily reduced from 2 due to ReadWriteOnce PVC multi-attach issues
   selector:
     matchLabels:
       app: rag-document
@@ -97,11 +97,18 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "500m"
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8082
+          failureThreshold: 30  # 30 * 10s = 5 minutes max startup time
+          periodSeconds: 10
+          timeoutSeconds: 5
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
             port: 8082
-          initialDelaySeconds: 60
+          initialDelaySeconds: 10  # Reduced since startupProbe handles initial startup
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
@@ -109,7 +116,7 @@ spec:
           httpGet:
             path: /actuator/health/readiness
             port: 8082
-          initialDelaySeconds: 30
+          initialDelaySeconds: 10  # Reduced since startupProbe handles initial startup
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3

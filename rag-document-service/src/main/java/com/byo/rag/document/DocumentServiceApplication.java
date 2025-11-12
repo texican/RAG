@@ -74,10 +74,15 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @see org.springframework.data.jpa.repository.config.EnableJpaAuditing
  * @see org.springframework.transaction.annotation.EnableTransactionManagement
  */
-@SpringBootApplication(scanBasePackages = {
-    "com.byo.rag.document",
-    "com.byo.rag.shared.exception"
-})
+@SpringBootApplication(
+    scanBasePackages = {
+        "com.byo.rag.document",
+        "com.byo.rag.shared.exception"
+    },
+    exclude = {
+        org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class
+    }
+)
 @EntityScan("com.byo.rag.shared.entity")
 @EnableJpaRepositories(basePackages = "com.byo.rag.document.repository")
 @EnableJpaAuditing

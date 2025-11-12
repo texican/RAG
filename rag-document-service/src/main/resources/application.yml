@@ -112,6 +112,27 @@ spring:
 spring:
   config:
     activate:
+      on-profile: gcp
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:byo_rag_dev}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE:0}
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+---
+spring:
+  config:
+    activate:
       on-profile: test
 
   datasource:

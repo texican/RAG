@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Enterprise RAG System - Comprehensive Integration Test Runner
 # This script runs all integration tests across all services with detailed reporting
+#
+# Requirements: Bash 4.0+ (for associative arrays)
 #
 # Usage: ./scripts/dev/run-integration-tests.sh [options]
 #
@@ -12,6 +14,18 @@
 #   --verbose            Enable verbose output
 #   --fail-fast          Stop on first test failure
 #   --skip-build         Skip compilation before testing
+
+# Check Bash version (requires 4.0+ for associative arrays)
+if ((BASH_VERSINFO[0] < 4)); then
+    echo "Error: This script requires Bash 4.0 or higher (current: ${BASH_VERSION})"
+    echo ""
+    echo "On macOS, install Bash 4+ with Homebrew:"
+    echo "  brew install bash"
+    echo ""
+    echo "Then run the script with:"
+    echo "  /opt/homebrew/bin/bash $0 $*"
+    exit 1
+fi
 
 set -euo pipefail
 

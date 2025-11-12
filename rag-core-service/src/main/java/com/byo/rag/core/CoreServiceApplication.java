@@ -2,13 +2,8 @@ package com.byo.rag.core;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * Spring Boot application class for the Enterprise RAG Core Service.
@@ -19,8 +14,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * http://localhost:8084 with full Spring AI integration and LLM connectivity.</p>
  * 
  * <p><strong>🐳 Docker Integration Status:</strong> Service is healthy and operational with 
- * complete database connectivity, Redis caching, inter-service communication, and streaming 
- * response capabilities through the API Gateway.</p>
+ * Redis caching, inter-service communication, and streaming response capabilities through 
+ * direct service access.</p>
  * 
  * <h2>RAG Pipeline Orchestration</h2>
  * <ul>
@@ -53,7 +48,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  *   <li><strong>✅ Embedding Service (8083)</strong> - Vector search and similarity operations</li>
  *   <li><strong>✅ Document Service (8082)</strong> - Document retrieval and content access</li>
  *   <li><strong>✅ Auth Service (8081)</strong> - JWT authentication and tenant isolation</li>
- *   <li><strong>✅ API Gateway (8080)</strong> - Centralized routing and security</li>
  *   <li><strong>✅ Redis Stack</strong> - Caching and vector storage integration</li>
  * </ul>
  * 
@@ -68,14 +62,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * <h2>Production Configuration Features</h2>
  * <ul>
  *   <li><strong>Component Scanning</strong> - Auto-discovery of core service and shared components</li>
- *   <li><strong>Entity Management</strong> - JPA entity scanning from shared module</li>
- *   <li><strong>Repository Config</strong> - Custom JPA repository implementations with audit support</li>
- *   <li><strong>Audit Support</strong> - Entity auditing with @EnableJpaAuditing for compliance</li>
- *   <li><strong>Transaction Management</strong> - ACID compliance with @EnableTransactionManagement</li>
  *   <li><strong>Async Processing</strong> - Background task execution with @EnableAsync</li>
- *   <li><strong>Kafka Integration</strong> - Event-driven architecture with @EnableKafka</li>
  *   <li><strong>Feign Clients</strong> - Inter-service communication with @EnableFeignClients</li>
+ *   <li><strong>Redis Integration</strong> - Distributed caching and session management</li>
  * </ul>
+ * 
+ * <p><strong>Note:</strong> This service does not use a database. All data persistence is handled 
+ * by Redis for caching and session management, while the Document Service manages document storage.</p>
  * 
  * @author Enterprise RAG Development Team
  * @version 1.0.0
@@ -83,23 +76,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @see org.springframework.boot.autoconfigure.SpringBootApplication
  * @see org.springframework.cloud.openfeign.EnableFeignClients
  * @see org.springframework.kafka.annotation.EnableKafka
- * @see org.springframework.data.jpa.repository.config.EnableJpaAuditing
  */
 @SpringBootApplication(
-    scanBasePackages = {
-        "com.byo.rag.core",
-        "com.byo.rag.shared.exception"
-    },
+    scanBasePackages = {"com.byo.rag.core", "com.byo.rag.shared.exception"},
     exclude = {
-        org.springframework.ai.autoconfigure.ollama.OllamaAutoConfiguration.class
+        org.springframework.ai.autoconfigure.ollama.OllamaAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class
     }
 )
-@EntityScan("com.byo.rag.shared.entity")
-@EnableJpaRepositories(basePackages = "com.byo.rag.core.repository")
-@EnableJpaAuditing
-@EnableTransactionManagement
 @EnableAsync
-@EnableKafka
 @EnableFeignClients
 public class CoreServiceApplication {
 
