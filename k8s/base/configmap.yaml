@@ -22,6 +22,13 @@ data:
   REDIS_PORT: "6379"
   REDIS_DATABASE: "0"
   
+  # Redis Key Prefixes (all services use DB 0 with namespaced keys)
+  REDIS_KEY_PREFIX_AUTH: "byo_rag_dev:auth"
+  REDIS_KEY_PREFIX_DOCUMENT: "byo_rag_dev:document"
+  REDIS_KEY_PREFIX_CORE: "byo_rag_dev:core"
+  REDIS_KEY_PREFIX_EMBEDDING: "byo_rag_dev:embedding"
+  REDIS_KEY_PREFIX_ADMIN: "byo_rag_dev:admin"
+  
   # Artifact Registry Configuration
   ARTIFACT_REGISTRY: "us-central1-docker.pkg.dev/byo-rag-dev/rag-system"
   

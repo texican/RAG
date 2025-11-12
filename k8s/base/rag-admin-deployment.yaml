@@ -62,6 +62,28 @@ spec:
             secretKeyRef:
               name: cloud-sql-credentials
               key: password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        - name: REDIS_DATABASE
+          value: "0"  # Admin service uses database 0 with key prefix
+        - name: REDIS_KEY_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_KEY_PREFIX_ADMIN
         resources:
           requests:
             memory: "512Mi"
@@ -71,19 +93,19 @@ spec:
             cpu: "1000m"
         livenessProbe:
           httpGet:
-            path: /actuator/health/liveness
+            path: /admin/api/actuator/health/liveness
             port: 8085
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
           httpGet:
-            path: /actuator/health/readiness
+            path: /admin/api/actuator/health/readiness
             port: 8085
-          initialDelaySeconds: 30
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 70
+          periodSeconds: 10
+          timeoutSeconds: 5
           failureThreshold: 3
         securityContext:
           runAsNonRoot: true

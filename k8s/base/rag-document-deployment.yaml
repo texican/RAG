@@ -77,6 +77,13 @@ spec:
             secretKeyRef:
               name: redis-credentials
               key: password
+        - name: REDIS_DATABASE
+          value: "0"  # Document service uses database 0
+        - name: REDIS_KEY_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_KEY_PREFIX_DOCUMENT
         # Kafka will be migrated to Pub/Sub in GCP-KAFKA-006 implementation
         - name: KAFKA_BOOTSTRAP_SERVERS
           value: "kafka:9092"  # TODO: Replace with Pub/Sub

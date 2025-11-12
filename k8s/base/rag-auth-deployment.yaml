@@ -79,6 +79,11 @@ spec:
               key: password
         - name: REDIS_DATABASE
           value: "0"  # Auth service uses database 0
+        - name: REDIS_KEY_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_KEY_PREFIX_AUTH
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:

@@ -10,7 +10,7 @@ spring:
     redis:
       host: localhost
       port: 6379
-      database: 2  # Use separate database for embeddings
+      database: 0  # Use DB 0 with key prefix byo_rag_local:embedding
       timeout: 2000ms
       lettuce:
         pool:
@@ -57,7 +57,7 @@ embedding:
   # Vector Storage Configuration
   vector:
     redis:
-      index-prefix: "rag:vectors"
+      index-prefix: "byo_rag_local:embedding:vectors"
       batch-size: 100
       dimension: 1536
       similarity-algorithm: COSINE
@@ -178,7 +178,7 @@ spring:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD}
-      database: 2
+      database: 0
       timeout: 2000ms
       lettuce:
         pool:

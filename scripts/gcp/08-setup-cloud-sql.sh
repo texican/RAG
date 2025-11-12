@@ -43,9 +43,7 @@ readonly APP_PASSWORD="$(openssl rand -base64 32)"
 
 # Databases to create
 declare -a DATABASES=(
-    "rag_auth"
-    "rag_document"
-    "rag_admin"
+    "byo_rag_dev"
 )
 
 # Flags

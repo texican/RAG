@@ -36,36 +36,6 @@ spec:
             configMapKeyRef:
               name: gcp-config
               key: SPRING_PROFILES_ACTIVE
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: gcp-config
-              key: DB_HOST
-        - name: DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: gcp-config
-              key: DB_PORT
-        - name: DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: gcp-config
-              key: DB_NAME
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: cloud-sql-credentials
-              key: username
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: cloud-sql-credentials
-              key: password
-        - name: SPRING_DATASOURCE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: gcp-config
-              key: SPRING_DATASOURCE_URL
         - name: REDIS_HOST
           valueFrom:
             configMapKeyRef:
@@ -82,7 +52,12 @@ spec:
               name: redis-credentials
               key: password
         - name: REDIS_DATABASE
-          value: "1"  # Core service uses database 1
+          value: "0"  # Core service uses database 0 with key prefix
+        - name: REDIS_KEY_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_KEY_PREFIX_CORE
         - name: EMBEDDING_SERVICE_URL
           valueFrom:
             configMapKeyRef:
@@ -104,7 +79,7 @@ spec:
           httpGet:
             path: /actuator/health/liveness
             port: 8084
-          initialDelaySeconds: 60
+          initialDelaySeconds: 150
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
@@ -112,9 +87,9 @@ spec:
           httpGet:
             path: /actuator/health/readiness
             port: 8084
-          initialDelaySeconds: 30
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
           failureThreshold: 3
         securityContext:
           runAsNonRoot: true
@@ -123,28 +98,6 @@ spec:
           capabilities:
             drop:
             - ALL
-      
-      # Cloud SQL Proxy sidecar
-      - name: cloud-sql-proxy
-        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
-        args:
-        - "--structured-logs"
-        - "--port=5432"
-        - "byo-rag-dev:us-central1:rag-postgres"
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 65532
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
 ---
 apiVersion: v1
 kind: Service

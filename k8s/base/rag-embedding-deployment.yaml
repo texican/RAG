@@ -52,7 +52,12 @@ spec:
               name: redis-credentials
               key: password
         - name: REDIS_DATABASE
-          value: "2"  # Embedding service uses database 2
+          value: "0"  # Embedding service uses database 0 with key prefix
+        - name: REDIS_KEY_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: gcp-config
+              key: REDIS_KEY_PREFIX_EMBEDDING
         # Kafka will be migrated to Pub/Sub in GCP-KAFKA-006 implementation
         - name: KAFKA_BOOTSTRAP_SERVERS
           value: "kafka:9092"  # TODO: Replace with Pub/Sub
@@ -69,7 +74,7 @@ spec:
           httpGet:
             path: /actuator/health/liveness
             port: 8083
-          initialDelaySeconds: 60
+          initialDelaySeconds: 150
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
@@ -77,9 +82,9 @@ spec:
           httpGet:
             path: /actuator/health/readiness
             port: 8083
-          initialDelaySeconds: 30
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
           failureThreshold: 3
         securityContext:
           runAsNonRoot: true

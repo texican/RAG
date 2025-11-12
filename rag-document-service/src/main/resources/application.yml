@@ -6,7 +6,7 @@ spring:
     name: rag-document-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/rag_documents
+    url: jdbc:postgresql://localhost:5432/byo_rag_local
     username: ${DB_USERNAME:rag_user}
     password: ${DB_PASSWORD:rag_password}
     driver-class-name: org.postgresql.Driver
@@ -98,7 +98,7 @@ spring:
       on-profile: docker
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:rag_enterprise}
+    url: jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:byo_rag_local}
   
   data:
     redis:

@@ -5,43 +5,12 @@ spring:
   application:
     name: rag-core-service
   
-  # Database Configuration
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/rag_db}
-    username: ${DB_USERNAME:rag_user}
-    password: ${DB_PASSWORD:rag_password}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 15
-      minimum-idle: 5
-      connection-timeout: 20000
-      idle-timeout: 300000
-      max-lifetime: 1200000
-  
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
-        generate_statistics: false
-        cache:
-          use_second_level_cache: false
-          use_query_cache: false
-        jdbc:
-          batch_size: 25
-          order_inserts: true
-          order_updates: true
-          batch_versioned_data: true
-  
   # Redis Configuration for Caching
   data:
     redis:
       host: localhost
       port: 6379
-      database: 1  # Use separate database for core service cache
+      database: 0  # Use DB 0 with key prefixes
       timeout: 2000ms
       lettuce:
         pool:
@@ -236,11 +205,6 @@ spring:
   config:
     activate:
       on-profile: docker
-
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:rag_enterprise}
-    username: ${DB_USERNAME:rag_user}
-    password: ${DB_PASSWORD:rag_password}
 
   data:
     redis:

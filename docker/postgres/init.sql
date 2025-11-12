@@ -1,20 +1,9 @@
--- Create databases for each service
-CREATE DATABASE rag_auth;
-CREATE DATABASE rag_documents;
-CREATE DATABASE rag_embeddings;
-CREATE DATABASE rag_core;
-CREATE DATABASE rag_admin;
+-- Create single shared database for all services
+CREATE DATABASE byo_rag_local;
 
--- Create pgvector extension for vector operations
-\c rag_embeddings;
-CREATE EXTENSION IF NOT EXISTS vector;
-
-\c rag_core;
+-- Create pgvector extension for future vector operations
+\c byo_rag_local;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Grant permissions
-GRANT ALL PRIVILEGES ON DATABASE rag_auth TO rag_user;
-GRANT ALL PRIVILEGES ON DATABASE rag_documents TO rag_user;
-GRANT ALL PRIVILEGES ON DATABASE rag_embeddings TO rag_user;
-GRANT ALL PRIVILEGES ON DATABASE rag_core TO rag_user;
-GRANT ALL PRIVILEGES ON DATABASE rag_admin TO rag_user;
+GRANT ALL PRIVILEGES ON DATABASE byo_rag_local TO rag_user;

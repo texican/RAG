@@ -4,7 +4,7 @@ services:
     image: pgvector/pgvector:pg15
     container_name: rag-postgres
     environment:
-      POSTGRES_DB: rag_enterprise
+      POSTGRES_DB: byo_rag_local
       POSTGRES_USER: rag_user
       POSTGRES_PASSWORD: rag_password
     ports:
@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_enterprise"]
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d byo_rag_local"]
       interval: 10s
       timeout: 5s
       retries: 5
