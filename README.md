@@ -51,8 +51,6 @@
 - [GCP Cloud Deployment](#️-gcp-cloud-deployment) - Production GKE deployment
 - [Kubernetes Guide](k8s/README.md) - K8s manifests and configuration
 
-## 🏗️ Architecture & Design
-
 ## 📚 Table of Contents
 
 - [🎯 Project Overview](#-project-overview)
