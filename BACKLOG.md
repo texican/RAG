@@ -645,11 +645,11 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
 - ✅ STORY-016: Fix Document Service Kafka Connectivity (1 point)
 - ✅ STORY-017: Fix Tenant Data Synchronization + DB Persistence (2 points)
 - ✅ STORY-002: Enable E2E Tests - Infrastructure Complete (2 points)
+- ✅ STORY-018: Implement Document Processing Pipeline (8 points)
 - ✅ Database Persistence Fix (bonus - prevent data loss)
 - **Goal**: Get E2E tests passing ✅ Infrastructure ready
-- **Status**: ✅ COMPLETE - 5/5 stories delivered (12/12 points)
-- **Achievements**: All infrastructure blockers resolved, test suite can execute
-- **Discovery**: STORY-018 (async processing) - critical for full E2E completion
+- **Status**: ✅ COMPLETE - 6/6 stories delivered (20/20 points)
+- **Achievements**: All infrastructure blockers resolved, test suite can execute, async processing pipeline operational
 
 ### Sprint 2 (Current - IN PROGRESS)
 - ✅ STORY-022: Make Kafka Optional Across All Services (P0 - 5 points) **COMPLETE**
@@ -658,12 +658,11 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
 - ✅ STORY-019: Fix Spring Security for K8s Health Checks (P0 - 2 points) **COMPLETE**
 - ✅ STORY-021: Fix rag-embedding RestTemplate Bean (P0 - 1 point) **COMPLETE**
 - ✅ STORY-003: Fix Admin Health Check (P1 - 2 points) **COMPLETE**
-- 🔴 STORY-018: Implement Document Processing Pipeline (P0 - 8 points)
-- TECH-DEBT-005: Implement Flyway Database Migrations (5 points)
-- TECH-DEBT-006: Fix Auth Service Security Tests (2 points)
-- TECH-DEBT-007: Fix Embedding Service Ollama Tests (2 points)
+- 🔴 TECH-DEBT-005: Implement Flyway Database Migrations (P2 - 5 points)
+- 🔴 TECH-DEBT-006: Fix Auth Service Security Tests (P2 - 2 points)
+- 🔴 TECH-DEBT-007: Fix Embedding Service Ollama Tests (P2 - 2 points)
 - **Goal**: E2E validation + infrastructure stability + cost optimization
-- **Progress**: 6/10 stories complete (16/33 points) 🎉
+- **Progress**: 6/9 stories complete (16/25 points) 🎉
 - **Achievements**: 
   - All critical infrastructure issues resolved
   - Services healthy without Kafka (~$250-450/mo savings)
@@ -675,6 +674,7 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
   - Local deployment fully operational (all services healthy)
   - Docs: KAFKA_OPTIONAL.md, DEPLOYMENT_TROUBLESHOOTING.md
 - **Status**: 🟢 All P0 critical stories complete - GKE deployment fully stable
+- **Note**: STORY-018 was completed in Sprint 1 (2025-10-06), removed from Sprint 2 backlog
 
 ### Sprint 3
 - STORY-004: TestContainers Fix (3 points)
@@ -689,10 +689,11 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
 **Technical Debt Items**: 8 (4 complete, 4 remaining)
 **Total Estimated Effort**: ~120 Story Points
 **Sprint 1 Progress**: ✅ COMPLETE - 5/5 stories (STORY-001, 015, 016, 017, 002)
-**Sprint 2 Progress**: 🟢 IN PROGRESS - 6/10 stories complete (STORY-022, 023, TECH-DEBT-008, STORY-019, STORY-021, STORY-003)
+**Sprint 2 Progress**: 🟢 IN PROGRESS - 6/9 stories complete (STORY-022, 023, TECH-DEBT-008, STORY-019, STORY-021, STORY-003)
 **Sprint 2 Achievements**:
   - ✅ All 5 P0 critical stories complete (14/14 points)
   - ✅ STORY-003 validated (working as designed) - local deployment verified
+  - ✅ Removed STORY-018 from Sprint 2 (was completed in Sprint 1 on 2025-10-06)
   - Made Kafka optional across all services (~$250-450/month savings)
   - Fixed deployment health issues (startup probes, liveness probes, PVC multi-attach)
   - Removed PostgreSQL from unused services (~$206/year savings)
@@ -703,7 +704,6 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
   - Created comprehensive documentation (KAFKA_OPTIONAL.md, DEPLOYMENT_TROUBLESHOOTING.md)
   - All services verified healthy in GKE (2/2 or 1/1 Running, 0 restarts)
 **Next Priority**: 
-  1. STORY-018 (Document Processing Pipeline) - P0 Critical - 8 points
-  2. TECH-DEBT-005 (Flyway Database Migrations) - P2 Medium - 5 points
-  3. TECH-DEBT-005 (Flyway Migrations) - P2 - 5 points
-  4. TECH-DEBT-006 & 007 (Test Fixes) - Improve test coverage
+  1. TECH-DEBT-005 (Flyway Database Migrations) - P2 Medium - 5 points
+  2. TECH-DEBT-006 (Auth Service Security Tests) - P2 - 2 points
+  3. TECH-DEBT-007 (Embedding Service Ollama Tests) - P2 - 2 points
