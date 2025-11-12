@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: implementation
+---
+
 # STORY-018: Implement Document Processing Pipeline - Implementation Summary
 
 **Priority:** P0 - Critical

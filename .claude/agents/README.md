@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: agent-system
+---
+
 # Sub-Agent Architecture
 
 **Version**: 1.0.0  
@@ -142,6 +150,30 @@ The RAG project uses a **specialized sub-agent architecture** to improve perform
 
 ---
 
+### 6. Docs Agent (`docs-agent.md`)
+**Domain**: Documentation management  
+**Responsibilities**:
+- Documentation validation (links, metadata, format)
+- Documentation generation (API docs, diagrams, changelogs)
+- Documentation maintenance (freshness, consolidation)
+- Quality reporting (coverage, health metrics)
+
+**When to Use**:
+- "Validate documentation"
+- "Check broken links"
+- "Generate API docs"
+- "Create documentation"
+- "Documentation health report"
+
+**Key Capabilities**:
+- Automated link checking
+- OpenAPI spec generation
+- Metadata enforcement
+- Diagram creation
+- Documentation quality gates
+
+---
+
 ## Delegation Framework
 
 ### Routing Decision Tree
@@ -163,6 +195,9 @@ User Request
     │
     ├─ Git-related? ─────────────────→ git-agent.md
     │   (branches, commits, backups)
+    │
+    ├─ Documentation-related? ───────→ docs-agent.md
+    │   (validate, generate, fix docs)
     │
     └─ General/Unknown? ─────────────→ main agent-instructions.md
         (routing help, core concepts)
@@ -196,6 +231,7 @@ User: "Add new endpoint"
   → dev-agent.md (provide implementation guidance)
       → dev-agent.md (rebuild service)
       → test-agent.md (run tests)
+      → docs-agent.md (generate API documentation)
       → git-agent.md (commit if tests pass)
 ```
 
@@ -242,14 +278,15 @@ can-call: [list of other agents]
 
 **After Modularization**:
 - `agent-instructions.md`: ~500 lines (index + core concepts)
-- `test-agent.md`: ~350 lines
-- `backlog-agent.md`: ~450 lines
-- `deploy-agent.md`: ~500 lines
-- `dev-agent.md`: ~400 lines
-- `git-agent.md`: ~200 lines
+- `test-agent.md`: ~850 lines
+- `backlog-agent.md`: ~750 lines
+- `deploy-agent.md`: ~1,150 lines
+- `dev-agent.md`: ~650 lines
+- `git-agent.md`: ~550 lines
+- `docs-agent.md`: ~1,800 lines
 - `references/`: ~800 lines (examples, patterns, troubleshooting)
 
-**Result**: Instead of loading 3,300 lines for any task, load 500 + domain-specific content (350-500 lines) = **850-1000 lines total** (60-70% reduction)
+**Result**: Instead of loading 3,300 lines for any task, load 500 + domain-specific content (550-1,800 lines) = **1,050-2,300 lines total** (30-70% reduction, depending on agent)
 
 ## Usage Examples
 
@@ -323,6 +360,11 @@ Deploy Agent:
 
 ## Version History
 
+### v1.1.0 (2025-11-12)
+- Added Documentation Agent (docs-agent.md)
+- Updated routing to include documentation tasks
+- Enhanced agent delegation framework
+
 ### v1.0.0 (2025-11-12)
 - Initial sub-agent architecture
 - Created 5 specialized agents:
@@ -339,7 +381,6 @@ Deploy Agent:
 ### Planned Agents
 - **security-agent.md**: Security scanning, vulnerability assessment
 - **performance-agent.md**: Performance testing, optimization
-- **docs-agent.md**: Documentation generation, updates
 - **monitoring-agent.md**: Observability, alerting, metrics
 
 ### Planned Features

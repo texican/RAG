@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: deployment
+---
+
 # BYO RAG System - Quick Deployment Guide
 
 [![Version](https://img.shields.io/badge/Version-0.8.0--SNAPSHOT-blue.svg)](https://semver.org/)

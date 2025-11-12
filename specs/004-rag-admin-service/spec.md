@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Feature Specification: RAG Admin Service
 
 **Feature Branch**: `004-rag-admin-service`  
@@ -8,26 +16,26 @@
 ## Execution Flow (main)
 ```
 1. Parse user description from Input
-   ’ Feature: RAG Admin Service for enterprise multi-tenant administration
+   ' Feature: RAG Admin Service for enterprise multi-tenant administration
 2. Extract key concepts from description
-   ’ Identified: system administrators, tenant management, user administration, authentication, monitoring
+   ' Identified: system administrators, tenant management, user administration, authentication, monitoring
 3. For each unclear aspect:
-   ’ All aspects clear from existing implementation analysis
+   ' All aspects clear from existing implementation analysis
 4. Fill User Scenarios & Testing section
-   ’ Admin workflows for tenant and user management defined
+   ' Admin workflows for tenant and user management defined
 5. Generate Functional Requirements
-   ’ All requirements testable and based on existing implementation
+   ' All requirements testable and based on existing implementation
 6. Identify Key Entities (if data involved)
-   ’ Entities: Tenant, User, Admin, Audit Log, System Metrics
+   ' Entities: Tenant, User, Admin, Audit Log, System Metrics
 7. Run Review Checklist
-   ’ No [NEEDS CLARIFICATION] markers
-   ’ No implementation details included
+   ' No [NEEDS CLARIFICATION] markers
+   ' No implementation details included
 8. Return: SUCCESS (spec ready for planning)
 ```
 
 ---
 
-## ¡ Quick Guidelines
+## Â¡ Quick Guidelines
 -  Focus on WHAT users need and WHY
 - L Avoid HOW to implement (no tech stack, APIs, code structure)
 - =e Written for business stakeholders, not developers

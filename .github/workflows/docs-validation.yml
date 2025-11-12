@@ -1,0 +1,108 @@
+name: Documentation Validation
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - '.github/workflows/docs-validation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**.md'
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  validate-links:
+    name: Validate Markdown Links
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: '.markdown-link-check.json'
+          folder-path: 'docs/'
+          file-path: './README.md, ./CONTRIBUTING.md, ./CLAUDE.md'
+          max-depth: -1
+          check-modified-files-only: 'no'
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+      
+      - name: Upload link check results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: link-check-results
+          path: |
+            ./*.md.log
+            docs/**/*.md.log
+  
+  validate-metadata:
+    name: Validate Documentation Metadata
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Check documentation metadata
+        run: |
+          python .github/scripts/check-doc-metadata.py
+      
+      - name: Upload metadata validation results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: metadata-validation-results
+          path: metadata-validation-report.txt
+  
+  lint-markdown:
+    name: Lint Markdown Files
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v14
+        with:
+          globs: |
+            **/*.md
+            !**/node_modules/**
+            !**/target/**
+  
+  check-quality:
+    name: Documentation Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Check for TODO markers in docs
+        run: |
+          echo "Checking for TODO/FIXME/XXX markers in documentation..."
+          if grep -r "TODO\|FIXME\|XXX" docs/**/*.md *.md --exclude-dir=archive 2>/dev/null; then
+            echo "❌ Found TODO markers in documentation. Please resolve before merging."
+            exit 1
+          else
+            echo "✅ No TODO markers found in active documentation"
+          fi
+      
+      - name: Check documentation freshness
+        run: |
+          echo "Checking for stale documentation (>90 days)..."
+          .github/scripts/check-doc-freshness.sh

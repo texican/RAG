@@ -1,3 +1,11 @@
+---
+version: 0.8.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: project-context
+---
+
 # Claude Context - RAG Project Current State
 
 Last Updated: 2025-11-09 (Session: Documentation Update)

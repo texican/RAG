@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Documentation Improvement Specification
 
 **Document Version**: 1.0  
@@ -22,7 +30,7 @@
 
 ### 1.1 Current State
 
-The Enterprise RAG System has substantial documentation covering 18,381 lines across 56 Markdown files, but analysis reveals significant opportunities for improvement in organization, consistency, and coverage.
+The BYO RAG System has substantial documentation covering 18,381 lines across 56 Markdown files, but analysis reveals significant opportunities for improvement in organization, consistency, and coverage.
 
 **Documentation Strengths**:
 - ✅ Comprehensive service specifications (7 detailed specs)

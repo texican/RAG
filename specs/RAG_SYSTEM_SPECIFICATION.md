@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Enterprise RAG System - Comprehensive Technical Specification
 
 **Document Version**: 1.0  
@@ -26,7 +34,7 @@
 
 ### 1.1 System Purpose
 
-The Enterprise RAG (Retrieval Augmented Generation) System is a comprehensive AI-powered knowledge platform that enables organizations to build intelligent document processing and conversational AI capabilities while maintaining complete data privacy and control. The system combines large language models with private knowledge bases to provide accurate, contextual responses to natural language queries.
+The BYO RAG (Retrieval Augmented Generation) System is a comprehensive AI-powered knowledge platform that enables organizations to build intelligent document processing and conversational AI capabilities while maintaining complete data privacy and control. The system combines large language models with private knowledge bases to provide accurate, contextual responses to natural language queries.
 
 ### 1.2 Key Value Propositions
 

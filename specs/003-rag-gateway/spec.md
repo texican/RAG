@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Feature Specification: RAG Gateway
 
 **Feature Branch**: `003-rag-gateway`  
@@ -8,27 +16,27 @@
 ## Execution Flow (main)
 ```
 1. Parse user description from Input
-   ’ If empty: ERROR "No feature description provided"
+   ' If empty: ERROR "No feature description provided"
 2. Extract key concepts from description
-   ’ Identified: API gateway, request routing, authentication, rate limiting
+   ' Identified: API gateway, request routing, authentication, rate limiting
 3. For each unclear aspect:
-   ’ [NEEDS CLARIFICATION: specific authentication requirements and session management]
+   ' [NEEDS CLARIFICATION: specific authentication requirements and session management]
 4. Fill User Scenarios & Testing section
-   ’ Primary flow: Client requests through gateway to microservices
+   ' Primary flow: Client requests through gateway to microservices
 5. Generate Functional Requirements
-   ’ Each requirement must be testable
-   ’ Security, routing, and performance requirements identified
+   ' Each requirement must be testable
+   ' Security, routing, and performance requirements identified
 6. Identify Key Entities (if data involved)
-   ’ Gateway routes, authentication tokens, rate limit records
+   ' Gateway routes, authentication tokens, rate limit records
 7. Run Review Checklist
-   ’ If any [NEEDS CLARIFICATION]: WARN "Spec has uncertainties"
-   ’ If implementation details found: ERROR "Remove tech details"
+   ' If any [NEEDS CLARIFICATION]: WARN "Spec has uncertainties"
+   ' If implementation details found: ERROR "Remove tech details"
 8. Return: SUCCESS (spec ready for planning)
 ```
 
 ---
 
-## ¡ Quick Guidelines
+## Â¡ Quick Guidelines
 -  Focus on WHAT users need and WHY
 - L Avoid HOW to implement (no tech stack, APIs, code structure)
 - =e Written for business stakeholders, not developers

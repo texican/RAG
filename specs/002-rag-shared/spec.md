@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Feature Specification: RAG Shared Components
 
 **Feature Branch**: `002-rag-shared`  
@@ -8,26 +16,26 @@
 ## Execution Flow (main)
 ```
 1. Parse user description from Input
-   ’ Feature name extracted: RAG Shared Components
+   ' Feature name extracted: RAG Shared Components
 2. Extract key concepts from description
-   ’ Identified: Shared entities, DTOs, utilities, configuration, exception handling
+   ' Identified: Shared entities, DTOs, utilities, configuration, exception handling
 3. For each unclear aspect:
-   ’ All core shared components identified from existing implementation
+   ' All core shared components identified from existing implementation
 4. Fill User Scenarios & Testing section
-   ’ Clear usage patterns for shared components across microservices
+   ' Clear usage patterns for shared components across microservices
 5. Generate Functional Requirements
-   ’ Each requirement mapped to existing shared functionality
+   ' Each requirement mapped to existing shared functionality
 6. Identify Key Entities
-   ’ BaseEntity, Document, DocumentChunk, Tenant, User entities identified
+   ' BaseEntity, Document, DocumentChunk, Tenant, User entities identified
 7. Run Review Checklist
-   ’ No [NEEDS CLARIFICATION] markers present
-   ’ No implementation details included
+   ' No [NEEDS CLARIFICATION] markers present
+   ' No implementation details included
 8. Return: SUCCESS (spec ready for planning)
 ```
 
 ---
 
-## ¡ Quick Guidelines
+## Â¡ Quick Guidelines
 -  Focus on WHAT shared components need and WHY
 - L Avoid HOW to implement (no tech stack, APIs, code structure)
 - =e Written for business stakeholders, not developers

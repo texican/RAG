@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Feature Specification: RAG Core Service
 
 **Feature Branch**: `001-rag-core-service`  
@@ -8,26 +16,26 @@
 ## Execution Flow (main)
 ```
 1. Parse user description from Input
-   ’ Feature name extracted: RAG Core Service
+   ' Feature name extracted: RAG Core Service
 2. Extract key concepts from description
-   ’ Identified: RAG orchestration, query processing, LLM integration, document retrieval
+   ' Identified: RAG orchestration, query processing, LLM integration, document retrieval
 3. For each unclear aspect:
-   ’ All core capabilities identified from existing implementation
+   ' All core capabilities identified from existing implementation
 4. Fill User Scenarios & Testing section
-   ’ Clear user flows for query processing and multi-turn conversations
+   ' Clear user flows for query processing and multi-turn conversations
 5. Generate Functional Requirements
-   ’ Each requirement mapped to existing service capabilities
+   ' Each requirement mapped to existing service capabilities
 6. Identify Key Entities
-   ’ Query, Response, Conversation, Document entities identified
+   ' Query, Response, Conversation, Document entities identified
 7. Run Review Checklist
-   ’ No [NEEDS CLARIFICATION] markers present
-   ’ No implementation details included
+   ' No [NEEDS CLARIFICATION] markers present
+   ' No implementation details included
 8. Return: SUCCESS (spec ready for planning)
 ```
 
 ---
 
-## ¡ Quick Guidelines
+## Â¡ Quick Guidelines
 -  Focus on WHAT users need and WHY
 - L Avoid HOW to implement (no tech stack, APIs, code structure)
 - =e Written for business stakeholders, not developers

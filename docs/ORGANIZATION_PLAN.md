@@ -1,3 +1,19 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: project-management
+---
+
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: documentation
+---
+
 # Documentation Organization Plan
 
 ## Current Issues

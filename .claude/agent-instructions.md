@@ -62,6 +62,7 @@ This agent system uses **specialized sub-agents** for different domains. Each su
 | **Deploy Agent** | Deployment | `.claude/agents/deploy-agent.md` | Local/GCP deployment, infrastructure |
 | **Dev Agent** | Development | `.claude/agents/dev-agent.md` | Feature implementation, debugging |
 | **Git Agent** | Version Control | `.claude/agents/git-agent.md` | Commits, branches, backups, tagging |
+| **Docs Agent** | Documentation | `.claude/agents/docs-agent.md` | Documentation validation, generation, maintenance |
 
 ### How Sub-Agents Work
 
@@ -119,20 +120,33 @@ This agent system uses **specialized sub-agents** for different domains. Each su
 
 **Use Git Agent** when:
 - "Commit these changes"
+- "Commit and push"
+- "Push changes"
 - "Create a backup"
 - "Tag this deployment"
 - "Create a branch"
-- "Push changes"
+- "Save this work"
+- Any git/version control operations
+
+**Use Docs Agent** when:
+- "Validate documentation"
+- "Check broken links"
+- "Generate API docs"
+- "Update documentation"
+- "Documentation health report"
+- "Fix documentation"
+- Any documentation quality/maintenance tasks
 
 ### Agent Dependencies
 
 ```
 Main Agent (this file)
   ├─ Test Agent (leaf agent)
-  ├─ Backlog Agent (calls: test-agent, git-agent)
-  ├─ Deploy Agent (calls: test-agent, git-agent)
-  ├─ Dev Agent (calls: test-agent, git-agent)
-  └─ Git Agent (leaf agent)
+  ├─ Backlog Agent (calls: test-agent, git-agent, docs-agent)
+  ├─ Deploy Agent (calls: test-agent, git-agent, docs-agent)
+  ├─ Dev Agent (calls: test-agent, git-agent, docs-agent)
+  ├─ Git Agent (calls: docs-agent)
+  └─ Docs Agent (calls: test-agent, git-agent)
 ```
 
 **Delegation Examples**:
@@ -319,6 +333,9 @@ spring.profiles.active=gcp
 | Commit changes | Git Agent | `.claude/agents/git-agent.md` |
 | Debug service | Dev Agent | `.claude/agents/dev-agent.md` |
 | Estimate story | Backlog Agent | `.claude/agents/backlog-agent.md` |
+| Validate docs | Docs Agent | `.claude/agents/docs-agent.md` |
+| Generate API docs | Docs Agent | `.claude/agents/docs-agent.md` |
+| Fix broken links | Docs Agent | `.claude/agents/docs-agent.md` |
 
 ### Key Documentation Files
 
@@ -373,8 +390,11 @@ spring.profiles.active=gcp
              ├─ Contains "story", "backlog", "estimate", "complete"
              │  → BACKLOG AGENT
              │
-             ├─ Contains "commit", "git", "branch", "backup"
+             ├─ Contains "commit", "push", "git", "branch", "backup", "save"
              │  → GIT AGENT
+             │
+             ├─ Contains "documentation", "docs", "links", "api docs", "validate"
+             │  → DOCS AGENT
              │
              ├─ Contains "implement", "add", "fix", "debug", "feature"
              │  → DEV AGENT
@@ -410,6 +430,7 @@ spring.profiles.active=gcp
 - **Deploy Agent**: `.claude/agents/deploy-agent.md` - Deployment expert (1,150 lines)
 - **Dev Agent**: `.claude/agents/dev-agent.md` - Development expert (650 lines)
 - **Git Agent**: `.claude/agents/git-agent.md` - Version control expert (550 lines)
+- **Docs Agent**: `.claude/agents/docs-agent.md` - Documentation expert (1,800 lines)
 
 **References**:
 - **Communication Examples**: `.claude/references/communication-examples.md` - Status update templates

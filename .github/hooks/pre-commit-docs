@@ -1,0 +1,80 @@
+#!/bin/bash
+#
+# Git Pre-Commit Hook for Documentation Quality
+# Validates documentation changes before allowing commit
+#
+
+set -e
+
+echo "🔍 Running documentation quality checks..."
+
+# Get list of staged markdown files
+STAGED_MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.md$' || true)
+
+if [ -z "$STAGED_MD_FILES" ]; then
+    echo "✅ No markdown files to check"
+    exit 0
+fi
+
+echo "📄 Checking ${STAGED_MD_FILES[*]}"
+
+# Track if any checks failed
+CHECKS_FAILED=0
+
+# Check for TODO/FIXME/XXX markers (excluding archive and specific allowed files)
+echo ""
+echo "Checking for TODO markers..."
+for file in $STAGED_MD_FILES; do
+    # Skip archive, backlog, and development notes
+    if echo "$file" | grep -qE "archive|BACKLOG\.md|E2E-TEST-RESULTS\.md|notes"; then
+        continue
+    fi
+    
+    if grep -n "TODO\|FIXME\|XXX" "$file" 2>/dev/null; then
+        echo "❌ Found TODO markers in $file"
+        echo "   Please resolve before committing"
+        CHECKS_FAILED=1
+    fi
+done
+
+# Check metadata for non-archived docs
+echo ""
+echo "Checking metadata..."
+for file in $STAGED_MD_FILES; do
+    # Skip archive
+    if echo "$file" | grep -q "archive"; then
+        continue
+    fi
+    
+    # Check if file has metadata
+    if ! head -n 10 "$file" | grep -q "^---"; then
+        echo "⚠️  Warning: $file is missing metadata header"
+        echo "   Consider adding version, last-updated, status, applies-to fields"
+        # Don't fail on missing metadata, just warn
+    fi
+done
+
+# Check markdown formatting (if markdownlint is available)
+if command -v markdownlint &> /dev/null; then
+    echo ""
+    echo "Linting markdown..."
+    for file in $STAGED_MD_FILES; do
+        if ! markdownlint "$file"; then
+            echo "❌ Markdown linting failed for $file"
+            CHECKS_FAILED=1
+        fi
+    done
+else
+    echo "ℹ️  markdownlint not installed, skipping markdown linting"
+    echo "   Install with: npm install -g markdownlint-cli"
+fi
+
+echo ""
+if [ $CHECKS_FAILED -eq 1 ]; then
+    echo "❌ Documentation quality checks failed"
+    echo "   Fix the issues above before committing"
+    exit 1
+else
+    echo "✅ Documentation quality checks passed"
+    exit 0
+fi

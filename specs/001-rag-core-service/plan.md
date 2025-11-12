@@ -1,3 +1,10 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
 
 # Implementation Plan: RAG Core Service Tech Stack
 

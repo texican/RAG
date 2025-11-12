@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: deployment
+---
+
 # Docker Workflow Enforcement Mechanisms
 
 This document describes the multi-layered approach to ensuring developers use the correct Docker workflow.

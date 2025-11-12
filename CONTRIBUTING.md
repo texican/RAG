@@ -1,6 +1,14 @@
-# Contributing to RAG System
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: development
+---
 
-Thank you for contributing! Please follow these guidelines to ensure smooth development.
+# Contributing to BYO RAG System
+
+Thank you for your interest in contributing to the BYO RAG System! This document provides guidelines and instructions for contributing to the project.
 
 ## 🚫 Deprecated Practices
 

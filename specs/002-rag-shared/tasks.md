@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Implementation Tasks: RAG Shared Components Tech Stack
 
 **Branch**: `002-rag-shared` | **Date**: 2025-09-18  

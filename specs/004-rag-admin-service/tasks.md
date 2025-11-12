@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: archived
+applies-to: 0.8.0-SNAPSHOT
+category: specifications
+---
+
 # Tasks: RAG Admin Service Documentation
 
 **Input**: Design documents from `/specs/004-rag-admin-service/`

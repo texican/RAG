@@ -1,3 +1,11 @@
+---
+version: 1.0.0
+last-updated: 2025-11-12
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: deployment
+---
+
 # Container Image Building Best Practices for GCP
 
 This document outlines best practices for building and deploying container images to Google Cloud Platform.
