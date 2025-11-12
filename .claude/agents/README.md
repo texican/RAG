@@ -1,5 +1,5 @@
 ---
-version: 1.0.0
+version: 2.0.0
 last-updated: 2025-11-12
 status: active
 applies-to: 0.8.0-SNAPSHOT
@@ -8,9 +8,44 @@ category: agent-system
 
 # Sub-Agent Architecture
 
-**Version**: 1.0.0  
+**Version**: 2.0.0  
 **Last Updated**: 2025-11-12  
 **Purpose**: Specialized agents for domain-specific tasks
+
+## 🎉 NEW: VS Code Custom Agents Integration
+
+**As of 2025-11-12**, all agents have been migrated to VS Code's native custom agent system:
+
+- **Location**: `.github/agents/` (VS Code standard location)
+- **Format**: `.agent.md` files with YAML frontmatter
+- **Features**:
+  - ✅ Native VS Code integration
+  - ✅ Agent dropdown in Copilot Chat
+  - ✅ Handoffs between agents with button UI
+  - ✅ Tool restrictions per agent
+  - ✅ Model selection per agent
+
+**New Files Created**:
+- `.github/agents/test.agent.md` - Testing expert
+- `.github/agents/git.agent.md` - Version control expert
+- `.github/agents/backlog.agent.md` - Backlog management expert
+- `.github/agents/deploy.agent.md` - Deployment expert
+- `.github/agents/dev.agent.md` - Development expert
+- `.github/agents/docs.agent.md` - Documentation expert
+
+**How to Use**:
+1. Open VS Code Copilot Chat
+2. Click the agents dropdown (@ icon)
+3. Select the agent you need (e.g., @test, @git, @backlog)
+4. Agent-specific instructions and tools will be applied
+5. Use handoff buttons to transition between agents
+
+**Legacy Files**:
+- Files in `.claude/agents/*.md` remain as reference documentation
+- They contain detailed procedures and examples
+- VS Code agents in `.github/agents/` are the active system
+
+---
 
 ## Overview
 
