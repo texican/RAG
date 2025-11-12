@@ -1,13 +1,23 @@
+---
+version: 1.1.0
+last-updated: 2025-11-13
+status: active
+applies-to: 0.8.0-SNAPSHOT
+category: project-management
+changelog: Added Phase 2 API Documentation stories (7 stories, 41 points)
+---
+
 # BYO RAG System - Task Backlog
 
 ## Overview
 This document tracks the remaining user stories and features to be implemented for the RAG system.
 
-**Total Remaining Story Points: 127** (71 GCP + 37 existing + 8 CI/CD + 11 observability)
+**Total Remaining Story Points: 168** (89 GCP [COMPLETE] + 41 Documentation + 26 Testing + 8 CI/CD + 4 Infrastructure)
 - **GCP Deployment Epic**: ✅ **COMPLETE** (89/89 story points, 100%) 🎉
+- **Documentation Improvement (Phase 2)**: ⭐ **NEW** (41 story points, 0%)
 - **Testing Stories**: 26 story points
-- **Infrastructure Stories**: 19 story points (11 existing + 8 CI/CD)
-- **Observability**: 11 story points
+- **Infrastructure Stories**: 12 story points (4 existing + 8 CI/CD)
+- **Observability**: 11 story points (included in CI/CD)
 
 **🔥 GCP DEPLOYMENT EPIC: ✅ COMPLETE (100%)**
 
@@ -1314,6 +1324,521 @@ Spring Boot's reactive security auto-configuration is creating default security 
 
 ---
 
+## 📚 DOCUMENTATION IMPROVEMENT - PHASE 2: API DOCUMENTATION
+
+### **DOC-API-001: Export OpenAPI 3.0 Specifications for All Services**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 5  
+**Priority:** P1 - High (Foundation for API Documentation)  
+**Dependencies:** None (SpringDoc already installed)
+
+**Context:**
+While all 6 services have SpringDoc OpenAPI 2.5.0 installed and provide Swagger UI interfaces, there are **NO exported OpenAPI specification files** in the codebase. The current `docs/api/API_DOCUMENTATION_PORTAL.md` misleadingly claims "100% API Documentation Coverage" but only documents Swagger UI access URLs, not comprehensive API documentation. This story addresses the gap between interactive docs and versioned, exportable API specifications.
+
+**Current State Analysis:**
+- ✅ SpringDoc 2.5.0 installed in all services (rag-core, rag-auth, rag-admin, rag-document, rag-embedding, rag-shared)
+- ✅ Swagger UI functional at `/swagger-ui.html` on all services
+- ✅ Auto-generated OpenAPI JSON available at runtime (`/v3/api-docs`)
+- ❌ **ZERO exported .json or .yaml files** (verified via file search)
+- ❌ No docs/api/openapi/ directory structure
+- ❌ No versioned API specifications for offline use or CI/CD integration
+
+**Acceptance Criteria:**
+- [ ] Export OpenAPI 3.0 specifications to `docs/api/openapi/{service-name}/v1/openapi.yaml`
+- [ ] All 6 services have exported specs: core, auth, admin, document, embedding, shared
+- [ ] Specs include comprehensive endpoint descriptions, request/response schemas, and examples
+- [ ] Validate exported specs using openapi-generator-cli or Swagger Editor
+- [ ] Configure SpringDoc to include authentication flows (JWT bearer tokens)
+- [ ] Add error response schemas (400, 401, 403, 404, 500) to all endpoints
+- [ ] Include API metadata: version, contact info, license, servers
+
+**Technical Tasks:**
+- [ ] Create directory structure: `docs/api/openapi/{service}/v1/`
+- [ ] Configure SpringDoc to export comprehensive specs (via application.yml or code)
+- [ ] Start each service and export from `/v3/api-docs` to YAML files
+- [ ] Add `@Operation`, `@ApiResponse`, `@Schema` annotations to improve spec quality
+- [ ] Document authentication requirements in OpenAPI security schemes
+- [ ] Add request/response examples to common endpoints
+- [ ] Validate specs against OpenAPI 3.0 schema
+- [ ] Create automation script: `scripts/dev/export-openapi-specs.sh`
+
+**Definition of Done:**
+- [ ] All 6 services have exported OpenAPI YAML files
+- [ ] Specs validate without errors using OpenAPI tools
+- [ ] Documentation includes authentication flows and error codes
+- [ ] Export script can regenerate specs on demand
+- [ ] README.md in docs/api/openapi/ explains spec structure
+
+**Business Impact:**
+**HIGH** - Enables SDK generation, contract testing, API versioning, and provides foundation for comprehensive API documentation portal.
+
+**Related Issues:**
+- Addresses gap identified in Documentation Improvement Specification § 3.1.1
+- Prerequisite for DOC-API-002 (Unified Portal)
+- Enables API versioning strategy (DOC-API-006)
+
+---
+
+### **DOC-API-002: Create Unified API Documentation Portal**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 8  
+**Priority:** P1 - High (Developer Experience)  
+**Dependencies:** DOC-API-001
+
+**Context:**
+Replace the current `docs/api/API_DOCUMENTATION_PORTAL.md` (which is just a Swagger UI access guide) with a comprehensive, unified API documentation portal that serves as the single source of truth for all API documentation, examples, and integration guides.
+
+**Current Gap:**
+- ✅ Existing: Swagger UI access guide with URLs and authentication details
+- ❌ Missing: Centralized documentation with versioned specs, examples, SDKs
+- ❌ Missing: Integration patterns and common workflows
+- ❌ Missing: API changelog and migration guides
+- ❌ Missing: Links to Postman collections (7 exist but not documented)
+
+**Acceptance Criteria:**
+- [ ] Replace API_DOCUMENTATION_PORTAL.md with comprehensive portal documentation
+- [ ] Link to all 6 exported OpenAPI specs with version information
+- [ ] Document common integration patterns (authentication, pagination, error handling)
+- [ ] Include cURL examples for each service's primary endpoints
+- [ ] Integrate existing 7 Postman collections with download links and usage guides
+- [ ] Add interactive examples using Swagger UI embeds or code snippets
+- [ ] Document API versioning strategy and deprecation policy
+- [ ] Create quick-start guides for each service
+
+**Portal Structure:**
+```markdown
+docs/api/API_DOCUMENTATION_PORTAL.md
+├── 1. Overview & Getting Started
+├── 2. Authentication & Authorization (JWT flows)
+├── 3. Service Documentation
+│   ├── 3.1 Core Service
+│   │   ├── OpenAPI Spec Link
+│   │   ├── Swagger UI Link
+│   │   ├── Postman Collection
+│   │   └── cURL Examples
+│   ├── 3.2 Auth Service
+│   └── ... (repeat for all 6 services)
+├── 4. Common Patterns
+│   ├── Authentication Workflows
+│   ├── Error Handling
+│   ├── Pagination
+│   └── Rate Limiting
+├── 5. Integration Guides
+│   ├── Java SDK Usage
+│   ├── JavaScript/TypeScript
+│   └── Python
+├── 6. API Versioning & Deprecation
+├── 7. Postman Collections
+└── 8. Additional Resources
+```
+
+**Technical Tasks:**
+- [ ] Restructure API_DOCUMENTATION_PORTAL.md with new comprehensive sections
+- [ ] Extract cURL examples from integration tests for documentation
+- [ ] Create integration pattern documentation (auth, error handling, pagination)
+- [ ] Document each Postman collection with usage instructions
+- [ ] Add OpenAPI spec version badges and links
+- [ ] Create API changelog template
+- [ ] Write quick-start guide for each service
+- [ ] Add troubleshooting section with common issues
+
+**Definition of Done:**
+- [ ] Portal documentation is comprehensive and user-friendly
+- [ ] All 6 services documented with specs, examples, and collections
+- [ ] Developers can integrate any service using portal documentation alone
+- [ ] Portal includes links to all 7 Postman collections
+- [ ] API versioning and deprecation policy documented
+- [ ] Peer review confirms portal meets developer needs
+
+**Business Impact:**
+**HIGH** - Significantly improves developer experience, reduces integration time, and serves as professional external-facing API documentation.
+
+**Related Issues:**
+- Completes Documentation Improvement Specification § 6.1.2
+- Integrates existing Postman collections into documentation
+- Foundation for SDK documentation (DOC-API-005)
+
+---
+
+### **DOC-API-003: Add cURL and Code Examples for Common Workflows**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 5  
+**Priority:** P2 - Medium (Developer Experience)  
+**Dependencies:** DOC-API-002
+
+**Context:**
+Enhance API documentation with practical, runnable code examples in cURL, Java, JavaScript, and Python for common workflows. Current documentation lacks executable examples, making it harder for developers to quickly integrate services.
+
+**Common Workflows to Document:**
+1. **Authentication Flow**
+   - User login → Get JWT token → Use token for authenticated requests
+2. **Document Management**
+   - Create tenant → Upload document → Process document → Query embeddings
+3. **RAG Query Workflow**
+   - Authenticate → Submit query → Retrieve context → Get AI response
+4. **Admin Operations**
+   - Create tenant → Create users → Assign roles → Manage quotas
+5. **Error Handling**
+   - Handle 401 (re-authenticate) → Handle 429 (rate limit) → Handle 500 (retry)
+
+**Acceptance Criteria:**
+- [ ] cURL examples for all 5 common workflows
+- [ ] Java code snippets using RestTemplate/WebClient
+- [ ] JavaScript/TypeScript examples using fetch/axios
+- [ ] Python examples using requests library
+- [ ] All examples include authentication setup
+- [ ] Examples demonstrate error handling
+- [ ] Code snippets are tested and runnable
+- [ ] Examples added to docs/api/examples/ directory
+
+**Technical Tasks:**
+- [ ] Create `docs/api/examples/` directory structure
+- [ ] Extract authentication examples from integration tests
+- [ ] Write comprehensive cURL examples for each workflow
+- [ ] Create Java SDK usage examples
+- [ ] Create JavaScript/Node.js examples
+- [ ] Create Python examples
+- [ ] Add environment variable setup instructions
+- [ ] Test all examples against running services
+- [ ] Document example prerequisites and setup
+
+**Example Structure:**
+```
+docs/api/examples/
+├── 01-authentication/
+│   ├── curl.md
+│   ├── java.md
+│   ├── javascript.md
+│   └── python.md
+├── 02-document-management/
+├── 03-rag-query/
+├── 04-admin-operations/
+└── 05-error-handling/
+```
+
+**Definition of Done:**
+- [ ] All 5 workflows documented with 4 language examples each (20 total examples)
+- [ ] Examples tested and verified to work
+- [ ] Documentation includes setup instructions and prerequisites
+- [ ] Examples integrated into API_DOCUMENTATION_PORTAL.md
+- [ ] Code examples follow best practices for each language
+
+**Business Impact:**
+**MEDIUM** - Accelerates developer onboarding, reduces support requests, and improves API adoption by providing copy-paste-ready examples.
+
+**Related Issues:**
+- Addresses gap in Documentation Improvement Specification § 3.1.3
+- Complements unified portal (DOC-API-002)
+- Supports developer onboarding (Phase 2 goal)
+
+---
+
+### **DOC-API-004: Document SDK Usage and Client Library Integration**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 5  
+**Priority:** P2 - Medium (Advanced Integration)  
+**Dependencies:** DOC-API-001, DOC-API-002
+
+**Context:**
+While OpenAPI specs can be used to auto-generate SDKs, there is currently no documentation on how to generate or use client SDKs for the RAG system. This story provides comprehensive guidance on generating and integrating client libraries for Java, JavaScript/TypeScript, and Python.
+
+**Current State:**
+- ✅ OpenAPI 3.0 specs available (after DOC-API-001)
+- ❌ No SDK generation instructions
+- ❌ No pre-generated SDK artifacts
+- ❌ No client library usage documentation
+- ❌ No guidance on authentication configuration in SDKs
+
+**Acceptance Criteria:**
+- [ ] Document SDK generation using openapi-generator-cli for all 3 languages
+- [ ] Create generation scripts: `scripts/dev/generate-sdk-{java,js,python}.sh`
+- [ ] Document authentication configuration in generated SDKs (JWT bearer tokens)
+- [ ] Provide usage examples for generated SDKs
+- [ ] Document SDK customization (base URL, timeouts, retry logic)
+- [ ] Create troubleshooting guide for common SDK issues
+- [ ] Add SDK documentation to unified API portal
+
+**SDK Generation Guide Structure:**
+```markdown
+docs/api/SDK_GENERATION_GUIDE.md
+├── 1. Prerequisites (openapi-generator installation)
+├── 2. Generating SDKs
+│   ├── 2.1 Java SDK (Maven/Gradle)
+│   ├── 2.2 JavaScript/TypeScript SDK (npm)
+│   └── 2.3 Python SDK (pip)
+├── 3. SDK Configuration
+│   ├── Authentication Setup
+│   ├── Base URL Configuration
+│   └── Custom HTTP Clients
+├── 4. Usage Examples
+│   ├── Authentication Client
+│   ├── Document Service Client
+│   └── Core Service Client
+├── 5. Advanced Configuration
+│   ├── Retry Logic
+│   ├── Timeout Configuration
+│   └── Custom Interceptors
+└── 6. Troubleshooting
+```
+
+**Technical Tasks:**
+- [ ] Install and test openapi-generator-cli
+- [ ] Create SDK generation scripts for each language
+- [ ] Generate sample SDKs from exported OpenAPI specs
+- [ ] Test generated SDKs against running services
+- [ ] Document SDK configuration for authentication
+- [ ] Write usage examples for each language
+- [ ] Document SDK publishing process (if applicable)
+- [ ] Add SDK troubleshooting section
+
+**Definition of Done:**
+- [ ] SDK generation documented for Java, JavaScript, Python
+- [ ] Generation scripts tested and working
+- [ ] Usage examples provided for each language
+- [ ] Authentication configuration documented
+- [ ] SDK guide integrated into API portal
+- [ ] All generated SDKs successfully authenticate and call endpoints
+
+**Business Impact:**
+**MEDIUM** - Enables enterprise developers to integrate RAG system using type-safe, auto-generated clients, reducing integration complexity.
+
+**Related Issues:**
+- Addresses SDK documentation gap from audit
+- Leverages OpenAPI specs from DOC-API-001
+- Complements code examples from DOC-API-003
+
+---
+
+### **DOC-API-005: Implement API Versioning and Deprecation Strategy**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 3  
+**Priority:** P2 - Medium (Future-Proofing)  
+**Dependencies:** DOC-API-001
+
+**Context:**
+Establish and document a clear API versioning strategy to manage breaking changes, maintain backward compatibility, and communicate deprecations to API consumers. Currently, there is no documented versioning strategy, making it unclear how API changes will be managed over time.
+
+**Current State:**
+- ✅ Services use `/api/v1/` URL path versioning convention
+- ❌ No documented versioning policy
+- ❌ No deprecation process
+- ❌ No API changelog
+- ❌ No OpenAPI spec versioning strategy
+- ❌ No migration guides between versions
+
+**Acceptance Criteria:**
+- [ ] Document API versioning policy (semantic versioning for specs)
+- [ ] Define URL versioning strategy (`/api/v1/`, `/api/v2/`, etc.)
+- [ ] Establish deprecation notice period (e.g., 6 months minimum)
+- [ ] Create deprecation communication plan (headers, documentation, emails)
+- [ ] Implement API changelog in docs/api/CHANGELOG.md
+- [ ] Document breaking vs. non-breaking changes
+- [ ] Create version migration guide template
+
+**Versioning Strategy Document:**
+```markdown
+docs/api/API_VERSIONING_STRATEGY.md
+├── 1. Versioning Principles
+│   ├── Semantic Versioning for OpenAPI specs
+│   ├── URL Path Versioning (/api/v1/, /api/v2/)
+│   └── Header-based Versioning (if needed)
+├── 2. Breaking vs. Non-Breaking Changes
+│   ├── Breaking: Removed fields, changed types
+│   └── Non-Breaking: Added fields, new endpoints
+├── 3. Deprecation Policy
+│   ├── Minimum 6-month notice period
+│   ├── Deprecation headers (Sunset, Deprecation)
+│   └── Documentation updates
+├── 4. Migration Guides
+│   └── Template for v1 → v2 migrations
+└── 5. API Changelog
+    └── Link to docs/api/CHANGELOG.md
+```
+
+**Technical Tasks:**
+- [ ] Document versioning policy in API_VERSIONING_STRATEGY.md
+- [ ] Define breaking change criteria
+- [ ] Create deprecation notice template
+- [ ] Implement Sunset and Deprecation HTTP headers (future work)
+- [ ] Create API CHANGELOG.md with template
+- [ ] Document version migration process
+- [ ] Add versioning strategy to API portal
+- [ ] Create example migration guide
+
+**Definition of Done:**
+- [ ] Versioning strategy documented and approved
+- [ ] Deprecation policy clearly defined
+- [ ] API changelog created and maintained
+- [ ] Migration guide template available
+- [ ] Versioning strategy integrated into API portal
+- [ ] Team trained on versioning process
+
+**Business Impact:**
+**MEDIUM** - Enables safe API evolution, protects existing integrations, and provides clear communication path for breaking changes.
+
+**Related Issues:**
+- Addresses API versioning gap from audit
+- Complements unified portal (DOC-API-002)
+- Foundation for future API evolution
+
+---
+
+### **DOC-API-006: Integrate Postman Collections into Documentation**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 2  
+**Priority:** P2 - Medium (Quick Win)  
+**Dependencies:** DOC-API-002
+
+**Context:**
+The project has **7 Postman collections** for all services and workflows, but they are not integrated into the main API documentation portal. This story makes these collections discoverable and usable by documenting them in the unified portal.
+
+**Current State:**
+- ✅ 7 Postman collections exist in `postman/` directory
+- ✅ Collections cover all 6 services + gateway + complete workflows
+- ❌ Not documented in API_DOCUMENTATION_PORTAL.md
+- ❌ No usage instructions
+- ❌ No environment setup guide for Postman
+- ❌ Collections not linked in any README
+
+**Existing Postman Collections:**
+1. `BYO_RAG_Admin_Service.postman_collection.json`
+2. `BYO_RAG_Auth_Service.postman_collection.json`
+3. `BYO_RAG_Complete_Workflows.postman_collection.json`
+4. `BYO_RAG_Core_Service.postman_collection.json`
+5. `BYO_RAG_Document_Service.postman_collection.json`
+6. `BYO_RAG_Embedding_Service.postman_collection.json`
+7. `BYO_RAG_Gateway.postman_collection.json`
+
+**Acceptance Criteria:**
+- [ ] Create `docs/api/POSTMAN_COLLECTIONS_GUIDE.md`
+- [ ] Document all 7 Postman collections with descriptions
+- [ ] Provide import instructions for Postman desktop and web
+- [ ] Create Postman environment template with variables
+- [ ] Document authentication setup in Postman (JWT tokens)
+- [ ] Add usage examples for common workflows
+- [ ] Link Postman guide from API_DOCUMENTATION_PORTAL.md
+- [ ] Add collection badges/download links to portal
+
+**Postman Guide Structure:**
+```markdown
+docs/api/POSTMAN_COLLECTIONS_GUIDE.md
+├── 1. Getting Started with Postman
+├── 2. Import Collections
+│   ├── Desktop Import
+│   └── Web Import
+├── 3. Environment Setup
+│   ├── Environment Variables
+│   └── JWT Token Management
+├── 4. Available Collections
+│   ├── 4.1 Complete Workflows (recommended starting point)
+│   ├── 4.2 Individual Services
+│   └── 4.3 Gateway Collection
+├── 5. Common Workflows
+│   ├── Authentication Flow
+│   ├── Document Upload
+│   └── RAG Query
+└── 6. Troubleshooting
+```
+
+**Technical Tasks:**
+- [ ] Create POSTMAN_COLLECTIONS_GUIDE.md
+- [ ] Document each collection with purpose and key requests
+- [ ] Create Postman environment template JSON
+- [ ] Write import and setup instructions
+- [ ] Document authentication variable management
+- [ ] Add screenshots for key setup steps
+- [ ] Link guide from API portal
+- [ ] Test import process with fresh Postman install
+
+**Definition of Done:**
+- [ ] All 7 collections documented in Postman guide
+- [ ] Environment template created and tested
+- [ ] Import process verified to work
+- [ ] Guide linked from API portal
+- [ ] Team can successfully import and use collections
+
+**Business Impact:**
+**LOW-MEDIUM** - Quick win that makes existing assets discoverable, improves developer experience for API testing.
+
+**Related Issues:**
+- Leverages existing Postman collections
+- Complements unified portal (DOC-API-002)
+- Addresses documentation discoverability
+
+---
+
+### **DOC-API-007: Create API Reference Documentation with Examples**
+**Epic:** Documentation Improvement (Phase 2)  
+**Story Points:** 8  
+**Priority:** P2 - Medium (Comprehensive Reference)  
+**Dependencies:** DOC-API-001, DOC-API-002, DOC-API-003
+
+**Context:**
+Create comprehensive API reference documentation that goes beyond auto-generated OpenAPI specs to include detailed descriptions, business context, use cases, and extensive examples for every endpoint. This becomes the definitive API reference for developers.
+
+**Current State:**
+- ✅ OpenAPI specs (after DOC-API-001)
+- ✅ Swagger UI available
+- ❌ No human-readable API reference documentation
+- ❌ No business context for endpoints
+- ❌ No use case examples
+- ❌ Limited error documentation
+
+**Acceptance Criteria:**
+- [ ] Create comprehensive reference docs in `docs/api/reference/` for all 6 services
+- [ ] Document every endpoint with description, parameters, responses, errors
+- [ ] Include business context and use cases for each endpoint
+- [ ] Provide request/response examples for all endpoints
+- [ ] Document all error codes with troubleshooting guidance
+- [ ] Add authentication requirements per endpoint
+- [ ] Include rate limiting and quota information
+- [ ] Cross-reference related endpoints and workflows
+
+**API Reference Structure (per service):**
+```markdown
+docs/api/reference/{service-name}/
+├── index.md (Service overview)
+├── authentication.md
+├── endpoints/
+│   ├── create-resource.md
+│   │   ├── Overview & Use Case
+│   │   ├── Authentication
+│   │   ├── Request (params, body, headers)
+│   │   ├── Response (success, errors)
+│   │   ├── Examples (cURL, Java, JS, Python)
+│   │   └── Related Endpoints
+│   └── ... (all endpoints)
+├── errors.md (All error codes)
+└── rate-limits.md
+```
+
+**Technical Tasks:**
+- [ ] Create docs/api/reference/ directory structure
+- [ ] Extract endpoint information from OpenAPI specs
+- [ ] Write detailed descriptions with business context
+- [ ] Add use case examples for each endpoint
+- [ ] Document all error responses with resolution steps
+- [ ] Include authentication and authorization details
+- [ ] Add rate limiting documentation
+- [ ] Cross-link related endpoints
+- [ ] Integrate reference docs into API portal
+
+**Definition of Done:**
+- [ ] All 6 services have comprehensive reference documentation
+- [ ] Every endpoint documented with examples
+- [ ] Error codes documented with troubleshooting
+- [ ] Authentication requirements clearly stated
+- [ ] Reference docs linked from API portal
+- [ ] Peer review confirms completeness and clarity
+
+**Business Impact:**
+**MEDIUM-HIGH** - Provides professional-grade API documentation that significantly reduces developer support burden and accelerates integration.
+
+**Related Issues:**
+- Completes comprehensive API documentation
+- Builds on OpenAPI specs (DOC-API-001)
+- Integrates code examples (DOC-API-003)
+
 ---
 
 ## 🔄 CI/CD & OBSERVABILITY
@@ -1433,48 +1958,69 @@ Implement cost monitoring, optimization strategies, and budget controls to manag
 
 ### Remaining Backlog
 
-#### 🔥 **Critical Priority (GCP Deployment) - 68 Story Points**
-**Must complete for GCP deployment:**
+#### 🔥 **Critical Priority (GCP Deployment) - ✅ COMPLETE**
+**All GCP deployment tasks complete (89/89 story points):**
 1. GCP-INFRA-001: Project Setup (8 pts) - ✅ COMPLETE
 2. GCP-SECRETS-002: Secret Manager Migration (5 pts) - ✅ COMPLETE
 3. GCP-REGISTRY-003: Container Registry (8 pts) - ✅ COMPLETE
 4. GCP-SQL-004: Cloud SQL Migration (13 pts) - ✅ COMPLETE
 5. GCP-REDIS-005: Cloud Memorystore (8 pts) - ✅ COMPLETE
-6. GCP-KAFKA-006: Kafka/Pub-Sub (13 pts) - ✅ COMPLETE (Planning - 8 pts)
+6. GCP-KAFKA-006: Kafka/Pub-Sub (8 pts) - ✅ COMPLETE (Planning)
 7. GCP-GKE-007: GKE Cluster (13 pts) - ✅ COMPLETE
-8. GCP-K8S-008: Kubernetes Manifests (13 pts) - **NEXT PRIORITY**
-9. GCP-STORAGE-009: Persistent Storage (5 pts)
-10. GCP-INGRESS-010: Ingress & Load Balancer (8 pts)
-11. GCP-DEPLOY-011: Initial Deployment (8 pts)
+8. GCP-K8S-008: Kubernetes Manifests (13 pts) - ✅ COMPLETE
+9. GCP-STORAGE-009: Persistent Storage (5 pts) - ✅ COMPLETE
+10. GCP-INGRESS-010: Ingress & Load Balancer (8 pts) - ✅ COMPLETE
+11. GCP-DEPLOY-011: Initial Deployment (8 pts) - ✅ COMPLETE
 
-**Progress: 63 of 89 story points complete (71%)**
-**Note:** GCP-KAFKA-006 planning complete (8 pts), implementation (13 pts) deferred to post-GKE
+**Progress: 89 of 89 story points complete (100%)** ✅
 
-**Estimated Timeline: 1-2 weeks remaining**
+---
 
-#### High Priority - 37 Story Points
+#### ⭐ **NEW: Documentation Improvement (Phase 2) - 41 Story Points**
+**Focus: API Documentation Enhancement**
+1. DOC-API-001: Export OpenAPI Specifications (5 pts) - **Foundation**
+2. DOC-API-002: Unified API Documentation Portal (8 pts) - **High Impact**
+3. DOC-API-003: cURL & Code Examples (5 pts)
+4. DOC-API-004: SDK Usage Documentation (5 pts)
+5. DOC-API-005: API Versioning Strategy (3 pts)
+6. DOC-API-006: Integrate Postman Collections (2 pts) - **Quick Win**
+7. DOC-API-007: Comprehensive API Reference (8 pts)
+
+**Priority**: High (Developer Experience)  
+**Dependencies**: SpringDoc already installed, builds on Phase 1 (100% metadata coverage)  
+**Estimated Timeline**: 3-4 weeks  
+**Business Impact**: Professional API docs, reduced integration time, improved developer experience
+
+---
+
+#### High Priority - 45 Story Points
+**CI/CD & Observability:**
 - GCP-CICD-012: CI/CD Pipeline (8 pts)
-- GCP-OBSERVABILITY-013: Monitoring & Logging (8 pts)
-- INTEGRATION-TEST-008: E2E Tests (13 pts)
-- PERFORMANCE-TEST-009: Load Testing (8 pts)
+- GCP-OBSERVABILITY-013: Monitoring & Logging (11 pts)
 
-#### Medium Priority - 16 Story Points
-- GCP-COST-014: Cost Optimization (3 pts)
+**Testing:**
+- INTEGRATION-TEST-008: E2E Tests (13 pts) ⭐ HIGH IMPACT
+- PERFORMANCE-TEST-009: Load Testing (8 pts)
 - CONTRACT-TEST-010: Service Contracts (5 pts)
+
+#### Medium Priority - 11 Story Points
+- GCP-COST-014: Cost Optimization (3 pts)
 - GATEWAY-CSRF-012: Gateway CSRF Fix (8 pts)
 
 #### Low Priority - 3 Story Points
 - DOCKER-HEALTH-011: Admin Health Check (3 pts)
 
 ### Overall Metrics
-- **Total Remaining Story Points**: 145
-- **Critical (GCP Deployment)**: 89 points (61%)
-- **High Priority**: 37 points (26%)
-- **Medium Priority**: 16 points (11%)
-- **Low Priority**: 3 points (2%)
+- **Total Remaining Story Points**: 168 (100 active, 68 completed from previous sprints)
+- **GCP Deployment**: ✅ 89 points COMPLETE (100%)
+- **Documentation (Phase 2)**: ⭐ 41 points NEW (0%)
+- **Testing**: 26 points (0%)
+- **CI/CD & Observability**: 19 points (0%)
+- **Infrastructure**: 12 points (0%)
 
 ### Next Actions
-1. **IMMEDIATE**: Start GCP-INFRA-001 (Project Setup)
-2. **SECURITY**: Complete GCP-SECRETS-002 (rotate exposed API keys)
-3. **FOLLOW DEPENDENCY CHAIN**: Complete GCP stories in order
-4. **TARGET**: First GCP deployment in 3-4 weeks
+1. **PHASE 2 START**: Begin DOC-API-001 (Export OpenAPI Specs) - Foundation for all API docs
+2. **QUICK WIN**: DOC-API-006 (Integrate Postman Collections) - 2 pts, high visibility
+3. **HIGH IMPACT**: DOC-API-002 (Unified Portal) - Replaces misleading current docs
+4. **PARALLEL TRACK**: GCP-CICD-012 (CI/CD Pipeline) - Leverage completed GCP infrastructure
+5. **TARGET**: Complete Phase 2 API documentation in 3-4 weeks

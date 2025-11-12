@@ -4,7 +4,7 @@ This file tracks all completed stories that have been successfully implemented a
 
 ## Summary
 
-**Total Completed Story Points:** 185 points  
+**Total Completed Story Points:** 196 points  
 **Completion Date Range:** 2025-08-30 to 2025-11-12
 
 ---
@@ -1178,16 +1178,187 @@ POST /api/v1/documents/upload
 **Files Modified:**
 None required - services already configured correctly
 
-**Acceptance Criteria:** ✅ ALL COMPLETED
-- ✅ Tenant data accessible from both services
-- ✅ Document upload succeeds with existing tenant
-- ✅ No "Tenant not found" errors
-- ✅ User can upload documents after registration
-
 **Definition of Done:** ✅ ALL COMPLETED
 - ✅ Tenant data shared across services (verified)
 - ✅ Document upload succeeds
 - ✅ No regression in auth service
 - ✅ Documentation updated
+
+---
+
+### **STORY-019: Fix Spring Security Configuration for Kubernetes Health Checks** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Bug Fix  
+**Story Points:** 2  
+**Sprint:** Sprint 2  
+**Completed:** 2025-11-12
+
+**As a** DevOps engineer  
+**I want** Kubernetes readiness probes to successfully check application health  
+**So that** pods can become ready and serve traffic without continuous restarts
+
+**Business Impact:**
+Fixed critical GKE deployment issue preventing pods from reaching Ready state. All services now pass health checks and remain stable with 0 restarts, enabling production deployment.
+
+**Problem:**
+Spring Security blocked unauthenticated access to `/actuator/health/readiness`, causing Kubernetes readiness probes to fail with 403 Forbidden. Pods continuously restarted (5-8 restarts), never reaching Ready state despite being fully functional.
+
+**Solution:**
+Modified `SecurityConfig.java` to permit unauthenticated access to health endpoints while keeping other actuator endpoints secured:
+```java
+http.authorizeHttpRequests()
+    .requestMatchers("/actuator/health/**").permitAll()  // Changed from /actuator/health
+    .anyRequest().authenticated()
+```
+
+**Results:**
+- Pods reach Ready state (2/2 Running)
+- 0 restarts, 70+ minute uptime
+- Health endpoints return HTTP 200 OK
+- Other actuator endpoints still secured (HTTP 403)
+
+**Files Modified:**
+- `rag-auth-service/src/main/java/com/byo/rag/auth/config/SecurityConfig.java`
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ Health endpoints (`/actuator/health/**`) return 200 OK without authentication
+- ✅ Kubernetes readiness probes succeed consistently
+- ✅ Pods reach Ready state (2/2 containers)
+- ✅ No pod restarts (0 restarts, 70+ min uptime)
+- ✅ Other actuator endpoints remain secured (/actuator/info returns 403)
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Security configuration updated
+- ✅ Health endpoints publicly accessible
+- ✅ Other endpoints remain secured
+- ✅ Deployed to GKE and verified
+- ✅ Pods stable with 0 restarts
+
+---
+
+### **STORY-021: Fix rag-embedding RestTemplate Bean Configuration** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Bug Fix  
+**Story Points:** 1  
+**Sprint:** Sprint 2  
+**Completed:** 2025-11-11
+
+**As a** developer  
+**I want** the rag-embedding service to start successfully  
+**So that** the embedding functionality is available for RAG operations
+
+**Business Impact:**
+Fixed critical bean configuration issue preventing rag-embedding-service from starting. Service now starts successfully and remains stable, enabling embedding generation for RAG operations.
+
+**Problem:**
+Service failed with `UnsatisfiedDependencyException` - `OllamaEmbeddingClient` required a `RestTemplate` bean that wasn't defined. Multiple bean conflicts and missing conditional guards caused Spring context initialization failures.
+
+**Solution:**
+Fixed bean configuration in `EmbeddingConfig.java`:
+1. Added RestTemplate bean with `@ConditionalOnProperty` for docker profile
+2. Fixed bean conflicts using `@ConditionalOnMissingBean` annotations
+3. Added `@Qualifier` annotations to disambiguate primary/fallback models
+4. Created 12 comprehensive unit tests (all passing)
+5. Increased memory limits to 2Gi for transformer models
+
+**Results:**
+- Pods reach Running state (1/1)
+- 0 restarts, 100+ minute uptime
+- No bean creation errors
+- Embedding endpoints respond successfully
+
+**Files Modified:**
+- `rag-embedding-service/src/main/java/com/byo/rag/embedding/config/EmbeddingConfig.java`
+- `rag-embedding-service/src/test/java/com/byo/rag/embedding/config/EmbeddingConfigTest.java`
+- `k8s/base/rag-embedding-deployment.yaml` (memory limits)
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ RestTemplate bean defined with proper conditionals
+- ✅ Bean conflicts resolved using @ConditionalOnMissingBean
+- ✅ Application starts without errors
+- ✅ Pods reach Running state (1/1)
+- ✅ No CrashLoopBackOff (0 restarts, 100+ min uptime)
+- ✅ Embedding endpoints respond successfully
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ Bean configuration fixed
+- ✅ RestTemplate bean available
+- ✅ Application starts successfully
+- ✅ Comprehensive tests added (12 tests)
+- ✅ Deployed and verified stable
+
+---
+
+### **STORY-020: GCP Infrastructure Migration to rag-vpc** ✅ **COMPLETED**
+**Priority:** P0 - Critical  
+**Type:** Infrastructure  
+**Story Points:** 8  
+**Sprint:** Sprint 2  
+**Completed:** 2025-11-10
+
+**As a** DevOps engineer  
+**I want** all GCP infrastructure running on the dedicated rag-vpc network  
+**So that** the system has proper network isolation and follows production best practices
+
+**Business Impact:**
+Successfully migrated all GCP infrastructure from default network to dedicated rag-vpc, establishing production-ready network architecture with proper isolation, private IP addressing, and VPC peering.
+
+**Infrastructure Migrated:**
+
+**1. GKE Cluster** (rag-gke-dev):
+- Network: rag-vpc
+- Subnet: rag-gke-subnet (10.0.0.0/20)
+- Pod CIDR: 10.4.0.0/14
+- Service CIDR: 10.8.0.0/20
+- Private nodes with master IP: 172.16.0.0/28
+- Workload Identity enabled
+
+**2. Cloud SQL** (rag-postgres):
+- Private IP: 10.200.0.3
+- Network: rag-vpc
+- Private service connection: 10.200.0.0/16
+- No public IP (secure)
+
+**3. Redis** (rag-redis):
+- Host: 10.170.252.12
+- Network: rag-vpc
+
+**Scripts Updated:**
+- `scripts/gcp/12-setup-gke-cluster.sh` - Network/subnet configuration
+- `scripts/gcp/08-setup-cloud-sql.sh` - Private-only connectivity
+- `scripts/gcp/13-sync-secrets-to-k8s.sh` - Database credentials, ConfigMap
+
+**Configuration Fixes:**
+- Database username: `rag_user` (was `ragapp`)
+- Database name: `rag_auth` (was `ragdb`)
+- Password secret: `cloudsql-app-password` (was `postgres-password`)
+- Cloud SQL Proxy: Using `--private-ip` flag
+
+**Kubernetes Resources:**
+- Namespace: rag-system
+- ConfigMap: gcp-config (Redis & Cloud SQL)
+- Secrets: cloud-sql-credentials, redis-credentials, jwt-secret
+- Deployment: rag-auth with Cloud SQL Proxy sidecar
+
+**Files Modified:**
+- `scripts/gcp/12-setup-gke-cluster.sh`
+- `scripts/gcp/08-setup-cloud-sql.sh`
+- `scripts/gcp/13-sync-secrets-to-k8s.sh`
+
+**Acceptance Criteria:** ✅ ALL COMPLETED
+- ✅ GKE cluster on rag-vpc with private nodes
+- ✅ Cloud SQL Proxy connects via private IP (10.200.0.3)
+- ✅ Application connects to rag_auth database
+- ✅ Application starts successfully (~86 seconds)
+- ✅ Network isolation established
+- ✅ Production-ready architecture implemented
+
+**Definition of Done:** ✅ ALL COMPLETED
+- ✅ All infrastructure on rag-vpc
+- ✅ Private IP connectivity verified
+- ✅ Scripts updated and tested
+- ✅ Kubernetes resources deployed
+- ✅ Application verified functional
+- ✅ Network configuration documented
 
 ---
