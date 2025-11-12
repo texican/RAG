@@ -11,9 +11,17 @@ spring:
     password: ${DB_PASSWORD:rag_password}
     driver-class-name: org.postgresql.Driver
   
+  # Flyway Database Migrations
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  
   jpa:
     hibernate:
-      ddl-auto: update  # Changed from create-drop to prevent data loss on restart
+      ddl-auto: validate  # Changed from 'update' - Flyway now manages schema
     show-sql: false
     properties:
       hibernate:

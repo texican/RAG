@@ -72,6 +72,12 @@
             <artifactId>postgresql</artifactId>
         </dependency>
 
+        <!-- Flyway Database Migrations -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
         <!-- Redis for caching -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
