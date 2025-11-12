@@ -12,12 +12,84 @@ This file tracks all completed stories that have been successfully implemented a
 
 ## Summary
 
-**Total Completed Story Points:** 198 points  
+**Total Completed Story Points:** 203 points  
 **Completion Date Range:** 2025-08-30 to 2025-11-12
 
 ---
 
 ## Completed Stories
+
+### **TECH-DEBT-005: Implement Flyway Database Migrations** ✅ **COMPLETED**
+**Priority:** P2 - Medium (before production)  
+**Type:** Technical Debt  
+**Story Points:** 5  
+**Sprint:** Sprint 2  
+**Completed:** 2025-11-12
+
+**As a** DevOps engineer  
+**I want** proper database migration management with Flyway  
+**So that** schema changes are version-controlled, reviewable, and safe for production
+
+**Problem:**
+Using Hibernate `ddl-auto: update` which automatically modifies database schema. Not suitable for production because:
+- No version control for schema changes
+- Cannot rollback migrations
+- Cannot rename/drop columns safely
+- Schema changes happen automatically without review
+- No audit trail
+
+**Implementation Summary:**
+- Added Flyway dependency to auth-service and document-service
+- Created 4 baseline migrations (V1-V4):
+  - V1__create_tenants_table.sql
+  - V2__create_users_table.sql  
+  - V3__create_documents_table.sql
+  - V4__create_document_chunks_table.sql
+- Configured Flyway in application.yml (baseline-on-migrate, validate-on-migrate)
+- Changed ddl-auto from 'update' to 'validate' (production-safe)
+- Created comprehensive DATABASE_MIGRATIONS.md guide
+
+**Validation Results** (2025-11-12):
+```sql
+-- flyway_schema_history table
+installed_rank | version | description                    | success
+1              | 0       | << Flyway Baseline >>          | t
+2              | 1       | create tenants table           | t
+3              | 2       | create users table             | t
+4              | 3       | create documents table         | t
+5              | 4       | create document chunks table   | t
+
+-- Service Health Checks
+Auth service: Successfully validated 2 migrations, started in 4.742s, UP
+Document service: Successfully validated 5 migrations, started in 4.565s, UP
+```
+
+**Business Impact:**
+- ✅ Version-controlled schema changes (Git history)
+- ✅ Peer review of database changes (PR process)
+- ✅ Automatic rollback support
+- ✅ Audit trail of all schema modifications
+- ✅ Safe production deployments
+- ✅ Prevents accidental schema changes
+
+**Files Modified:**
+- `rag-auth-service/pom.xml` (Flyway dependency)
+- `rag-auth-service/src/main/resources/application.yml`
+- `rag-document-service/pom.xml` (Flyway dependency)
+- `rag-document-service/src/main/resources/application.yml`
+
+**Files Created:**
+- `rag-auth-service/src/main/resources/db/migration/V1__create_tenants_table.sql`
+- `rag-auth-service/src/main/resources/db/migration/V2__create_users_table.sql`
+- `rag-document-service/src/main/resources/db/migration/V1__create_tenants_table.sql`
+- `rag-document-service/src/main/resources/db/migration/V2__create_users_table.sql`
+- `rag-document-service/src/main/resources/db/migration/V3__create_documents_table.sql`
+- `rag-document-service/src/main/resources/db/migration/V4__create_document_chunks_table.sql`
+- `docs/development/DATABASE_MIGRATIONS.md` (400+ line workflow guide)
+
+**Git Commit:** `feat: Implement Flyway database migrations` (11193c1)
+
+---
 
 ### **STORY-003: Fix Admin Service Health Check** ✅ **COMPLETED**
 **Priority:** P1 - High  

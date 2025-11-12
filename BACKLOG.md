@@ -1,14 +1,15 @@
 # RAG System - Product Backlog
 
-**Last Updated**: 2025-11-12 (Local Deployment Validated - STORY-003 Complete)
+**Last Updated**: 2025-11-12 (TECH-DEBT-005 Complete - Flyway Database Migrations)
 **Sprint**: Sprint 2 - Deployment Stabilization & Architecture
-**Sprint Status**: 🟢 IN PROGRESS - 6/11 stories delivered
+**Sprint Status**: 🟢 IN PROGRESS - 7/11 stories delivered
   - STORY-022 ✅ (Kafka Optional Implementation)
   - STORY-023 ✅ (Deployment Health Fixes - rag-document, rag-auth)
   - TECH-DEBT-008 ✅ (PostgreSQL Cleanup)
   - STORY-019 ✅ (Spring Security for K8s Health Checks)
   - STORY-021 ✅ (rag-embedding RestTemplate Bean)
   - STORY-003 ✅ (Admin Service Health Check - Working as Designed)
+  - TECH-DEBT-005 ✅ (Flyway Database Migrations)
 
 **Sprint 1 Status**: ✅ COMPLETE - 5/5 stories delivered
   - STORY-001 ✅ (Document Upload Bug)
@@ -360,104 +361,6 @@ Response DTO likely uses hardcoded or default model name instead of reading from
 **Related**: STORY-015 (discovered during implementation)
 
 ---
-
-### TECH-DEBT-005: Implement Database Migration Strategy (Flyway)
-**Priority**: P2 - Medium (before production)
-**Type**: Technical Debt
-**Estimated Effort**: 5 Story Points
-**Sprint**: Sprint 2
-**Status**: 🔴 TO DO
-
-**As a** DevOps engineer
-**I want** proper database migration management with Flyway
-**So that** schema changes are version-controlled, reviewable, and safe for production
-
-**Description**:
-Currently using Hibernate `ddl-auto: update` which automatically modifies database schema. While this prevents data loss (fixed from `create-drop`), it's not suitable for production because:
-- No version control for schema changes
-- Cannot rollback migrations
-- Cannot rename/drop columns safely
-- Schema changes happen automatically without review
-- No audit trail
-
-**Current State** (after STORY-017 fix):
-```yaml
-# Auth & Document services:
-jpa:
-  hibernate:
-    ddl-auto: update  # Better than create-drop, but not production-ready
-```
-
-**Proposed Solution**: Implement Flyway for managed migrations
-
-**Implementation Plan**:
-1. Add Flyway dependency to affected services
-2. Create baseline migrations from current schema
-3. Configure Flyway in application.yml
-4. Change `ddl-auto` from `update` to `validate`
-5. Document migration workflow for team
-6. Add migrations to CI/CD pipeline
-
-**Example Configuration**:
-```yaml
-spring:
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
-  jpa:
-    hibernate:
-      ddl-auto: validate  # Only validate, don't auto-modify
-```
-
-**Example Migration File**:
-```sql
--- V1__baseline.sql
-CREATE TABLE IF NOT EXISTS tenants (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL,
-    status VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
-);
-```
-
-**Acceptance Criteria**:
-- [ ] Flyway configured in auth-service
-- [ ] Flyway configured in document-service
-- [ ] Baseline migrations created from current schema
-- [ ] ddl-auto changed to `validate`
-- [ ] Migration workflow documented
-- [ ] Team trained on creating migrations
-- [ ] CI/CD validates migrations before deployment
-
-**Benefits**:
-- Version-controlled schema changes (Git history)
-- Peer review of database changes (PR process)
-- Automatic rollback support
-- Audit trail of all schema modifications
-- Safe production deployments
-- Prevents accidental schema changes
-
-**Definition of Done**:
-- [ ] Flyway integrated and tested
-- [ ] All current schema captured in migrations
-- [ ] ddl-auto: validate enforced
-- [ ] Documentation updated
-- [ ] No schema auto-modifications
-- [ ] Migration workflow established
-
-**Files to Modify**:
-- `rag-auth-service/pom.xml` (add Flyway dependency)
-- `rag-document-service/pom.xml` (add Flyway dependency)
-- `rag-auth-service/src/main/resources/application.yml` (Flyway config)
-- `rag-document-service/src/main/resources/application.yml` (Flyway config)
-- `rag-auth-service/src/main/resources/db/migration/` (NEW - migration scripts)
-- `rag-document-service/src/main/resources/db/migration/` (NEW - migration scripts)
-- `docs/development/DATABASE_MIGRATIONS.md` (NEW - workflow guide)
-
-**Related**:
 - Database persistence fix (changed `create-drop` → `update`)
 - See [DATABASE_PERSISTENCE_FIX.md](docs/operations/DATABASE_PERSISTENCE_FIX.md)
 
@@ -658,11 +561,11 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
 - ✅ STORY-019: Fix Spring Security for K8s Health Checks (P0 - 2 points) **COMPLETE**
 - ✅ STORY-021: Fix rag-embedding RestTemplate Bean (P0 - 1 point) **COMPLETE**
 - ✅ STORY-003: Fix Admin Health Check (P1 - 2 points) **COMPLETE**
-- 🔴 TECH-DEBT-005: Implement Flyway Database Migrations (P2 - 5 points)
+- ✅ TECH-DEBT-005: Implement Flyway Database Migrations (P2 - 5 points) **COMPLETE**
 - 🔴 TECH-DEBT-006: Fix Auth Service Security Tests (P2 - 2 points)
 - 🔴 TECH-DEBT-007: Fix Embedding Service Ollama Tests (P2 - 2 points)
 - **Goal**: E2E validation + infrastructure stability + cost optimization
-- **Progress**: 6/9 stories complete (16/25 points) 🎉
+- **Progress**: 7/9 stories complete (21/25 points) 🎉
 - **Achievements**: 
   - All critical infrastructure issues resolved
   - Services healthy without Kafka (~$250-450/mo savings)
@@ -689,7 +592,7 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
 **Technical Debt Items**: 8 (4 complete, 4 remaining)
 **Total Estimated Effort**: ~120 Story Points
 **Sprint 1 Progress**: ✅ COMPLETE - 5/5 stories (STORY-001, 015, 016, 017, 002)
-**Sprint 2 Progress**: 🟢 IN PROGRESS - 6/9 stories complete (STORY-022, 023, TECH-DEBT-008, STORY-019, STORY-021, STORY-003)
+**Sprint 2 Progress**: 🟢 IN PROGRESS - 7/9 stories complete (STORY-022, 023, TECH-DEBT-008, STORY-019, STORY-021, STORY-003, TECH-DEBT-005)
 **Sprint 2 Achievements**:
   - ✅ All 5 P0 critical stories complete (14/14 points)
   - ✅ STORY-003 validated (working as designed) - local deployment verified
@@ -703,7 +606,8 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
   - Local deployment fully operational (13 containers, all services healthy)
   - Created comprehensive documentation (KAFKA_OPTIONAL.md, DEPLOYMENT_TROUBLESHOOTING.md)
   - All services verified healthy in GKE (2/2 or 1/1 Running, 0 restarts)
+  - Flyway database migrations implemented (production-ready schema management)
 **Next Priority**: 
-  1. TECH-DEBT-005 (Flyway Database Migrations) - P2 Medium - 5 points
-  2. TECH-DEBT-006 (Auth Service Security Tests) - P2 - 2 points
-  3. TECH-DEBT-007 (Embedding Service Ollama Tests) - P2 - 2 points
+  1. TECH-DEBT-006 (Auth Service Security Tests) - P2 - 2 points
+  2. TECH-DEBT-007 (Embedding Service Ollama Tests) - P2 - 2 points
+
