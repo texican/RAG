@@ -161,9 +161,9 @@ management:
       show-details: when-authorized
     rag:
       enabled: true
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
     tags:
       service: rag-core-service

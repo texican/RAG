@@ -15,8 +15,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        use_sql_comments: true
+        '[format_sql]': true
+        '[use_sql_comments]': true
   
   data:
     redis:
@@ -31,10 +31,7 @@ spring:
           max-idle: 8
           min-idle: 0
   
-  security:
-    jwt:
-      secret: ${JWT_SECRET:admin-super-secret-key-that-should-be-at-least-256-bits-long-for-production-use}
-      expiration: 86400000 # 24 hours
+  # security.jwt block removed: not a recognized Spring Boot property
 
 server:
   port: ${SERVER_PORT:8085}
@@ -49,16 +46,16 @@ management:
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 logging:
   level:
-    com.byo.rag.admin: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
+    '[com.byo.rag.admin]': DEBUG
+    '[org.springframework.security]': DEBUG
+    '[org.hibernate.SQL]': DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
@@ -71,28 +68,5 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: method
-  info:
-    title: RAG Admin Service API
-    description: Enterprise RAG System - Admin Operations and Analytics API
-    version: 1.0.0
-    contact:
-      name: Enterprise RAG Team
-      email: admin@enterprise-rag.com
 
-admin:
-  security:
-    cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
-      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-      allowed-headers: "*"
-      allow-credentials: true
-  
-  analytics:
-    batch-size: 1000
-    retention-days: 90
-    
-  monitoring:
-    alert-thresholds:
-      error-rate: 0.05
-      response-time-p95: 1000
-      memory-usage: 0.85
+# The 'admin' block is not a recognized Spring Boot property. If needed, move these to a custom config class or prefix with a recognized namespace.

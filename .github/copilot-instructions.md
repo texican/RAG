@@ -56,12 +56,13 @@ category: ai-agent-guidance
 - **K8s**: `k8s/README.md` (deployment, troubleshooting)
 - **Docker**: `docker/README.md` (infra config)
 - **Ollama Chat**: `ollama-chat/README.md` (frontend integration)
-- **Agent System**: `.github/agents/`, `.claude/agents/README.md`
+<!-- - **Agent System**: `.github/agents/`, `.claude/agents/README.md` -->
+- **Agent System**:`.claude/agents/README.md`
 - **Testing**: `docs/development/TESTING_BEST_PRACTICES.md`
 - **Backlog**: `BACKLOG.md`, `docs/project-management/PROJECT_BACKLOG.md`
 
 ---
 
-**For agent routing, always use the specialized agent in `.github/agents/` if available.**
+<!-- **For agent routing, always use the specialized agent in `.github/agents/` if available.** -->
 
 **For unclear or missing conventions, check `README.md` and `docs/` before proceeding.**
