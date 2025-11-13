@@ -1,6 +1,6 @@
 # RAG System - Product Backlog
 
-**Last Updated**: 2025-11-12 (TECH-DEBT-005 Complete - Flyway Database Migrations)
+**Last Updated**: 2025-11-13 (Spring Boot 3.5 Upgrade Stories Created)
 **Sprint**: Sprint 2 - Deployment Stabilization & Architecture
 **Sprint Status**: 🟢 IN PROGRESS - 7/11 stories delivered
   - STORY-022 ✅ (Kafka Optional Implementation)
@@ -610,4 +610,508 @@ But tests show `TransformersEmbeddingModel` is being created instead, indicating
 **Next Priority**: 
   1. TECH-DEBT-006 (Auth Service Security Tests) - P2 - 2 points
   2. TECH-DEBT-007 (Embedding Service Ollama Tests) - P2 - 2 points
+
+## 🟣 Epic: Spring Boot 3.5 Upgrade
+
+**Epic Status**: 📋 PLANNED
+**Total Effort**: 20 Story Points (5 stories)
+**Sprint**: Sprint 3 (or later)
+**Risk Level**: MEDIUM-HIGH (Spring AI compatibility concern)
+
+**Epic Summary**:
+Upgrade RAG system from Spring Boot 3.2.11 to 3.5.x to gain LTS support, security patches, and new features. This is a coordinated upgrade affecting all microservices, requiring code changes, configuration updates, and thorough testing.
+
+**Key Risks**:
+- ⚠️ Spring AI (1.0.3/1.1.0-RC1) built against Spring Boot 3.4.2, not 3.5.x
+- 🔴 Breaking changes: TaskExecutor bean naming, Actuator security defaults
+- 🟡 Major Spring Cloud version jump: 2023.0.3 → 2025.0.x
+
+**Documentation**:
+- [Spring Boot 3.5 Upgrade Guide](docs/development/SPRING_BOOT_3.5_UPGRADE_GUIDE.md) - Complete migration guide
+- [Spring Boot 3.5 Upgrade Checklist](docs/development/SPRING_BOOT_3.5_UPGRADE_CHECKLIST.md) - Task tracker
+
+---
+
+### STORY-030: Spring Boot 3.5 Upgrade - Phase 1: Analysis & Preparation
+**Priority**: P1 - High
+**Type**: Platform Upgrade
+**Estimated Effort**: 3 Story Points
+**Sprint**: Sprint 3
+**Status**: 📋 TODO
+
+**As a** developer
+**I want** to analyze breaking changes and prepare the codebase for Spring Boot 3.5 upgrade
+**So that** we have a clear migration plan with identified risks and effort estimates
+
+**Description**:
+Perform comprehensive analysis of the codebase to identify all code, configuration, and dependencies affected by Spring Boot 3.5 breaking changes. Create feature branch, baseline metrics, and document findings.
+
+**Acceptance Criteria**:
+- [ ] Feature branch created: `upgrade/spring-boot-3.5`
+- [ ] Backup tag created: `before-spring-boot-3.5-upgrade`
+- [ ] Baseline test results documented (unit + integration pass rates)
+- [ ] Baseline performance metrics captured (startup time, response times, memory)
+- [ ] All breaking change searches completed (see checklist)
+- [ ] Impact assessment documented (files affected, estimated effort)
+- [ ] Risk assessment completed and documented
+- [ ] Upgrade approach decided (gradual vs direct)
+
+**Breaking Change Searches**:
+```bash
+# TaskExecutor references (HIGH IMPACT)
+grep -r '@Qualifier.*taskExecutor' rag-*/src/main/java/
+
+# TestRestTemplate usage (LOW IMPACT - tests only)
+grep -r 'TestRestTemplate' rag-*/src/test/java/
+grep -r 'ENABLE_REDIRECTS' rag-*/src/test/java/
+
+# Boolean property validation (LOW IMPACT)
+grep -r 'enabled:' rag-*/src/main/resources/ | grep -v 'true\|false'
+
+# Deprecated properties (MEDIUM IMPACT)
+grep -r 'spring.mvc.converters.preferred-json-mapper' rag-*/src/main/resources/
+grep -r 'spring.codec' rag-*/src/main/resources/
+```
+
+**Deliverables**:
+- [ ] Analysis report with all findings documented in upgrade guide
+- [ ] List of affected files with line numbers
+- [ ] Effort estimate for Phase 2 (POM updates) and Phase 3 (code changes)
+- [ ] Decision: Gradual (3.2→3.4→3.5) or Direct (3.2→3.5) upgrade path
+
+**Definition of Done**:
+- [ ] All searches executed and results documented
+- [ ] Impact assessment reviewed and approved
+- [ ] Phase 2 story refined with specific file changes needed
+- [ ] Upgrade checklist started (first section completed)
+
+**References**:
+- [Spring Boot 3.5 Upgrade Guide](docs/development/SPRING_BOOT_3.5_UPGRADE_GUIDE.md)
+- [Spring Boot 3.5 Release Notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.5-Release-Notes)
+
+---
+
+### STORY-031: Spring Boot 3.5 Upgrade - Phase 2: POM Updates
+**Priority**: P1 - High
+**Type**: Platform Upgrade
+**Estimated Effort**: 3 Story Points
+**Sprint**: Sprint 3
+**Status**: 📋 TODO
+**Depends On**: STORY-030
+
+**As a** developer
+**I want** all Maven POM files updated to Spring Boot 3.5.x compatible versions
+**So that** dependency management is correct before code changes
+
+**Description**:
+Update root `pom.xml` and all service POMs with Spring Boot 3.5.x, Spring Cloud 2025.0.x, and compatible dependency versions. Remove redundant version overrides now managed by Spring Boot BOM.
+
+**POM Changes Required**:
+
+**Root pom.xml Updates**:
+```xml
+<!-- MUST UPDATE -->
+<spring-boot.version>3.5.10</spring-boot.version>  <!-- from 3.2.11 -->
+<spring-cloud.version>2025.0.1</spring-cloud.version>  <!-- from 2023.0.3 -->
+<spring-ai.version>1.1.0-RC1</spring-ai.version>  <!-- from 1.0.0-M1 -->
+
+<!-- REMOVE (managed by Boot BOM) -->
+<!-- <spring-security.version>6.2.8</spring-security.version> -->
+<!-- <spring-framework.version>6.1.21</spring-framework.version> -->
+<!-- <testcontainers.version>1.19.8</testcontainers.version> -->
+<!-- <kafka.version>3.7.0</kafka.version> -->
+```
+
+**Acceptance Criteria**:
+- [ ] `spring-boot.version` updated to 3.5.x (latest patch version)
+- [ ] `spring-cloud.version` updated to 2025.0.x
+- [ ] `spring-ai.version` updated to 1.1.0-RC1 or 1.0.3 (stable)
+- [ ] Redundant version properties removed (security, framework, kafka, testcontainers)
+- [ ] Spring Cloud BOM import verified in dependencyManagement
+- [ ] `mvn dependency:tree` output reviewed for conflicts
+- [ ] Dependency tree comparison shows expected version changes
+- [ ] All POMs validate: `mvn validate`
+
+**Validation Steps**:
+1. **Dependency Tree Analysis**:
+   ```bash
+   mvn dependency:tree > dependency-tree-3.5.txt
+   # Compare with baseline: dependency-tree-3.2.txt
+   ```
+
+2. **Verify Key Dependencies**:
+   - Spring Boot: 3.5.x
+   - Spring Framework: 6.2.x (managed by Boot BOM)
+   - Spring Security: 6.5.x (managed by Boot BOM)
+   - Spring Cloud: 2025.0.x
+   - Kafka: 3.9.x (managed by Boot BOM)
+   - Testcontainers: 1.21.x (managed by Boot BOM)
+
+3. **Check for Conflicts**:
+   ```bash
+   mvn dependency:tree | grep CONFLICT
+   ```
+
+**Deliverables**:
+- [ ] Updated root `pom.xml`
+- [ ] Dependency tree comparison report
+- [ ] List of version changes (managed dependencies)
+- [ ] Conflict resolution documentation (if any)
+
+**Definition of Done**:
+- [ ] Maven validate passes
+- [ ] No dependency conflicts
+- [ ] Dependency tree reviewed and approved
+- [ ] Changes committed to feature branch
+
+**References**:
+- [Spring Boot 3.5 Upgrade Guide - POM Updates](docs/development/SPRING_BOOT_3.5_UPGRADE_GUIDE.md#phase-2-update-parent-pom-15-minutes)
+- [Spring Boot Dependency Versions](https://docs.spring.io/spring-boot/appendix/dependency-versions/index.html)
+
+---
+
+### STORY-032: Spring Boot 3.5 Upgrade - Phase 3: Configuration Updates
+**Priority**: P1 - High
+**Type**: Platform Upgrade
+**Estimated Effort**: 2 Story Points
+**Sprint**: Sprint 3
+**Status**: 📋 TODO
+**Depends On**: STORY-031
+
+**As a** developer
+**I want** all application.yml configuration files updated for Spring Boot 3.5 compatibility
+**So that** services start correctly with new configuration requirements
+
+**Description**:
+Update all `application.yml` files across microservices to comply with Spring Boot 3.5 configuration changes, including actuator security, deprecated property replacements, and new defaults.
+
+**Configuration Changes**:
+
+**1. Actuator Heapdump Security (All Services)**
+```yaml
+# Only add to dev/docker profiles if heapdump needed
+management:
+  endpoints:
+    web:
+      exposure:
+        include: heapdump  # Explicit exposure required
+  endpoint:
+    heapdump:
+      access: unrestricted  # Or 'restricted' with role-based access
+```
+
+**2. Deprecated Property Migration (If Found)**
+```yaml
+# OLD (deprecated)
+spring.mvc.converters.preferred-json-mapper: jackson
+spring.codec.log-request-details: true
+spring.codec.max-in-memory-size: 10MB
+
+# NEW (Spring 3.5)
+spring.http.converters.preferred-json-mapper: jackson
+spring.http.codecs.log-request-details: true
+spring.http.codecs.max-in-memory-size: 10MB
+```
+
+**3. Tomcat APR (Optional - Production Only)**
+```yaml
+server:
+  tomcat:
+    use-apr: when-available  # Performance optimization
+```
+
+**Files to Update**:
+- [ ] `rag-auth-service/src/main/resources/application.yml`
+- [ ] `rag-document-service/src/main/resources/application.yml`
+- [ ] `rag-embedding-service/src/main/resources/application.yml`
+- [ ] `rag-core-service/src/main/resources/application.yml`
+- [ ] `rag-admin-service/src/main/resources/application.yml`
+
+**Acceptance Criteria**:
+- [ ] All deprecated properties replaced with new equivalents
+- [ ] Actuator heapdump configuration added to dev profiles only
+- [ ] Tomcat APR configuration documented (not enabled in dev)
+- [ ] Profile names validated (docker, default, test - all valid)
+- [ ] No boolean property value errors (all true/false)
+- [ ] Redis configuration verified (using host/port - no changes)
+
+**Validation Steps**:
+```bash
+# 1. Search for deprecated properties
+grep -r 'spring.mvc.converters.preferred-json-mapper' rag-*/src/main/resources/
+grep -r 'spring.codec' rag-*/src/main/resources/
+
+# 2. Validate boolean values
+grep -r 'enabled:' rag-*/src/main/resources/ | grep -v 'true\|false'
+
+# 3. Verify profile names
+grep -r 'spring.profiles' rag-*/src/main/resources/
+
+# 4. Check Redis config (should use host/port, not url)
+grep -r 'spring.data.redis' rag-*/src/main/resources/
+```
+
+**Definition of Done**:
+- [ ] All application.yml files updated
+- [ ] Validation searches show no deprecated properties
+- [ ] Configuration documented in upgrade guide
+- [ ] Changes committed to feature branch
+
+**References**:
+- [Spring Boot 3.5 Upgrade Guide - Configuration Updates](docs/development/SPRING_BOOT_3.5_UPGRADE_GUIDE.md#phase-3-configuration-updates-30-minutes)
+- [Spring Boot 3.5 Release Notes - Breaking Changes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.5-Release-Notes)
+
+---
+
+### STORY-033: Spring Boot 3.5 Upgrade - Phase 4: Code Changes
+**Priority**: P1 - High
+**Type**: Platform Upgrade
+**Estimated Effort**: 5 Story Points
+**Sprint**: Sprint 3
+**Status**: 📋 TODO
+**Depends On**: STORY-032
+
+**As a** developer
+**I want** all Java code updated for Spring Boot 3.5 API changes
+**So that** services compile and run without deprecation warnings or errors
+
+**Description**:
+Update all Java code affected by Spring Boot 3.5 breaking changes, including TaskExecutor bean qualifiers, TestRestTemplate redirect handling, and any other API changes.
+
+**Code Changes Required**:
+
+**1. TaskExecutor Bean Qualifier (HIGH PRIORITY)**
+```java
+// BEFORE (Spring Boot 3.2.x)
+@Autowired
+@Qualifier("taskExecutor")
+private TaskExecutor taskExecutor;
+
+// AFTER (Spring Boot 3.5.x)
+@Autowired
+@Qualifier("applicationTaskExecutor")
+private TaskExecutor taskExecutor;
+
+// OR (simpler - uses default)
+@Autowired
+private TaskExecutor applicationTaskExecutor;
+```
+
+**Search Command**:
+```bash
+grep -r '@Qualifier.*taskExecutor' rag-*/src/main/java/ --include="*.java" -n
+```
+
+**2. TestRestTemplate Redirect Handling (TEST CODE ONLY)**
+```java
+// BEFORE
+TestRestTemplate template = new TestRestTemplate(HttpOption.ENABLE_REDIRECTS);
+
+// AFTER
+TestRestTemplate template = new TestRestTemplate()
+    .withRedirects(HttpClientOption.ENABLE_REDIRECTS);
+```
+
+**Search Commands**:
+```bash
+grep -r 'TestRestTemplate' rag-*/src/test/java/ --include="*.java" -n
+grep -r 'ENABLE_REDIRECTS' rag-*/src/test/java/ --include="*.java" -n
+```
+
+**Acceptance Criteria**:
+- [ ] All `@Qualifier("taskExecutor")` replaced with `@Qualifier("applicationTaskExecutor")`
+- [ ] All `HttpOption.ENABLE_REDIRECTS` replaced with `HttpClientOption.ENABLE_REDIRECTS`
+- [ ] No deprecation warnings during compilation
+- [ ] All services compile successfully: `mvn clean install -DskipTests`
+- [ ] No Spring Boot 3.5 API compatibility errors
+
+**Affected Files** (to be determined from search):
+- [ ] File: _________________ (line: ___)
+- [ ] File: _________________ (line: ___)
+- [ ] File: _________________ (line: ___)
+
+**Validation Steps**:
+1. **Clean Build**:
+   ```bash
+   mvn clean install -DskipTests
+   ```
+
+2. **Check for Warnings**:
+   ```bash
+   mvn compile 2>&1 | grep -i "warning\|deprecated"
+   ```
+
+3. **Verify Imports**:
+   ```bash
+   # Ensure correct imports for HttpClientOption
+   grep -r "import.*HttpClientOption" rag-*/src/test/java/
+   ```
+
+**Definition of Done**:
+- [ ] All code changes completed
+- [ ] Services compile without errors
+- [ ] No deprecation warnings
+- [ ] Code review completed
+- [ ] Changes committed to feature branch
+
+**References**:
+- [Spring Boot 3.5 Upgrade Guide - Code Updates](docs/development/SPRING_BOOT_3.5_UPGRADE_GUIDE.md#phase-4-code-updates-1-2-hours)
+- [Spring Boot 3.5 Release Notes - TaskExecutor](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.5-Release-Notes#taskexecutor-bean-names)
+
+---
+
+### STORY-034: Spring Boot 3.5 Upgrade - Phase 5: Testing & Validation
+**Priority**: P0 - Critical
+**Type**: Platform Upgrade
+**Estimated Effort**: 7 Story Points
+**Sprint**: Sprint 3
+**Status**: 📋 TODO
+**Depends On**: STORY-033
+
+**As a** developer
+**I want** comprehensive testing of the Spring Boot 3.5 upgrade
+**So that** we can confidently deploy to production with no regressions
+
+**Description**:
+Execute full test suite (unit, integration, E2E), perform Docker-based testing, validate Spring AI compatibility, and measure performance against baseline metrics.
+
+**Testing Phases**:
+
+**Phase 1: Unit Tests (1 hour)**
+```bash
+mvn clean test
+```
+- [ ] All unit tests pass
+- [ ] No new test failures
+- [ ] Test execution time comparable to baseline
+
+**Phase 2: Integration Tests (1 hour)**
+```bash
+mvn verify -pl rag-integration-tests
+```
+- [ ] All integration tests pass
+- [ ] No new test failures
+- [ ] Services integrate correctly
+
+**Phase 3: Docker Build & Startup (1 hour)**
+```bash
+make clean-all
+make build-all
+make start
+```
+- [ ] All services build successfully
+- [ ] All services start without errors
+- [ ] All health checks pass: `./scripts/utils/service-status.sh`
+
+**Phase 4: Spring AI Compatibility Testing (2 hours)**
+
+**Critical**: Spring AI 1.1.0-RC1 built against Spring Boot 3.4.2, not 3.5.x
+
+**Ollama Embeddings**:
+```bash
+curl -X POST http://localhost:8083/api/v1/embeddings/generate \
+  -H 'Content-Type: application/json' \
+  -H 'X-Tenant-ID: YOUR_TENANT_ID' \
+  -d '{"texts":["test"]}'
+```
+- [ ] Embedding generation succeeds
+- [ ] Returns 1024-dimensional vectors
+- [ ] Response time acceptable (<100ms)
+- [ ] No Spring AI errors in logs
+
+**OpenAI Embeddings** (if API key configured):
+```bash
+# Same test with openai profile
+```
+- [ ] OpenAI embedding generation works
+- [ ] Returns 1536-dimensional vectors
+- [ ] No compatibility errors
+
+**Check Logs**:
+```bash
+grep -i "spring.*ai" logs/*.log | grep -i "warn\|error\|deprecated"
+```
+- [ ] No Spring AI compatibility warnings
+- [ ] No unexpected errors
+
+**Phase 5: Functional Testing (2 hours)**
+
+**Authentication Flow**:
+- [ ] Admin login: `./scripts/utils/admin-login.sh`
+- [ ] User registration (Swagger UI)
+- [ ] JWT token validation
+
+**Document Processing Pipeline**:
+```bash
+TENANT_ID="..." # From admin-login
+curl -X POST http://localhost:8082/api/v1/documents/upload \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -F 'file=@test.txt'
+```
+- [ ] Document uploads successfully
+- [ ] Document processing completes (chunks created)
+- [ ] Embeddings generated
+- [ ] Status updates to PROCESSED
+
+**Query Execution**:
+```bash
+curl -X POST http://localhost:8084/api/v1/query \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"test","topK":5}'
+```
+- [ ] Query executes
+- [ ] Results returned
+- [ ] Response time acceptable
+
+**Phase 6: Performance Validation (1 hour)**
+
+**Baseline Comparison**:
+- [ ] Startup time: _______ (baseline: _______)
+- [ ] Document upload response time: _______ (baseline: _______)
+- [ ] Query response time: _______ (baseline: _______)
+- [ ] Memory usage: _______ (baseline: _______)
+- [ ] CPU usage: _______ (baseline: _______)
+
+**Resource Monitoring**:
+```bash
+docker stats
+```
+- [ ] Memory usage <80% of limits
+- [ ] CPU usage <70% under load
+- [ ] No resource leaks
+
+**Acceptance Criteria**:
+- [ ] All unit tests pass (58 tests)
+- [ ] All integration tests pass (13 tests)
+- [ ] All services start successfully
+- [ ] All health checks pass
+- [ ] Spring AI embeddings work (Ollama + OpenAI)
+- [ ] Document processing pipeline works end-to-end
+- [ ] Query execution works
+- [ ] No performance regressions (within 10% of baseline)
+- [ ] No memory leaks detected
+- [ ] E2E tests pass (or known blockers documented)
+
+**Critical Spring AI Test**:
+- [ ] **BLOCKER**: If Spring AI fails, consider rollback or gradual upgrade path (3.2→3.4→3.5)
+
+**Definition of Done**:
+- [ ] All testing phases completed
+- [ ] Test results documented
+- [ ] Performance comparison documented
+- [ ] Any issues documented with workarounds
+- [ ] Upgrade guide updated with findings
+- [ ] Sign-off obtained for merge
+
+**Rollback Criteria**:
+- Spring AI embedding generation fails
+- >20% performance regression
+- Critical functionality broken
+- Memory leaks detected
+
+**References**:
+- [Spring Boot 3.5 Upgrade Guide - Testing](docs/development/SPRING_BOOT_3.5_UPGRADE_GUIDE.md#phase-5-build-and-test-2-4-hours)
+- [Spring Boot 3.5 Upgrade Checklist - Testing Section](docs/development/SPRING_BOOT_3.5_UPGRADE_CHECKLIST.md#build-and-test)
+
 
