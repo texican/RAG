@@ -18,27 +18,27 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <!-- Spring versions -->
-        <spring-boot.version>3.2.11</spring-boot.version>
-        <spring-cloud.version>2023.0.3</spring-cloud.version>
-        <spring-ai.version>1.0.0-M1</spring-ai.version>
-        <spring-security.version>6.2.8</spring-security.version>
-        <spring-framework.version>6.1.21</spring-framework.version>
+        <spring-boot.version>4.0.0</spring-boot.version>
+        <spring-cloud.version>2025.1.0</spring-cloud.version>
+        <spring-ai.version>1.0.0-M5</spring-ai.version>
+        <spring-security.version>7.0.0</spring-security.version>
+        <spring-framework.version>7.0.0</spring-framework.version>
         
         <!-- Security patches -->
-        <tomcat.version>10.1.35</tomcat.version>
+        <tomcat.version>11.0.2</tomcat.version>
         <netty.version>4.1.124.Final</netty.version>
         <commons-fileupload.version>1.6.0</commons-fileupload.version>
-        
+
         <!-- Database versions -->
         <postgresql.version>42.7.3</postgresql.version>
         <redis.version>5.0.2</redis.version>
-        
+
         <!-- AI/ML libraries -->
         <langchain4j.version>0.33.0</langchain4j.version>
         <tika.version>2.9.2</tika.version>
-        
+
         <!-- Testing versions -->
-        <junit.version>5.10.2</junit.version>
+        <junit.version>5.11.0</junit.version>
         <testcontainers.version>1.19.8</testcontainers.version>
         <wiremock.version>3.8.0</wiremock.version>
         <mockito.version>5.14.2</mockito.version>
@@ -321,7 +321,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+                    <argLine>
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                        --add-opens java.base/java.text=ALL-UNNAMED
+                        --add-opens java.desktop/java.awt.font=ALL-UNNAMED
+                    </argLine>
                 </configuration>
             </plugin>
             
@@ -337,6 +343,14 @@
     </build>
 
     <repositories>
+        <repository>
+            <id>spring-releases</id>
+            <name>Spring Releases</name>
+            <url>https://repo.spring.io/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>

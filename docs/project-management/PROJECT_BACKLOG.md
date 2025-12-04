@@ -12,8 +12,9 @@ changelog: Added Phase 2 API Documentation stories (7 stories, 41 points)
 ## Overview
 This document tracks the remaining user stories and features to be implemented for the RAG system.
 
-**Total Remaining Story Points: 168** (89 GCP [COMPLETE] + 41 Documentation + 26 Testing + 8 CI/CD + 4 Infrastructure)
+**Total Remaining Story Points: 181** (89 GCP [COMPLETE] + 13 Tech Debt [URGENT] + 41 Documentation + 26 Testing + 8 CI/CD + 4 Infrastructure)
 - **GCP Deployment Epic**: ✅ **COMPLETE** (89/89 story points, 100%) 🎉
+- **Technical Debt (Spring Upgrade)**: 🔴 **URGENT** (13 story points, P0 - EOL Dec 2024 - 12 months ago)
 - **Documentation Improvement (Phase 2)**: ⭐ **NEW** (41 story points, 0%)
 - **Testing Stories**: 26 story points
 - **Infrastructure Stories**: 12 story points (4 existing + 8 CI/CD)
@@ -1321,6 +1322,215 @@ Spring Boot's reactive security auto-configuration is creating default security 
 - Direct service access: `http://localhost:8081/api/v1/auth/login` (fully functional)
 - Individual service Swagger UIs work correctly
 - API testing tools (Postman, curl) work with direct endpoints
+
+---
+
+### **TECH-DEBT-006: Upgrade Spring Boot 3.2.11 → 4.0.0 (End-of-Life)**
+**Epic:** Technical Debt & Maintenance
+**Story Points:** 13 (Auth Service) + 40 (Remaining Services) = 53 total
+**Priority:** P0 - Critical (Security & Support)
+**Dependencies:** None
+**Status:** 🟡 **IN PROGRESS - Auth Service 40% Complete (5/13 points)**
+**Progress:** Maven dependencies ✅, Package moves ✅, Mockito config ✅, 🔴 Jackson 3.x blocker
+
+**Context:**
+The RAG project is currently using **Spring Boot 3.2.11** and **Spring Framework 6.1.21**, which reached end-of-life over 12 months ago (December 2024). The system has been running without security patches for a full year, creating critical security and compliance risks. Additionally, Spring Boot 3.4 and 3.5 are either EOL or have insufficient support runway (3.5.x has only 5 months left), making **Spring Boot 4.0 the only viable upgrade target**.
+
+**Current Versions:**
+- Spring Boot: 3.2.11 (EOL: Dec 2024 - 12 months ago) 🔴
+- Spring Framework: 6.1.21 (EOL: Nov 2025 - 1 month ago) 🔴
+- Spring Security: 6.2.8 (EOL: TBD) 🔴
+- Spring Cloud: 2023.0.3 (EOL: TBD) 🔴
+- Spring AI: 1.0.0-M1 (Milestone) 🟡
+- Java: 17+ (Java 21+ required for Spring Boot 4.0) ⚠️
+
+**Target Versions (Required - Spring Boot 4.0):**
+- Spring Boot: **4.0.0** (Support until Nov 2026 - 11 months)
+- Spring Framework: **7.0.0** (Support until Nov 2027 - 23 months)
+- Spring Security: **7.0.x** (Latest stable)
+- Spring Cloud: **2025.0.0** (Latest stable)
+- Spring AI: **1.0.0-M5** (Latest milestone)
+- Java: **21** (23 recommended for optimal performance)
+
+**Acceptance Criteria:**
+- [ ] Upgrade JDK to Java 21+
+- [ ] Update parent POM to Spring Boot 4.0.0, Spring Framework 7.0.0
+- [ ] Replace @MockBean/@SpyBean with Mockito @Mock
+- [ ] Update Jackson configuration for Jackson 3.x
+- [ ] Fix @ConfigurationProperties public field bindings
+- [ ] Update security configurations for Spring Security 7.0
+- [ ] All unit tests passing
+- [ ] All integration tests passing
+- [ ] E2E tests passing
+- [ ] Docker builds successful
+- [ ] Performance baseline maintained (±10%)
+- [ ] Documentation updated (README, CLAUDE.md)
+
+**Implementation Strategy:**
+This upgrade is being done **incrementally, one service at a time**, starting with Auth Service to establish patterns before migrating remaining services. See `docs/deployment/SPRING_BOOT_4_UPGRADE_PROGRESS.md` for detailed progress tracking.
+
+**Service-by-Service Breakdown:**
+1. ✅ **Maven Dependencies (All Services)** - 3 points COMPLETE
+   - Updated to Spring Boot 4.0.0, Spring Framework 7.0.0, Spring Cloud 2025.1.0
+   - Tomcat 11.0.2 (Servlet 6.1), JUnit 5.11.0
+
+2. 🟡 **Auth Service** - 13 points (40% complete)
+   - ✅ Package moves (@EntityScan, test infrastructure)
+   - ✅ Mockito configuration for Java 25
+   - 🔴 Jackson 3.x configuration (BLOCKER)
+   - ⏸️ Spring Security 7.0 updates
+   - ⏸️ Test suite validation
+
+3. ⏸️ **Document Service** - 10 points
+   - Package moves (Kafka autoconfiguration)
+   - Same patterns as Auth
+
+4. ⏸️ **Admin Service** - 8 points
+   - Simplest service, same patterns as Auth
+
+5. ⏸️ **Core Service** - 9 points
+   - Redis integration updates
+   - Same patterns as Auth
+
+6. ⏸️ **Embedding Service** - 13 points (MOST COMPLEX)
+   - Spring AI API changes (embed returns float[] instead of List<Double>)
+   - Multiple autoconfiguration exclusions
+   - Ollama integration updates
+
+**Total:** 53 story points (13 Auth + 40 remaining)
+
+**Technical Tasks (Updated 2025-12-04):**
+- [x] **Phase 1: Preparation** (3-4 hours) ✅ COMPLETE
+  - [x] Create feature branch `upgrade/spring-boot-4.0` ✅
+  - [x] Create backup tag `pre-spring-4-upgrade-20251204` ✅
+  - [x] Review Spring Boot 4.0 and Spring Framework 7.0 release notes ✅
+  - [x] JDK already on Java 21 ✅
+  - [x] Update CLAUDE.md and PROJECT_BACKLOG.md ✅
+  - [x] Create `docs/deployment/SPRING_BOOT_4_UPGRADE_PROGRESS.md` ✅
+
+- [x] **Phase 2: Version Updates** (2-3 hours) ✅ COMPLETE
+  - [x] Update `pom.xml` Spring Boot 4.0.0, Framework 7.0.0, Cloud 2025.1.0 ✅
+  - [x] Update Tomcat 11.0.2, JUnit 5.11.0 ✅
+  - [x] Add spring-releases repository ✅
+  - [x] Resolve all dependencies successfully ✅
+  - [x] Fix `spring-boot-starter-aop` → `spring-boot-starter-aspectj` ✅
+
+- [x] **Phase 3: Package Moves** (3-4 hours) ✅ COMPLETE
+  - [x] @EntityScan: `autoconfigure.domain` → `persistence.autoconfigure` ✅
+  - [x] KafkaAutoConfiguration: `autoconfigure.kafka` → `kafka.autoconfigure` ✅
+  - [x] AutoConfigureMockMvc: `test.autoconfigure.web.servlet` → `webmvc.test.autoconfigure` ✅
+  - [x] TestRestTemplate: `test.web.client` → `resttestclient` ✅
+  - [x] Add `spring-boot-starter-webmvc-test` dependency ✅
+
+- [x] **Phase 4: Mockito Configuration** (1 hour) ✅ COMPLETE
+  - [x] Create `mockito-extensions/org.mockito.plugins.MockMaker` ✅
+  - [x] Set mock-maker-inline for Java 25 compatibility ✅
+  - [x] Add JVM `--add-opens` arguments for reflection ✅
+
+- [ ] **Phase 5: Auth Service - Jackson 3.x** (4-6 hours) 🔴 IN PROGRESS
+  - [ ] Review Jackson property binding errors
+  - [ ] Update `JsonConfig.java` (uses deprecated Jackson2ObjectMapperBuilder)
+  - [ ] Update `application.yml` Jackson properties
+  - [ ] Test JSON serialization/deserialization
+  - [ ] Fix all 13 test failures
+
+- [ ] **Phase 6: Auth Service - Spring Security 7.0** (2-3 hours)
+  - [ ] Review security configuration changes
+  - [ ] Update filter chains if needed
+  - [ ] Test authentication flows
+
+- [ ] **Phase 7: Auth Service - Validation** (2-3 hours)
+  - [ ] All unit tests passing
+  - [ ] Service starts successfully
+  - [ ] Manual API testing
+  - [ ] Document patterns for other services
+
+- [ ] **Phase 4: Testing** (12-16 hours)
+  - [ ] Run unit tests (`mvn test`)
+  - [ ] Run integration tests (`mvn verify`)
+  - [ ] Service-specific testing (auth, document, embedding, core, admin)
+  - [ ] E2E workflow tests
+  - [ ] Performance testing (startup time, memory, query latency)
+  - [ ] Docker testing (rebuild images, run containers)
+
+- [ ] **Phase 5: Validation & Rollout** (4-6 hours)
+  - [ ] Smoke tests (all services start, migrations run)
+  - [ ] Regression tests (critical path workflows)
+  - [ ] Performance validation (within ±10%)
+  - [ ] Documentation updates (README, CLAUDE.md, BACKLOG)
+  - [ ] Commit and create pull request
+
+**Known Breaking Changes:**
+1. **Java 21 Required:** Minimum Java 17, Java 21+ recommended (Java 23 optimal)
+2. **Spring Framework 7.0:** Major framework upgrade, Jakarta EE 11, Servlet 6.1
+3. **@MockBean/@SpyBean Removed:** Replace with Mockito @Mock and @ExtendWith(MockitoExtension.class)
+4. **Jackson 3.x:** Configuration properties moved (spring.jackson.json.read/write)
+5. **JUnit 6 (Jupiter 6):** Updated test annotations and lifecycle methods
+6. **@ConfigurationProperties:** No more public field binding (requires getters/setters)
+7. **Undertow Removed:** Not Servlet 6.1 compatible (project uses Tomcat - no impact)
+
+**Service Impact Assessment:**
+- **HIGH Impact:** rag-auth-service (MockBean removal, Spring Security 7.0, Jackson JWT)
+- **HIGH Impact:** rag-document-service (Jackson 3.x file upload, Servlet 6.1 multipart)
+- **HIGH Impact:** rag-embedding-service (Spring AI compatibility, Jackson 3.x, test mocks)
+- **HIGH Impact:** rag-core-service (Jackson 3.x query handling, Redis, Kafka serialization)
+- **MEDIUM Impact:** rag-admin-service (Actuator changes, test mocks)
+
+**Rollback Plan:**
+```bash
+# Option 1: Git revert
+git checkout pre-spring-upgrade-YYYYMMDD
+make clean-all && make build-all && make start
+
+# Option 2: Docker rollback
+docker-compose down && git checkout main && make start
+
+# Option 3: Selective service rollback
+git checkout main -- rag-{service}-service/
+make rebuild SERVICE=rag-{service}
+```
+
+**Definition of Done:**
+- [ ] All services upgraded to Spring Boot 4.0.0 and Spring Framework 7.0.0
+- [ ] Java upgraded to 21+
+- [ ] Zero compilation errors or warnings
+- [ ] All tests passing (unit, integration, E2E)
+- [ ] Docker images build successfully with Java 21
+- [ ] Performance metrics within ±10% of baseline
+- [ ] Documentation updated with new versions
+- [ ] Upgrade guide available (SPRING_UPGRADE_PLAN.md)
+- [ ] Post-upgrade monitoring plan in place (7-14 days)
+
+**Business Impact:**
+**CRITICAL** - Using end-of-life dependencies for 12 months exposes the system to:
+- Security vulnerabilities without patches (CVEs in Spring Boot 3.2.x)
+- Compliance violations (SOC 2, HIPAA, PCI DSS)
+- Inability to upgrade other dependencies
+- Technical debt accumulation (12 months of patches missed)
+- Potential production incidents from unpatched vulnerabilities
+
+**Why Spring Boot 4.0 (Not 3.5):**
+- Spring Boot 3.5.x only has 5 months of support remaining (EOL May 2026)
+- Spring Boot 4.0.0 has 11 months of support (EOL Nov 2026)
+- Avoid double upgrade (3.5 now → 4.0 in May 2026)
+- Extra 2-3 days of effort = 6 months more stability
+
+**Resources:**
+- [Upgrade Plan](../../docs/deployment/SPRING_UPGRADE_PLAN.md) - **Comprehensive Spring Boot 4.0 upgrade guide**
+- [Spring Boot 4.0 Release Announcement](https://spring.io/blog/2025/11/20/spring-boot-4-0-0-available-now/)
+- [Spring Boot 4.0 Migration Guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide)
+- [Spring Boot 4.0 Release Notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Release-Notes)
+- [Spring Framework 7.0 Documentation](https://docs.spring.io/spring-framework/reference/)
+- [Spring Boot End of Life](https://endoflife.date/spring-boot)
+
+**Estimated Duration:** 5-7 days (major version upgrade)
+
+**Story Points Breakdown:**
+- Preparation: 2 points (JDK upgrade)
+- Version updates: 2 points
+- Code updates: 4 points (MockBean, Jackson, ConfigProperties)
+- Testing: 4 points (major breaking changes)
+- Validation: 1 point
 
 ---
 

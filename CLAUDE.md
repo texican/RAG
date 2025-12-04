@@ -8,15 +8,21 @@ category: project-context
 
 # Claude Context - RAG Project Current State
 
-Last Updated: 2025-11-09 (Session: Documentation Update)
+Last Updated: 2024-12-04 (Session: Spring Framework EOL Analysis)
 
-## 🚨 CURRENT PRIORITY: DOCUMENTATION & MAINTENANCE
+## 🚨 CURRENT PRIORITY: SPRING BOOT UPGRADE (URGENT - EOL)
 
 **Previous Milestone:** GCP Deployment Infrastructure - ✅ COMPLETE
 
-**Status:** All 11 GCP deployment tasks complete (89/89 story points)
+**Current Status:** Spring Boot 3.2.11 reached end-of-life December 2024
 
-**Current Activity:** Documentation updates and system maintenance
+**Current Activity:** 🔴 **URGENT** - Plan Spring Boot 3.4.1 upgrade (TECH-DEBT-006)
+
+**Critical Issue:**
+- Spring Boot 3.2.x OSS support ended December 2024
+- No security patches or bug fixes available
+- Compliance risk for production deployment
+- 8 story points, P0 priority, 2-3 day effort
 
 **Critical Path:**
 1. GCP-INFRA-001: Project Setup (8 pts) - ✅ COMPLETE
@@ -38,6 +44,147 @@ See [PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md) for detaile
 ---
 
 ## Recent Session Summary
+
+### Session 17: Spring Framework EOL Analysis & Upgrade Planning (2025-12-04) ✅ CORRECTED
+
+**Date Verified:** 2025-12-04 (December 4, 2025)
+
+**Objective:** Investigate Spring Framework 6.1.14 EOL impact and create comprehensive upgrade plan to Spring Boot 4.0.
+
+**What Was Done:**
+
+#### 1. Version Analysis ✅
+**Current State Verified:**
+- Spring Boot: 3.2.11 (🔴 EOL December 2024 - 12 months ago)
+- Spring Framework: 6.1.21 (🔴 EOL November 2025 - 1 month ago)
+- Spring Security: 6.2.8
+- Spring Cloud: 2023.0.3
+- Spring AI: 1.0.0-M1
+
+**Key Finding:** Project is NOT using Spring Framework 6.1.14 (the EOL version mentioned). Currently on 6.1.21, which is newer. However, both Spring Boot 3.2.11 and Spring Framework 6.1.21 are end-of-life, making this a critical 12-month-old security issue.
+
+#### 2. Latest Version Research ✅ (Corrected for December 2025)
+**Available Versions:**
+- Spring Boot 3.4.x (EOL November 2025 - 1 month ago) 🔴
+- Spring Boot 3.5.x (EOL May 2026 - 5 months remaining) 🟡
+- **Spring Boot 4.0.0** (Released Nov 2025, EOL Nov 2026 - 11 months) ✅
+- Spring Framework 7.0.0 (comes with Spring Boot 4.0)
+
+**Support Timeline (as of December 2025):**
+| Version | Released | OSS EOL | Status |
+|---------|----------|---------|--------|
+| Spring Boot 3.2.x | Nov 2023 | Dec 2024 | 🔴 EOL (12 months ago) |
+| Spring Boot 3.3.x | May 2024 | Jun 2025 | 🔴 EOL (6 months ago) |
+| Spring Boot 3.4.x | Nov 2024 | Nov 2025 | 🔴 EOL (1 month ago) |
+| Spring Boot 3.5.x | May 2025 | May 2026 | 🟡 Active (5 months left) |
+| Spring Boot 4.0.x | Nov 2025 | Nov 2026 | ✅ Active (11 months) |
+| Spring Framework 6.1.x | Nov 2023 | Nov 2025 | 🔴 EOL (1 month ago) |
+| Spring Framework 7.0.x | Nov 2025 | Nov 2027 | ✅ Active (23 months) |
+
+#### 3. Comprehensive Upgrade Plan Created ✅
+**Document:** `docs/deployment/SPRING_UPGRADE_PLAN.md` (900+ lines)
+
+**Recommendation:** **Spring Boot 4.0.0** (skip 3.4 and 3.5)
+
+**Why Skip 3.5:**
+- Only 5 months of support remaining (vs 11 months for 4.0)
+- Would require another upgrade in May 2026
+- Extra 2-3 days of effort for 4.0 = 6 more months of stability
+
+**Contents:**
+- Executive summary with critical findings
+- Version timeline and support status (December 2025)
+- Spring Boot 4.0 breaking changes (10 major changes)
+- Service-specific impact assessment (5 services)
+- Complete 5-phase implementation plan (5-7 days)
+- Testing checklist (critical path, infrastructure, performance)
+- Rollback procedures (3 options)
+- Post-upgrade monitoring plan (7-14 days)
+
+**Major Breaking Changes (Spring Boot 4.0):**
+1. **Java 21 Required:** Minimum Java 17, Java 21+ recommended
+2. **Spring Framework 7.0:** Jakarta EE 11, Servlet 6.1
+3. **@MockBean/@SpyBean Removed:** Replace with Mockito @Mock
+4. **Jackson 3.x:** Configuration properties moved
+5. **JUnit 6 (Jupiter 6):** Updated annotations
+6. **@ConfigurationProperties:** No public field binding
+7. **Undertow Removed:** Not Servlet 6.1 compatible
+
+**Service Impact Assessment:**
+- **HIGH Impact:** auth (MockBean, Security 7.0), document (Jackson, Servlet 6.1), embedding (Spring AI, Jackson), core (Jackson, Redis, Kafka)
+- **MEDIUM Impact:** admin (Actuator, test mocks)
+
+#### 4. Backlog Story Created ✅ (Corrected)
+**Story:** TECH-DEBT-006: Upgrade Spring Boot 3.2.11 → 4.0.0 (End-of-Life)
+- Priority: P0 - Critical
+- Story Points: 13 (increased from 8 due to major version jump)
+- Status: 🔴 URGENT - Spring Boot 3.2.x EOL December 2024 (12 months ago)
+- Epic: Technical Debt & Maintenance
+
+**Technical Tasks Defined:**
+- Phase 1: Preparation (3-4 hours) - JDK upgrade, branch creation, review guides
+- Phase 2: Version Updates (2-3 hours) - Update POMs to Spring Boot 4.0.0, Spring Framework 7.0.0, Java 21
+- Phase 3: Code Updates (8-12 hours) - MockBean removal, Jackson 3.x, ConfigProperties, Security 7.0
+- Phase 4: Testing (12-16 hours) - Unit, integration, E2E, performance validation
+- Phase 5: Validation & Rollout (4-6 hours) - Smoke tests, regression, documentation
+
+**Total Estimated Duration:** 5-7 days (major version upgrade)
+
+#### 5. Documentation Updates ✅
+**Files Created:**
+- `docs/deployment/SPRING_UPGRADE_PLAN.md` - Complete Spring Boot 4.0 upgrade guide (900+ lines)
+
+**Files Modified:**
+- `docs/project-management/PROJECT_BACKLOG.md` - Added TECH-DEBT-006, updated totals
+- `CLAUDE.md` - This session summary
+
+**Backlog Totals Updated:**
+- Total Remaining Story Points: 168 → 181 (+13 for Spring Boot 4.0 upgrade)
+- New Section: Technical Debt (Spring Upgrade) - 🔴 URGENT (13 points, P0)
+
+**Error Correction:**
+- Initial analysis incorrectly suggested Spring Boot 3.4.1 due to date error (2024 vs 2025)
+- Corrected after user identified the issue
+- All documents updated to reflect Spring Boot 4.0.0 as the target
+
+#### 6. Recommendations (Corrected)
+
+**Immediate Action Required:**
+- Upgrade directly to Spring Boot 4.0.0 and Spring Framework 7.0.0
+- Upgrade JDK to Java 21 (Java 23 recommended)
+- Skip Spring Boot 3.5.x (only 5 months of support left)
+- Schedule 5-7 day upgrade window
+- Follow 5-phase implementation plan
+
+**Business Impact:**
+System has been running 12 months without security patches:
+- Security vulnerabilities without patches (CVEs in Spring Boot 3.2.x)
+- Compliance violations (SOC 2, HIPAA, PCI DSS)
+- Inability to upgrade other dependencies
+- Technical debt accumulation (12 months of patches missed)
+- Potential production incidents from unpatched vulnerabilities
+
+**Next Steps:**
+1. Review upgrade plan: [SPRING_UPGRADE_PLAN.md](docs/deployment/SPRING_UPGRADE_PLAN.md)
+2. Schedule 5-7 day upgrade window (full week preferred)
+3. Create feature branch `upgrade/spring-boot-4.0`
+4. Create backup tag `pre-spring-4-upgrade-20251204`
+5. Upgrade JDK to Java 21
+6. Execute Phase 1 (Preparation)
+7. Proceed through phases sequentially
+
+**Story Points Completed:** 0 (planning only)
+**Story Points Added to Backlog:** 13 (TECH-DEBT-006)
+**Total Backlog:** 181 story points
+
+**Resources:**
+- [Spring Upgrade Plan](docs/deployment/SPRING_UPGRADE_PLAN.md)
+- [Spring Boot 3.4 Release Notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes)
+- [Spring Framework 6.2 Release Notes](https://github.com/spring-projects/spring-framework/wiki/Spring-Framework-6.2-Release-Notes)
+- [Spring Boot End of Life](https://endoflife.date/spring-boot)
+- [Spring Framework End of Life](https://endoflife.date/spring-framework)
+
+---
 
 ### Session 16: Documentation Update (2025-11-09)
 
