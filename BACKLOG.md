@@ -1,29 +1,103 @@
 # RAG System - Product Backlog
 
-**Last Updated**: 2025-11-13 (Spring Boot 3.5 Upgrade Stories Created)
-**Sprint**: Sprint 2 - Deployment Stabilization & Architecture
-**Sprint Status**: 🟢 IN PROGRESS - 7/11 stories delivered
-  - STORY-022 ✅ (Kafka Optional Implementation)
-  - STORY-023 ✅ (Deployment Health Fixes - rag-document, rag-auth)
-  - TECH-DEBT-008 ✅ (PostgreSQL Cleanup)
-  - STORY-019 ✅ (Spring Security for K8s Health Checks)
-  - STORY-021 ✅ (rag-embedding RestTemplate Bean)
-  - STORY-003 ✅ (Admin Service Health Check - Working as Designed)
-  - TECH-DEBT-005 ✅ (Flyway Database Migrations)
-
-**Sprint 1 Status**: ✅ COMPLETE - 5/5 stories delivered
-  - STORY-001 ✅ (Document Upload Bug)
-  - STORY-015 ✅ (Ollama Embeddings)
-  - STORY-016 ✅ (Kafka Connectivity)
-  - STORY-017 ✅ (Tenant Data Sync + DB Persistence)
-  - STORY-002 ✅ (Infrastructure Complete)
+**Last Updated**: 2025-12-04 (Spring Boot 4.0 Upgrade Analysis)
 
 ---
 
 ## 🔴 Critical - Must Fix (P0)
 
----
+### TECH-DEBT-006: Upgrade Spring Boot 3.2.11 → 4.0.0 (End-of-Life)
+**Priority**: P0 - Critical
+**Type**: Technical Debt / Security
+**Estimated Effort**: 13 Story Points
+**Sprint**: URGENT - Start Immediately
+**Status**: 🔴 **CRITICAL - 12 months overdue**
 
+**As a** development team
+**I want** to upgrade to Spring Boot 4.0.0 and Spring Framework 7.0.0
+**So that** the system receives security patches and remains compliant
+
+**Description**:
+The RAG system is running Spring Boot 3.2.11 which reached end-of-life in December 2024 (12 months ago). The system has been operating without security patches for an entire year, creating critical security and compliance risks. Spring Boot 4.0.0 is the only viable upgrade target as 3.4.x and 3.5.x are either EOL or have insufficient support runway.
+
+**Current State**:
+- Spring Boot: 3.2.11 (EOL: Dec 2024 - 12 months ago) 🔴
+- Spring Framework: 6.1.21 (EOL: Nov 2025 - 1 month ago) 🔴
+- Java: 17+ (Java 21+ required for Spring Boot 4.0) ⚠️
+
+**Target State**:
+- Spring Boot: **4.0.0** (Support until Nov 2026 - 11 months)
+- Spring Framework: **7.0.0** (Support until Nov 2027 - 23 months)
+- Java: **21** (23 recommended)
+
+**Why Not Spring Boot 3.5?**
+- Only 5 months of support remaining (vs 11 months for 4.0)
+- Would require another upgrade in May 2026
+- Extra 2-3 days of effort = 6 months more stability
+
+**Acceptance Criteria**:
+- [ ] JDK upgraded to Java 21+
+- [ ] All services upgraded to Spring Boot 4.0.0 and Spring Framework 7.0.0
+- [ ] @MockBean/@SpyBean replaced with Mockito @Mock in all test classes
+- [ ] Jackson configuration updated for Jackson 3.x (spring.jackson.json.*)
+- [ ] @ConfigurationProperties classes use getters/setters (no public fields)
+- [ ] Spring Security 7.0 configurations validated
+- [ ] All unit tests passing
+- [ ] All integration tests passing
+- [ ] E2E tests passing
+- [ ] Docker images build with Java 21
+- [ ] Performance within ±10% of baseline
+
+**Major Breaking Changes**:
+1. **Java 21 Required**: Minimum Java 17, Java 21+ recommended (Java 23 optimal)
+2. **Spring Framework 7.0**: Jakarta EE 11 baseline, Servlet 6.1
+3. **@MockBean/@SpyBean Removed**: Use Mockito @Mock with @ExtendWith(MockitoExtension.class)
+4. **Jackson 3.x**: Config properties moved to spring.jackson.json.read/write
+5. **JUnit 6**: Updated test annotations and lifecycle
+6. **@ConfigurationProperties**: No public field binding (requires getters/setters)
+7. **Undertow Removed**: Not Servlet 6.1 compatible (no impact - uses Tomcat)
+
+**Service Impact**:
+- 🔴 **HIGH**: rag-auth (MockBean, Security 7.0, Jackson JWT)
+- 🔴 **HIGH**: rag-document (Jackson file upload, Servlet 6.1)
+- 🔴 **HIGH**: rag-embedding (Spring AI, Jackson, test mocks)
+- 🔴 **HIGH**: rag-core (Jackson query handling, Redis, Kafka)
+- 🟡 **MEDIUM**: rag-admin (Actuator, test mocks)
+
+**Implementation Plan**:
+- **Phase 1**: Preparation (3-4 hours) - JDK upgrade, branch, backup
+- **Phase 2**: Version Updates (2-3 hours) - Update POMs
+- **Phase 3**: Code Updates (8-12 hours) - MockBean, Jackson, ConfigProperties
+- **Phase 4**: Testing (12-16 hours) - Unit, integration, E2E, performance
+- **Phase 5**: Validation (4-6 hours) - Smoke tests, regression, docs
+
+**Definition of Done**:
+- [ ] All services running Spring Boot 4.0.0 + Spring Framework 7.0.0
+- [ ] Java 21 in use across all services
+- [ ] Zero compilation errors or warnings
+- [ ] All tests passing (unit, integration, E2E)
+- [ ] Docker builds successful
+- [ ] Performance baseline maintained (±10%)
+- [ ] Documentation updated (README, CLAUDE.md, BACKLOG)
+- [ ] Post-upgrade monitoring plan active (7-14 days)
+
+**Business Impact**:
+**CRITICAL** - 12 months without security patches exposes system to:
+- Unpatched CVEs in Spring Boot 3.2.x
+- Compliance violations (SOC 2, HIPAA, PCI DSS)
+- Cannot upgrade other dependencies
+- Accumulating technical debt
+- Production incident risk
+
+**Resources**:
+- [Complete Upgrade Guide](docs/deployment/SPRING_UPGRADE_PLAN.md) - 900+ line implementation plan
+- [Spring Boot 4.0 Release](https://spring.io/blog/2025/11/20/spring-boot-4-0-0-available-now/)
+- [Migration Guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide)
+- [Spring Framework 7.0 Docs](https://docs.spring.io/spring-framework/reference/)
+
+**Estimated Duration**: 5-7 days (1 full week)
+
+---
 
 ## 🟠 High Priority (P1)
 
