@@ -73,7 +73,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @see org.springframework.scheduling.annotation.EnableScheduling
  * @see org.springframework.data.jpa.repository.config.EnableJpaRepositories
  */
-@SpringBootApplication
+@SpringBootApplication(
+    exclude = {
+        org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration.class
+    }
+)
 @EntityScan(basePackages = {"com.byo.rag.shared.entity"})
 @EnableJpaRepositories(basePackages = {"com.byo.rag.admin.repository"})
 @EnableScheduling

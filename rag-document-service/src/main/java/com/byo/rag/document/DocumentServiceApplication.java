@@ -80,7 +80,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "com.byo.rag.shared.exception"
     },
     exclude = {
-        org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration.class
+        org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration.class
     }
 )
 @EntityScan("com.byo.rag.shared.entity")

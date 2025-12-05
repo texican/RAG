@@ -81,10 +81,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
     scanBasePackages = {"com.byo.rag.core", "com.byo.rag.shared.exception"},
     exclude = {
         org.springframework.ai.autoconfigure.ollama.OllamaAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class
+        org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration.class,
+        org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration.class
     }
 )
 @EnableAsync

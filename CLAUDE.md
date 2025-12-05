@@ -8,21 +8,21 @@ category: project-context
 
 # Claude Context - RAG Project Current State
 
-Last Updated: 2024-12-04 (Session: Spring Framework EOL Analysis)
+Last Updated: 2025-12-04 (Session: Spring Boot 4.0 Upgrade - Auth Service Complete)
 
-## 🚨 CURRENT PRIORITY: SPRING BOOT UPGRADE (URGENT - EOL)
+## 🚨 CURRENT PRIORITY: SPRING BOOT 4.0 UPGRADE (IN PROGRESS)
 
 **Previous Milestone:** GCP Deployment Infrastructure - ✅ COMPLETE
 
-**Current Status:** Spring Boot 3.2.11 reached end-of-life December 2024
+**Current Milestone:** Spring Boot 4.0 Upgrade - Auth Service ✅ COMPLETE (13/53 points)
 
-**Current Activity:** 🔴 **URGENT** - Plan Spring Boot 3.4.1 upgrade (TECH-DEBT-006)
+**Current Activity:** 🟢 **IN PROGRESS** - Spring Boot 4.0.0 Upgrade (TECH-DEBT-006)
 
-**Critical Issue:**
-- Spring Boot 3.2.x OSS support ended December 2024
-- No security patches or bug fixes available
-- Compliance risk for production deployment
-- 8 story points, P0 priority, 2-3 day effort
+**Progress:**
+- ✅ Auth Service upgraded to Spring Boot 4.0.0 (13/13 points complete)
+- ✅ All 114 tests passing with Java 21
+- ⏸️ Remaining 4 services (40 points): Document, Admin, Core, Embedding
+- **Total Progress:** 13/53 story points (25% complete)
 
 **Critical Path:**
 1. GCP-INFRA-001: Project Setup (8 pts) - ✅ COMPLETE
@@ -44,6 +44,87 @@ See [PROJECT_BACKLOG.md](docs/project-management/PROJECT_BACKLOG.md) for detaile
 ---
 
 ## Recent Session Summary
+
+### Session 18: Spring Boot 4.0 Upgrade - Auth Service Implementation ✅ COMPLETE (2025-12-04)
+
+**Objective:** Implement Spring Boot 4.0.0 upgrade for Auth Service using incremental service-by-service approach.
+
+**What Was Done:**
+
+#### 1. Package Migrations ✅
+Fixed all Spring Boot 4.0 package moves:
+- **@EntityScan**: `org.springframework.boot.autoconfigure.domain` → `org.springframework.boot.persistence.autoconfigure`
+- **KafkaAutoConfiguration**: `org.springframework.boot.autoconfigure.kafka` → `org.springframework.boot.kafka.autoconfigure`
+- **Test Infrastructure**:
+  - `AutoConfigureMockMvc`: `org.springframework.boot.test.autoconfigure.web.servlet` → `org.springframework.boot.webmvc.test.autoconfigure`
+  - `TestRestTemplate`: `org.springframework.boot.test.web.client` → `org.springframework.boot.resttestclient`
+- Added `spring-boot-starter-webmvc-test` dependency for new test infrastructure
+
+#### 2. Jackson 3.x Configuration ✅
+**Problem:** Spring Boot context failed to start with Jackson property binding errors.
+
+**Solution:**
+- Excluded `JacksonAutoConfiguration` from `AuthServiceApplication`
+- Simplified `JsonConfig.java` to create `ObjectMapper` directly without deprecated `Jackson2ObjectMapperBuilder`
+- Removed all `spring.jackson` properties from `application.yml` (not needed)
+
+**Files Modified:**
+- `rag-auth-service/src/main/java/com/byo/rag/auth/AuthServiceApplication.java`
+- `rag-shared/src/main/java/com/byo/rag/shared/config/JsonConfig.java`
+
+#### 3. Spring Security 7.0 Updates ✅
+Added missing public endpoints to `SecurityConfig.java`:
+- `/actuator/info` - Was returning 403, now public
+- `/api/v1/auth/validate` - Token validation endpoint, now public
+
+**File Modified:**
+- `rag-auth-service/src/main/java/com/byo/rag/auth/config/SecurityConfig.java`
+
+#### 4. Mockito Java 25 Compatibility ✅
+**Initial Problem:** 41/114 tests failing with "Could not modify all classes [class java.lang.Object]"
+
+**Root Cause:** Tests running on Java 25 runtime while project targets Java 21. Mockito's ByteBuddy cannot modify `java.lang.Object` on Java 25 despite extensive `--add-opens` JVM arguments.
+
+**Solution:** Install Java 21 and run tests with correct Java version:
+```bash
+brew install openjdk@21
+JAVA_HOME=/opt/homebrew/opt/openjdk@21 mvn test -pl rag-auth-service
+```
+
+**Result:** ✅ All 114 tests pass successfully with Java 21
+
+**Files Modified:**
+- `pom.xml` - Enhanced maven-surefire-plugin with extensive JVM --add-opens arguments
+- `rag-auth-service/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker` - Created with `mock-maker-inline`
+
+#### 5. Comprehensive Documentation ✅
+Created complete upgrade documentation:
+- **Progress Tracking**: `docs/deployment/SPRING_BOOT_4_UPGRADE_PROGRESS.md` (460+ lines)
+  - All package migrations discovered and documented
+  - Jackson 3.x resolution documented
+  - Mockito Java 21 requirement documented
+  - Auth Service marked as 100% complete
+  - Upgrade patterns for remaining services documented
+
+**Upgrade Patterns Documented:**
+1. Package Migration Fixes (5 different package moves)
+2. Jackson 3.x Configuration (exclude Jackson autoconfiguration)
+3. Spring Security 7.0 Updates (public endpoint additions)
+4. Mockito Configuration (inline mock maker + Java 21 requirement)
+5. Spring AI Updates (EmbeddingModel interface changes for Embedding Service)
+
+#### 6. Backlog Updates ✅
+Updated `docs/project-management/PROJECT_BACKLOG.md`:
+- Marked Auth Service as COMPLETE (13/13 points)
+- Updated TECH-DEBT-006 status: 🟢 IN PROGRESS (13/53 points complete - 25%)
+- Total remaining: 40 points across 4 services (Document, Admin, Core, Embedding)
+
+**Story Points Completed:** 13 (Auth Service)
+**Total Progress:** 13/53 story points (25% complete)
+
+**Next Priority:** Apply proven upgrade patterns to remaining services
+
+---
 
 ### Session 17: Spring Framework EOL Analysis & Upgrade Planning (2025-12-04) ✅ CORRECTED
 

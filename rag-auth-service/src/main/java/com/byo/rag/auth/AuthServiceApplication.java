@@ -72,7 +72,12 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
  * @see org.springframework.boot.autoconfigure.SpringBootApplication
  * @see org.springframework.boot.autoconfigure.domain.EntityScan
  */
-@SpringBootApplication(scanBasePackages = "com.byo.rag")
+@SpringBootApplication(
+    scanBasePackages = "com.byo.rag",
+    exclude = {
+        org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration.class
+    }
+)
 @EntityScan("com.byo.rag.shared.entity")
 public class AuthServiceApplication {
 
