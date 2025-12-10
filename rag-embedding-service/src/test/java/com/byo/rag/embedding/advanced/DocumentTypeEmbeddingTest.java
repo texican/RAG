@@ -334,12 +334,16 @@ class DocumentTypeEmbeddingTest {
     
     private void mockSuccessfulEmbeddingResponse(List<Float> embedding) {
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        when(mockSpringEmbedding.getOutput()).thenReturn(embedding.stream().map(Float::doubleValue).toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[embedding.size()];
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
+        when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }
@@ -348,15 +352,19 @@ class DocumentTypeEmbeddingTest {
         List<Embedding> mockSpringEmbeddings = embeddings.stream()
             .map(embedding -> {
                 Embedding mockEmbedding = mock(Embedding.class);
-                when(mockEmbedding.getOutput()).thenReturn(embedding.stream().map(Float::doubleValue).toList());
+                float[] embeddingArray = new float[embedding.size()];
+                for (int i = 0; i < embedding.size(); i++) {
+                    embeddingArray[i] = embedding.get(i);
+                }
+                when(mockEmbedding.getOutput()).thenReturn(embeddingArray);
                 return mockEmbedding;
             })
             .collect(java.util.stream.Collectors.toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(mockSpringEmbeddings);
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }

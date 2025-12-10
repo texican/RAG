@@ -385,15 +385,15 @@ class MemoryOptimizationTest {
     private void setupMemoryEfficientMockResponses() {
         // Setup lightweight mock responses for memory testing
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        lenient().when(mockSpringEmbedding.getOutput()).thenReturn(
-            STANDARD_EMBEDDING.stream()
-                .map(Float::doubleValue)
-                .collect(java.util.stream.Collectors.toList())
-        );
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[STANDARD_EMBEDDING.size()];
+        for (int i = 0; i < STANDARD_EMBEDDING.size(); i++) {
+            embeddingArray[i] = STANDARD_EMBEDDING.get(i);
+        }
+        lenient().when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
-        
+
         lenient().when(embeddingModel.embedForResponse(any(List.class))).thenAnswer(invocation -> {
             List<?> input = invocation.getArgument(0);
             List<Embedding> results = IntStream.range(0, input.size())
@@ -406,16 +406,16 @@ class MemoryOptimizationTest {
     
     private void mockLargeDimensionEmbedding(List<Float> largeEmbedding) {
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        lenient().when(mockSpringEmbedding.getOutput()).thenReturn(
-            largeEmbedding.stream()
-                .map(Float::doubleValue)
-                .collect(java.util.stream.Collectors.toList())
-        );
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[largeEmbedding.size()];
+        for (int i = 0; i < largeEmbedding.size(); i++) {
+            embeddingArray[i] = largeEmbedding.get(i);
+        }
+        lenient().when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         lenient().when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         lenient().when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }

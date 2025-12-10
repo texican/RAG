@@ -414,15 +414,15 @@ class BatchProcessingTest {
     private void setupBatchMockResponses() {
         // Setup dynamic mock responses for batch processing
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        when(mockSpringEmbedding.getOutput()).thenReturn(
-            STANDARD_EMBEDDING.stream()
-                .map(Float::doubleValue)
-                .collect(java.util.stream.Collectors.toList())
-        );
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[STANDARD_EMBEDDING.size()];
+        for (int i = 0; i < STANDARD_EMBEDDING.size(); i++) {
+            embeddingArray[i] = STANDARD_EMBEDDING.get(i);
+        }
+        when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
-        
+
         // Return variable number of embeddings based on input size
         when(embeddingModel.embedForResponse(any(List.class))).thenAnswer(invocation -> {
             List<?> input = invocation.getArgument(0);

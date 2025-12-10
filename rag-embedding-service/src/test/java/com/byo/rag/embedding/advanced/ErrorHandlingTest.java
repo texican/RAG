@@ -410,16 +410,16 @@ class ErrorHandlingTest {
     
     private void mockSuccessfulEmbeddingResponse(List<Float> embedding) {
         org.springframework.ai.embedding.Embedding mockSpringEmbedding = mock(org.springframework.ai.embedding.Embedding.class);
-        lenient().when(mockSpringEmbedding.getOutput()).thenReturn(
-            embedding.stream()
-                .map(Float::doubleValue)
-                .collect(java.util.stream.Collectors.toList())
-        );
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[embedding.size()];
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
+        lenient().when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         lenient().when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         lenient().when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }

@@ -71,12 +71,16 @@ public class EmbeddingServiceTest {
         
         // Mock Spring AI response - using mocks to avoid constructor issues
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        when(mockSpringEmbedding.getOutput()).thenReturn(mockEmbedding.stream().map(Float::doubleValue).toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[mockEmbedding.size()];
+        for (int i = 0; i < mockEmbedding.size(); i++) {
+            embeddingArray[i] = mockEmbedding.get(i);
+        }
+        when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
         
@@ -162,15 +166,23 @@ public class EmbeddingServiceTest {
         
         // Mock Spring AI response - using mocks
         Embedding mockSpringEmbedding1 = mock(Embedding.class);
-        when(mockSpringEmbedding1.getOutput()).thenReturn(embedding1.stream().map(Float::doubleValue).toList());
-        
+        float[] embeddingArray1 = new float[embedding1.size()];
+        for (int i = 0; i < embedding1.size(); i++) {
+            embeddingArray1[i] = embedding1.get(i);
+        }
+        when(mockSpringEmbedding1.getOutput()).thenReturn(embeddingArray1);
+
         Embedding mockSpringEmbedding2 = mock(Embedding.class);
-        when(mockSpringEmbedding2.getOutput()).thenReturn(embedding2.stream().map(Float::doubleValue).toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray2 = new float[embedding2.size()];
+        for (int i = 0; i < embedding2.size(); i++) {
+            embeddingArray2[i] = embedding2.get(i);
+        }
+        when(mockSpringEmbedding2.getOutput()).thenReturn(embeddingArray2);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding1, mockSpringEmbedding2));
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
         
@@ -253,12 +265,16 @@ public class EmbeddingServiceTest {
         
         // Mock Spring AI response - using mocks
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        when(mockSpringEmbedding.getOutput()).thenReturn(mockEmbedding.stream().map(Float::doubleValue).toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[mockEmbedding.size()];
+        for (int i = 0; i < mockEmbedding.size(); i++) {
+            embeddingArray[i] = mockEmbedding.get(i);
+        }
+        when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
         

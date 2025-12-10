@@ -94,6 +94,9 @@ class DocumentServiceTest {
         testDocument = createTestDocument(documentId, testTenant, testUser);
         testFile = new MockMultipartFile("file", "test.pdf", "application/pdf", "test content".getBytes());
 
+        // Manually inject kafkaService mock (required=false autowired fields aren't injected by @InjectMocks)
+        org.springframework.test.util.ReflectionTestUtils.setField(documentService, "kafkaService", kafkaService);
+
         // Mock repository behavior for entity hydration
         lenient().when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(testTenant));
         lenient().when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));

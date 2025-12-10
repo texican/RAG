@@ -22,7 +22,8 @@ public class DependencyValidationTest {
     @DisplayName("Spring Boot Web should be available")
     void shouldHaveSpringBootWeb() {
         assertDoesNotThrow(() -> {
-            Class.forName("org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration");
+            // Spring Boot 4.0: WebMvcAutoConfiguration moved to new package
+            Class.forName("org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration");
         }, "Spring Boot Web should be available - add spring-boot-starter-web dependency");
     }
 

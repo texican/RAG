@@ -79,11 +79,11 @@ public class SecurityUtils {
 
     /**
      * Generates a secure BCrypt hash of the provided plain text password.
-     * 
+     *
      * <p>This method uses BCrypt with 12 rounds (2^12 = 4,096 iterations) to provide
      * enterprise-grade security against brute-force attacks. Each hash includes a
      * randomly generated salt for maximum security.</p>
-     * 
+     *
      * <p><strong>Security Features:</strong></p>
      * <ul>
      *   <li>12-round BCrypt hashing for optimal security/performance balance</li>
@@ -91,36 +91,46 @@ public class SecurityUtils {
      *   <li>Resistant to rainbow table attacks</li>
      *   <li>Future-proof against improved hardware capabilities</li>
      * </ul>
-     * 
+     *
      * @param plainPassword the plain text password to hash
      * @return BCrypt hash of the password with embedded salt
-     * @throws IllegalArgumentException if plainPassword is null
+     * @throws NullPointerException if plainPassword is null
      * @see BCryptPasswordEncoder
      */
     public static String hashPassword(String plainPassword) {
+        if (plainPassword == null) {
+            throw new NullPointerException("Password cannot be null");
+        }
         return PASSWORD_ENCODER.encode(plainPassword);
     }
 
     /**
      * Verifies a plain text password against its BCrypt hash.
-     * 
+     *
      * <p>This method provides secure password verification by comparing the plain text
      * password against the stored BCrypt hash. The verification process automatically
      * handles salt extraction and comparison using constant-time operations.</p>
-     * 
+     *
      * <p><strong>Security Features:</strong></p>
      * <ul>
      *   <li>Constant-time comparison to prevent timing attacks</li>
      *   <li>Automatic salt extraction from the hash</li>
      *   <li>Secure verification without exposing the original password</li>
      * </ul>
-     * 
+     *
      * @param plainPassword the plain text password to verify
      * @param hashedPassword the BCrypt hash to verify against
      * @return {@code true} if the password matches the hash, {@code false} otherwise
+     * @throws NullPointerException if plainPassword is null
      * @see BCryptPasswordEncoder#matches(CharSequence, String)
      */
     public static boolean verifyPassword(String plainPassword, String hashedPassword) {
+        if (plainPassword == null) {
+            throw new NullPointerException("Password cannot be null");
+        }
+        if (hashedPassword == null) {
+            return false;
+        }
         return PASSWORD_ENCODER.matches(plainPassword, hashedPassword);
     }
 

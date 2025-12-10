@@ -208,7 +208,8 @@ class SecurityUtilsTest {
     @DisplayName("Should handle edge cases gracefully")
     void shouldHandleEdgeCasesGracefully() {
         // Password hashing with edge cases
-        assertThrows(IllegalArgumentException.class, () -> {
+        // Spring Boot 4.0: BCryptPasswordEncoder throws NullPointerException for null input
+        assertThrows(NullPointerException.class, () -> {
             SecurityUtils.hashPassword(null);
         }, "Should throw exception for null password");
         
@@ -233,7 +234,7 @@ class SecurityUtilsTest {
         assertTrue(singleByteToken.length() > 0, "Single byte token should have length > 0");
         
         // Test password verification with null password
-        assertThrows(Exception.class, () -> {
+        assertThrows(NullPointerException.class, () -> {
             SecurityUtils.verifyPassword(null, "hash");
         }, "Should throw exception for null password in verification");
         

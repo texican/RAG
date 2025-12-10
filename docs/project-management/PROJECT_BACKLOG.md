@@ -1330,8 +1330,9 @@ Spring Boot's reactive security auto-configuration is creating default security 
 **Story Points:** 13 (Auth Service) + 40 (Remaining Services) = 53 total
 **Priority:** P0 - Critical (Security & Support)
 **Dependencies:** None
-**Status:** 🟢 **IN PROGRESS - 3/5 Services COMPLETE (39/53 points - 74%) ✅**
-**Progress:** Maven ✅, Auth Service ✅ (114 tests), Admin Service ✅ (66 tests), Core Service ✅ (108 tests)
+**Status:** 🟡 **BLOCKED - 4/5 Services COMPLETE (45/53 points - 85%)**
+**Progress:** Maven ✅, Auth ✅ (114 tests), Admin ✅ (77 tests), Document ✅ (111 tests), Core ✅ (108 tests), Embedding 🔴 BLOCKED
+**Blocker:** Spring AI 2.0 required for Embedding Service (not yet released)
 
 **Context:**
 The RAG project is currently using **Spring Boot 3.2.11** and **Spring Framework 6.1.21**, which reached end-of-life over 12 months ago (December 2024). The system has been running without security patches for a full year, creating critical security and compliance risks. Additionally, Spring Boot 3.4 and 3.5 are either EOL or have insufficient support runway (3.5.x has only 5 months left), making **Spring Boot 4.0 the only viable upgrade target**.
@@ -1400,12 +1401,16 @@ This upgrade is being done **incrementally, one service at a time**, starting wi
    - ✅ Jackson 3.x already excluded
    - ✅ All 108 tests passing with Java 21
 
-6. ⏸️ **Embedding Service** - 4 points (REMAINING)
-   - Spring AI API changes (embed returns float[] instead of List<Double>)
-   - Multiple autoconfiguration exclusions
-   - Ollama integration updates
+6. 🔴 **Embedding Service** - 8 points **BLOCKED BY SPRING AI INCOMPATIBILITY**
+   - **CRITICAL BLOCKER:** Spring AI 1.x NOT compatible with Spring Boot 4.0
+   - Spring AI requires `RestClientAutoConfiguration` class (removed in Spring Boot 4.0)
+   - Spring AI 2.0 required but not yet released (currently in planning)
+   - Latest available: Spring AI 1.1.0 GA (Nov 12, 2025) - Spring Boot 3.x only
+   - **Resolution:** Wait for Spring AI 2.0 milestone releases
+   - Production code ready, test context fails to load
+   - See: `docs/deployment/SPRING_BOOT_4_UPGRADE_PROGRESS.md` for details
 
-**Total:** 53 story points (13 Auth ✅ + 13 Admin ✅ + 10 Document ✅ + 13 Core ✅ + 4 Embedding ⏸️)
+**Total:** 53 story points (13 Auth ✅ + 13 Admin ✅ + 8 Document ✅ + 9 Core ✅ + 2 Shared ✅ + 8 Embedding 🔴 BLOCKED)
 
 **Technical Tasks (Updated 2025-12-04):**
 - [x] **Phase 1: Preparation** (3-4 hours) ✅ COMPLETE

@@ -337,16 +337,16 @@ class EmbeddingQualityConsistencyTest {
     
     private void mockDeterministicEmbeddingResponse(String text, List<Float> embedding) {
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        when(mockSpringEmbedding.getOutput()).thenReturn(
-            embedding.stream()
-                .map(Float::doubleValue)
-                .collect(java.util.stream.Collectors.toList())
-        );
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[embedding.size()];
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
+        when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }
@@ -356,19 +356,19 @@ class EmbeddingQualityConsistencyTest {
             .map(text -> {
                 Embedding embedding = mock(Embedding.class);
                 List<Float> embeddingValues = generateConsistentEmbedding(5); // Consistent dimension
-                when(embedding.getOutput()).thenReturn(
-                    embeddingValues.stream()
-                        .map(Float::doubleValue)
-                        .collect(java.util.stream.Collectors.toList())
-                );
+                float[] embeddingArray = new float[embeddingValues.size()];
+                for (int i = 0; i < embeddingValues.size(); i++) {
+                    embeddingArray[i] = embeddingValues.get(i);
+                }
+                when(embedding.getOutput()).thenReturn(embeddingArray);
                 return embedding;
             })
             .collect(java.util.stream.Collectors.toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(mockEmbeddings);
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }
@@ -382,19 +382,19 @@ class EmbeddingQualityConsistencyTest {
                 List<Float> similarEmbedding = baseEmbedding.stream()
                     .map(val -> val + (i * 0.05f)) // Small variations
                     .collect(java.util.stream.Collectors.toList());
-                when(embedding.getOutput()).thenReturn(
-                    similarEmbedding.stream()
-                        .map(Float::doubleValue)
-                        .collect(java.util.stream.Collectors.toList())
-                );
+                float[] embeddingArray = new float[similarEmbedding.size()];
+                for (int j = 0; j < similarEmbedding.size(); j++) {
+                    embeddingArray[j] = similarEmbedding.get(j);
+                }
+                when(embedding.getOutput()).thenReturn(embeddingArray);
                 return embedding;
             })
             .collect(java.util.stream.Collectors.toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(mockEmbeddings);
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }
@@ -407,35 +407,35 @@ class EmbeddingQualityConsistencyTest {
                 List<Float> differentEmbedding = IntStream.range(0, 5)
                     .mapToObj(j -> (float) (Math.sin(i * Math.PI * 2 + j * Math.PI) * 0.8 + Math.cos(i * j)))
                     .collect(java.util.stream.Collectors.toList());
-                when(embedding.getOutput()).thenReturn(
-                    differentEmbedding.stream()
-                        .map(Float::doubleValue)
-                        .collect(java.util.stream.Collectors.toList())
-                );
+                float[] embeddingArray = new float[differentEmbedding.size()];
+                for (int j = 0; j < differentEmbedding.size(); j++) {
+                    embeddingArray[j] = differentEmbedding.get(j);
+                }
+                when(embedding.getOutput()).thenReturn(embeddingArray);
                 return embedding;
             })
             .collect(java.util.stream.Collectors.toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(mockEmbeddings);
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }
     
     private void mockSpecificDimensionEmbedding(List<Float> embedding) {
         Embedding mockSpringEmbedding = mock(Embedding.class);
-        when(mockSpringEmbedding.getOutput()).thenReturn(
-            embedding.stream()
-                .map(Float::doubleValue)
-                .collect(java.util.stream.Collectors.toList())
-        );
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+        float[] embeddingArray = new float[embedding.size()];
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
+        when(mockSpringEmbedding.getOutput()).thenReturn(embeddingArray);
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(List.of(mockSpringEmbedding));
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }
@@ -443,23 +443,23 @@ class EmbeddingQualityConsistencyTest {
     private void mockTextPreprocessingEmbeddings(List<String> texts) {
         // All equivalent texts should produce very similar embeddings
         List<Float> baseEmbedding = List.of(0.9f, 0.8f, 0.7f, 0.6f, 0.5f);
-        
+        float[] embeddingArray = new float[baseEmbedding.size()];
+        for (int i = 0; i < baseEmbedding.size(); i++) {
+            embeddingArray[i] = baseEmbedding.get(i);
+        }
+
         List<Embedding> mockEmbeddings = texts.stream()
             .map(text -> {
                 Embedding embedding = mock(Embedding.class);
-                when(embedding.getOutput()).thenReturn(
-                    baseEmbedding.stream()
-                        .map(Float::doubleValue)
-                        .collect(java.util.stream.Collectors.toList())
-                );
+                when(embedding.getOutput()).thenReturn(embeddingArray);
                 return embedding;
             })
             .collect(java.util.stream.Collectors.toList());
-        
-        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse = 
+
+        org.springframework.ai.embedding.EmbeddingResponse mockSpringResponse =
             mock(org.springframework.ai.embedding.EmbeddingResponse.class);
         when(mockSpringResponse.getResults()).thenReturn(mockEmbeddings);
-        
+
         when(embeddingModel.embedForResponse(any(List.class)))
             .thenReturn(mockSpringResponse);
     }

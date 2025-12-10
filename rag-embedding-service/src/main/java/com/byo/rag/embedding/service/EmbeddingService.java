@@ -172,9 +172,12 @@ public class EmbeddingService {
                     UUID chunkId = request.chunkIds() != null ? 
                         request.chunkIds().get(originalIndex) : UUID.randomUUID();
                     
-                    List<Float> embeddingVector = embedding.getOutput().stream()
-                        .map(Double::floatValue)
-                        .toList();
+                    // Convert float[] to List<Float>
+                    float[] floatArray = embedding.getOutput();
+                    List<Float> embeddingVector = new ArrayList<>(floatArray.length);
+                    for (float f : floatArray) {
+                        embeddingVector.add(f);
+                    }
                     
                     // Cache the embedding
                     cacheService.cacheEmbedding(request.tenantId(), text, modelName, embeddingVector);
